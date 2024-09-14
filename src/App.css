@@ -1,0 +1,67 @@
+.header {
+  display: flex;
+  justify-content: space-between; /* Space between the left and right items */
+  align-items: center; /* Vertically center the items */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  z-index: 1;
+}
+
+.header .logo-title-container {
+  display: flex;
+  align-items: center;
+}
+
+.header h1 {
+  margin-left: 10px; /* Add a small space between the logo and title */
+  font-size: 20px;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+}
+
+.button-container {
+  display: flex;
+  justify-content: flex-end;
+  z-index: 1;
+}
+
+.upload-button {
+  background-color: #035a2a;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  z-index: 100;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 60px);  /* Adjust for the header */
+  margin-top: 60px;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #f9f9f9;
+  border-right: 1px solid #ccc;
+  height: 100vh;
+  padding: 10px;
+  z-index: 0;
+}
+
+.content {
+  flex-grow: 1;
+  padding: 20px;
+  position: relative;
+  overflow-y: auto;  /* Ensure content is scrollable if long */
+  z-index: 0;
+}

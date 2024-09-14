@@ -1,0 +1,202 @@
+/* TestCaseSteps.css */
+
+/* Test Step Styles */
+.test-steps-container {
+  margin: 20px;
+  position: relative; 
+}
+
+.test-steps-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap; /* Allow wrapping */
+  justify-content: center; /* Center the items */
+  margin-top: 20px;
+  padding: 10px;
+  position: relative; /* Add relative positioning */
+}
+
+.test-step-box {
+  padding: 20px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  flex: 1 1 250px; /* Make flexible and responsive */
+  max-width: 300px;
+  text-align: left;
+  margin: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+/* Remove the arrow from individual boxes */
+.test-step-box + .test-step-box::before {
+  content: '→';
+  font-size: 24px;
+  color: #555;
+  position: absolute;
+  top: 50%;
+  left: -15px;
+  transform: translateY(-50%);
+}
+
+/* Adjust arrows for wrapped items */
+.test-step-box:nth-child(n) {
+  margin-left: 20px;
+}
+
+.test-step-name {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.test-step-description {
+  font-size: 14px;
+  color: #555;
+  word-wrap: break-word;
+}
+
+.test-step-expected {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #008000; /* Green color for expected result */
+  word-wrap: break-word;
+}
+
+/* Remove the separate arrow div */
+.arrow {
+  font-size: 24px;
+  color: #555;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.test-step-box + .arrow {
+  left: 100%; /* Position the arrow right after the test step */
+  margin-left: -15px; /* Adjust the horizontal position to center it between boxes */
+}
+
+/* Test Results Table */
+.test-results-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.test-results-table th,
+.test-results-table td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+.test-results-table th {
+  background-color: #f0f0f0;
+}
+
+.test-results-table .passed {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.test-results-table .failed {
+  color: #f44336;
+  font-weight: bold;
+}
+
+/* Test Runs Section */
+.test-runs-list {
+  margin-top: 20px;
+}
+
+.test-run-item {
+  padding: 15px;
+  background-color: #f5f5f5;
+  border-left: 5px solid;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+.test-run-item.passed {
+  border-left-color: #4CAF50; /* Green */
+}
+
+.test-run-item.failed {
+  border-left-color: #f44336; /* Red */
+}
+
+.test-run-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.test-run-id {
+  font-weight: bold;
+}
+
+.test-run-result {
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 3px;
+  color: #fff;
+}
+
+.test-run-result.passed {
+  background-color: #4CAF50; /* Green */
+}
+
+.test-run-result.failed {
+  background-color: #f44336; /* Red */
+}
+
+.toggle-details-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 10px;
+}
+
+.test-run-details {
+  margin-top: 10px;
+}
+
+.test-run-output,
+.test-run-error {
+  margin-top: 10px;
+}
+
+.test-run-output pre,
+.test-run-error pre {
+  background-color: #e0e0e0;
+  padding: 10px;
+  border-radius: 3px;
+  overflow-x: auto;
+}
+
+.test-run-output strong,
+.test-run-error strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Media query for responsiveness */
+@media (max-width: 768px) {
+  .test-steps-flow {
+    justify-content: center;
+  }
+
+  .test-step-box {
+    flex: 1 1 100%;
+    max-width: none;
+    margin: 10px 0;
+  }
+
+
+
+  .arrow {
+    display: none;
+  }
+}
