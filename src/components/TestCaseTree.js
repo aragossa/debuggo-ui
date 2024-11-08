@@ -4,11 +4,12 @@ import { faPlay } from '@fortawesome/free-solid-svg-icons';
 import './TestCaseTree.css';
 
 const TestCaseTree = ({ onNodeClick, onRunClick }) => {
+  const API_URL = process.env.REACT_APP_API_URL;
   const [treeData, setTreeData] = useState([]);
   const [expandedNodes, setExpandedNodes] = useState({});
 
   useEffect(() => {
-    fetch('http://localhost:8000/get_tree')
+    fetch(`${API_URL}/get_tree`)
       .then((response) => response.json())
       .then((data) => {
         setTreeData(data);

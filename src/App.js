@@ -8,6 +8,7 @@ import './App.css';
 import logo from './logo.png';
 
 const App = () => {
+  const API_URL = process.env.REACT_APP_API_URL;
   const [treeData, setTreeData] = useState([]);
   const [testCases, setTestCases] = useState({ test_steps: [], test_runs: [] });
   const [showUploadPopup, setShowUploadPopup] = useState(false);
@@ -21,7 +22,10 @@ const App = () => {
 
   const fetchTreeData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/get_tree');
+      // const response = await fetch(`${API_URL}/get_tree`);
+      const response = await fetch(`${API_URL}/get_tree`);
+      console.log('api url')
+      console.log(API_URL)
       const data = await response.json();
       setTreeData(data);
     } catch (error) {
@@ -31,7 +35,7 @@ const App = () => {
 
   const fetchTestCases = async (id) => {
     try {
-      const response = await fetch(`http://localhost:8000/get_test_cases/${id}`);
+      const response = await fetch(`${API_URL}/get_test_cases/${id}`);
       const data = await response.json();
       setTestCases(data); // Update the test cases based on the selected node
     } catch (error) {
@@ -47,7 +51,7 @@ const App = () => {
   const handleRunClick = (testCaseId) => {
     console.log('Running test case:', testCaseId);
 
-    fetch(`http://localhost:8000/run_test_case/${testCaseId}`, {
+    fetch(`${API_URL}/run_test_case/${testCaseId}`, {
       method: 'POST',
     })
       .then((response) => response.json())
@@ -72,7 +76,7 @@ const App = () => {
     const formData = new FormData();
     formData.append('file', file);
 
-    fetch('http://localhost:8000/generate_test_cases_from_data', {
+    fetch(`${API_URL}/generate_test_cases_from_data`, {
       method: 'POST',
       body: formData,
     })

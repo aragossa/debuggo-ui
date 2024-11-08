@@ -1,49 +1,62 @@
 /* TestResultPopup.css */
 
 .popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-  
-  .popup-content {
-    background-color: white;
-    padding: 30px;
-    border-radius: 8px;
-    text-align: center;
-    width: 300px;
-  }
-  
-  .result-icon {
-    font-size: 50px;
-    margin-bottom: 20px;
-  }
-  
-  .result-icon.passed {
-    color: green;
-  }
-  
-  .result-icon.failed {
-    color: red;
-  }
-  
-  .close-popup-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 5px;
-  }
-  
-  .close-popup-button:hover {
-    background-color: #0056b3;
-  }
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1500;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.popup-overlay.hidden {
+  opacity: 0;
+}
+
+.popup-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  text-align: center;
+  width: 300px;
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.popup-content.fade-out {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.result-icon {
+  font-size: 50px;
+  margin-bottom: 20px;
+}
+
+.result-icon.passed {
+  color: green;
+}
+
+.result-icon.failed {
+  color: red;
+}
+
+.close-popup-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.close-popup-button:hover {
+  background-color: #0056b3;
+}
