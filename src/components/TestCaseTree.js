@@ -9,7 +9,7 @@ const TestCaseTree = ({ onNodeClick, onRunClick }) => {
   const [expandedNodes, setExpandedNodes] = useState({});
 
   useEffect(() => {
-    fetch(`${API_URL}/get_tree`)
+    fetch(`${API_URL}/api/get_tree`)
       .then((response) => response.json())
       .then((data) => {
         setTreeData(data);
