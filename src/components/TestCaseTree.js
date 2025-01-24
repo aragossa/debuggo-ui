@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay } from '@fortawesome/free-solid-svg-icons';
 import './TestCaseTree.css';
 
-const TestCaseTree = ({ onNodeClick, onRunClick }) => {
+const TestCaseTree = ({ onNodeClick }) => {
   const API_URL = process.env.REACT_APP_API_URL;
   const [treeData, setTreeData] = useState([]);
   const [expandedNodes, setExpandedNodes] = useState({});
@@ -45,18 +43,11 @@ const TestCaseTree = ({ onNodeClick, onRunClick }) => {
                 {depth === 2 ? (
                   <div className="test-case-buttons">
                     <button
-                      onClick={() => onRunClick(node.id)}
-                      className="run-button"
-                    >
-                      <FontAwesomeIcon icon={faPlay} />
-                    </button>
-                    <button
                       onClick={() => onNodeClick(node.id)}
                       className="tree-node-link"
                     >
                       {node.name}
                     </button>
-
                   </div>
                 ) : (
                   <span

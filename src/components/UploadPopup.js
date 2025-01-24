@@ -5,15 +5,29 @@ const UploadPopup = ({ onClose, onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false); // State to manage loading spinner and interactions
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selectedFile = e.target.files[0];
+    console.log('File selected:', selectedFile);
+    console.log('File size:', selectedFile?.size);
+    console.log('File type:', selectedFile?.type);
+    setFile(selectedFile);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const droppedFile = e.dataTransfer.files[0];
+    console.log('File dropped:', droppedFile);
+    console.log('File size:', droppedFile?.size);
+    console.log('File type:', droppedFile?.type);
+    setFile(droppedFile);
   };
 
   const handleSubmit = () => {
     if (file) {
-      setIsSubmitting(true); // Start the spinner and disable interactions
+      console.log('Submitting file in UploadPopup:', file);
+      setIsSubmitting(true);
       onSubmit(file, () => {
-        setIsSubmitting(false); // Stop the spinner and enable interactions after completion
-      }); // Pass a callback to handle completion
+        setIsSubmitting(false);
+      });
     }
   };
 

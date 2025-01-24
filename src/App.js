@@ -14,6 +14,7 @@ const App = () => {
   const [showUploadPopup, setShowUploadPopup] = useState(false);
   const [uploadType, setUploadType] = useState(''); // 'UI' or 'API'
   const [testResult, setTestResult] = useState(null); // State for test result
+  const [selectedTestId, setSelectedTestId] = useState(null);
 
   useEffect(() => {
     // Fetch data when component mounts
@@ -45,6 +46,7 @@ const App = () => {
 
   const handleNodeClick = (id) => {
     // Fetch the test steps for the clicked node
+    setSelectedTestId(id);
     fetchTestCases(id);
   };
 
@@ -70,29 +72,50 @@ const App = () => {
     setTestResult(null); // Close the popup
   };
 
-  const handleFileSubmit = (file, callback) => {
-    console.log('File submitted:', file);
+  const handleFileSubmit = async (file, callback) => {
+    try {
+      console.log('File submitted to handleFileSubmit:', file);
+      console.log('File size:', file?.size);
+      console.log('File type:', file?.type);
 
-    const formData = new FormData();
-    formData.append('file', file);
+      if (!file) {
+        console.error('No file provided');
+        return;
+      }
 
-    fetch(`${API_URL}/api/generate_test_cases_from_data`, {
-      method: 'POST',
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('File successfully uploaded', data);
-        setShowUploadPopup(false); // Close the popup after successful upload
-        if (callback) callback(); // Stop the spinner
-        window.location.reload(); // Refresh the page
-        // Or use fetchTreeData(); to refresh data without page reload
-        // fetchTreeData();
-      })
-      .catch((error) => {
-        console.error('Error uploading file:', error);
-        if (callback) callback(); // Stop the spinner even if there's an error
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Debug FormData contents
+      for (let pair of formData.entries()) {
+        console.log('FormData entry:', pair[0], pair[1]);
+        console.log('FormData file details:', pair[1] instanceof File ? {
+          name: pair[1].name,
+          size: pair[1].size,
+          type: pair[1].type
+        } : 'Not a file');
+      }
+
+      const response = await fetch(`${API_URL}/api/generate_test_cases_from_data`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Upload response:', data);
+      
+      setShowUploadPopup(false);
+      if (callback) callback();
+      window.location.reload();
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      if (callback) callback();
+    }
   };
 
   return (
@@ -116,14 +139,19 @@ const App = () => {
       </header>
       <div className="sidebar">
         <TestCaseTree
+          treeData={treeData}
           onNodeClick={handleNodeClick}
           onRunClick={handleRunClick}
         />
       </div>
       <div className="content">
-        <TestCaseSteps
-          test_steps={testCases.test_steps}
+        <TestCaseSteps 
+          test_steps={testCases.test_steps} 
           test_runs={testCases.test_runs}
+          testCaseId={selectedTestId}
+          test_name={testCases.test_name}
+          test_description={testCases.test_description}
+          updated_at={testCases.updated_at}
         />
         {showUploadPopup && (
           <UploadPopup

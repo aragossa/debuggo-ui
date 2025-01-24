@@ -1,9 +1,13 @@
 // TestCaseSteps.js
 import React, { useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlay, faMagicWandSparkles } from '@fortawesome/free-solid-svg-icons';
 import './TestCaseSteps.css';
 
-const TestCaseSteps = ({ test_steps, test_runs }) => {
+const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_description, updated_at }) => {
   const [expandedRuns, setExpandedRuns] = useState({});
+  const [isRunning, setIsRunning] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const toggleRunDetails = (runId) => {
     setExpandedRuns((prevState) => ({
@@ -12,9 +16,85 @@ const TestCaseSteps = ({ test_steps, test_runs }) => {
     }));
   };
 
+  const handleRunClick = async () => {
+    if (isRunning || !testCaseId) return;
+    
+    setIsRunning(true);
+    try {
+      const response = await fetch(`${API_URL}/api/run_test_case/${testCaseId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to run test case');
+      }
+      
+      const result = await response.json();
+      // Optionally handle the result or trigger a refresh of test runs
+      console.log('Test run result:', result);
+      
+    } catch (error) {
+      console.error('Error running test case:', error);
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleGenerateSteps = async () => {
+    if (!testCaseId) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/api/generate_steps/${testCaseId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate steps');
+      }
+      
+      const result = await response.json();
+      console.log('Steps generation result:', result);
+      
+    } catch (error) {
+      console.error('Error generating steps:', error);
+    }
+  };
+
   return (
     <div className="test-steps-container">
-      <h3>Test Steps</h3>
+      {testCaseId && (
+        <div className="test-case-details">
+          <h2 className="test-name">{test_name}</h2>
+          <p className="test-description">{test_description}</p>
+          <p className="updated-at">Last updated: {new Date(updated_at).toLocaleString()}</p>
+        </div>
+      )}
+      <div className="test-steps-header">
+        <h3>Test Steps</h3>
+        <div className="button-group">
+          <button 
+            onClick={handleGenerateSteps}
+            className="generate-steps-btn"
+            disabled={!testCaseId}
+            title="Generate Steps">
+            <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate Steps
+          </button>
+          <button 
+            onClick={handleRunClick} 
+            className={`run-button ${isRunning ? 'running' : ''}`}
+            disabled={isRunning || !testCaseId}
+          >
+            <FontAwesomeIcon icon={faPlay} className={isRunning ? 'fa-spin' : ''} />
+            {isRunning ? 'Running...' : 'Run Test'}
+          </button>
+        </div>
+      </div>
       <div className="test-steps-flow">
         {test_steps.map((step, index) => (
           <React.Fragment key={index}>
