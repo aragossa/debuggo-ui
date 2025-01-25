@@ -6,7 +6,13 @@
 
 .test-case-tree ul {
   list-style-type: none;
-  padding-left: 20px;
+  padding-left: 0;
+  margin: 0;
+}
+
+/* Only indent group items' children */
+.test-case-tree ul ul {
+  padding-left: 15px;
 }
 
 .test-case-tree li {
@@ -30,27 +36,65 @@
   cursor: pointer;
   margin-right: 5px;
   user-select: none;
+  font-size: 12px;
+  width: 15px;
+  display: inline-block;
 }
 
 .tree-node-label {
   cursor: pointer;
+  color: black;
+  font-weight: bold;
 }
 
 .tree-node-link {
   background: none;
   border: none;
-  color: blue;
-  text-decoration: underline;
+  color: #333;
   cursor: pointer;
-  padding: 0;
-  font: inherit;
+  padding: 4px 8px;
+  text-align: left;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 }
 
 .tree-node-link:hover {
-  text-decoration: none;
+  background-color: #f0f0f0;
 }
 
+.tree-node-link.selected {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  font-weight: 500;
+  position: relative;
+}
 
+.tree-node-link.selected::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 100%;
+  background-color: #1a73e8;
+  border-radius: 0 2px 2px 0;
+}
+
+.tree-node-link {
+  background: none;
+  border: none;
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  margin-left: 15px; /* Align with group labels */
+}
 
 .test-case-buttons {
   display: flex;
@@ -75,4 +119,10 @@
 
 .run-button:hover {
   background-color: #45a049;
+}
+
+.group-label {
+  font-weight: bold;
+  color: black;
+  margin-left: 0;
 }

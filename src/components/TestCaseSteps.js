@@ -1,13 +1,50 @@
 // TestCaseSteps.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay, faMagicWandSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faMagicWandSparkles, faGripVertical } from '@fortawesome/free-solid-svg-icons';
 import './TestCaseSteps.css';
+
+const STEP_ACTIONS = [
+  'click',
+  'type',
+  'select',
+  'hover',
+  'wait',
+  'assert',
+  'scroll',
+  'clear',
+  'navigate',
+  'press_key'
+];
 
 const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_description, updated_at }) => {
   const [expandedRuns, setExpandedRuns] = useState({});
   const [isRunning, setIsRunning] = useState(false);
+  const [stepValues, setStepValues] = useState({});
+  const [steps, setSteps] = useState([]);
+  const [draggedStep, setDraggedStep] = useState(null);
   const API_URL = process.env.REACT_APP_API_URL;
+
+  useEffect(() => {
+    if (test_steps && Array.isArray(test_steps)) {
+      setSteps(test_steps);
+    }
+  }, [test_steps]);
+
+  const hasTestSteps = steps && steps.length > 0;
+
+  const refreshTestCase = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/get_test_cases/${testCaseId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch updated test case');
+      }
+      const data = await response.json();
+      setSteps(data.test_steps);
+    } catch (error) {
+      console.error('Error refreshing test case:', error);
+    }
+  };
 
   const toggleRunDetails = (runId) => {
     setExpandedRuns((prevState) => ({
@@ -17,7 +54,7 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
   };
 
   const handleRunClick = async () => {
-    if (isRunning || !testCaseId) return;
+    if (isRunning || !testCaseId || !hasTestSteps) return;
     
     setIsRunning(true);
     try {
@@ -66,51 +103,173 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
     }
   };
 
+  const handleActionChange = async (stepId, newAction) => {
+    try {
+      const response = await fetch(`${API_URL}/api/update_test_step/${stepId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: newAction }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update test step action');
+      }
+
+      // Refresh test case data to get updated values
+      await refreshTestCase();
+    } catch (error) {
+      console.error('Error updating test step action:', error);
+    }
+  };
+
+  const handleValueChange = (stepId, value) => {
+    setStepValues(prev => ({
+      ...prev,
+      [stepId]: value
+    }));
+  };
+
+  const handleDragStart = (e, step) => {
+    setDraggedStep(step);
+    e.currentTarget.classList.add('dragging');
+  };
+
+  const handleDragEnd = (e) => {
+    e.currentTarget.classList.remove('dragging');
+    setDraggedStep(null);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    const dragBox = e.currentTarget;
+    dragBox.classList.add('drag-over');
+  };
+
+  const handleDragLeave = (e) => {
+    e.currentTarget.classList.remove('drag-over');
+  };
+
+  const handleDrop = async (e, targetStep) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    
+    if (!draggedStep || draggedStep.id === targetStep.id) return;
+
+    const oldIndex = steps.findIndex(s => s.id === draggedStep.id);
+    const newIndex = steps.findIndex(s => s.id === targetStep.id);
+    
+    // Create new array with updated order
+    const newSteps = [...steps];
+    newSteps.splice(oldIndex, 1);
+    newSteps.splice(newIndex, 0, draggedStep);
+
+    // Update step_order for affected steps
+    const updatedSteps = newSteps.map((step, index) => ({
+      ...step,
+      step_order: index
+    }));
+
+    // Update UI immediately
+    setSteps(updatedSteps);
+
+    // Send update to backend
+    try {
+      const response = await fetch(`${API_URL}/api/update_step_orders`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          test_case_id: testCaseId,
+          step_orders: updatedSteps.map(step => ({
+            id: step.id,
+            step_order: step.step_order
+          }))
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update step orders');
+      }
+    } catch (error) {
+      console.error('Error updating step orders:', error);
+      // Revert to original order on error
+      setSteps(test_steps);
+    }
+  };
+
   return (
     <div className="test-steps-container">
-      {testCaseId && (
-        <div className="test-case-details">
-          <h2 className="test-name">{test_name}</h2>
-          <p className="test-description">{test_description}</p>
-          <p className="updated-at">Last updated: {new Date(updated_at).toLocaleString()}</p>
-        </div>
-      )}
+      <div className="test-case-header">
+        <h2>{test_name}</h2>
+        <p>{test_description}</p>
+        <p className="last-updated">Last updated: {updated_at}</p>
+      </div>
+
       <div className="test-steps-header">
         <h3>Test Steps</h3>
-        <div className="button-group">
-          <button 
+        <div className="test-steps-actions">
+          <button
+            className="generate-steps-button"
             onClick={handleGenerateSteps}
-            className="generate-steps-btn"
-            disabled={!testCaseId}
-            title="Generate Steps">
+            disabled={isRunning}
+          >
             <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate Steps
           </button>
-          <button 
-            onClick={handleRunClick} 
-            className={`run-button ${isRunning ? 'running' : ''}`}
-            disabled={isRunning || !testCaseId}
+          <button
+            className={`run-button ${(!hasTestSteps || isRunning) ? 'disabled' : ''}`}
+            onClick={handleRunClick}
+            disabled={!hasTestSteps || isRunning}
           >
             <FontAwesomeIcon icon={faPlay} className={isRunning ? 'fa-spin' : ''} />
             {isRunning ? 'Running...' : 'Run Test'}
           </button>
         </div>
       </div>
-      <div className="test-steps-flow">
-        {test_steps.map((step, index) => (
-          <React.Fragment key={index}>
-            <div className="test-step-box">
-              <div className="test-step-name">{step.name}</div>
-              <div className="test-step-description">{step.description}</div>
 
-              {step.expected_result && (
-                <div className="test-step-expected">
-                  <strong>Expected Result: </strong>
-                  {step.expected_result}
-                </div>
+      <div className="test-steps-flow">
+        {steps && steps.map((step) => (
+          <div
+            key={step.id}
+            className="test-step-box"
+            draggable="true"
+            onDragStart={(e) => handleDragStart(e, step)}
+            onDragEnd={handleDragEnd}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, step)}
+          >
+            <div className="test-step-drag-handle">
+              <FontAwesomeIcon icon={faGripVertical} />
+            </div>
+            
+            <div className="test-step-description">{step.description}</div>
+            <div className="test-step-footer">
+              <select 
+                value={step.action || ''}
+                onChange={(e) => handleActionChange(step.id, e.target.value)}
+                className="action-select"
+              >
+                <option value="">Select Action</option>
+                {STEP_ACTIONS.map((action) => (
+                  <option key={action} value={action}>
+                    {action.replace('_', ' ')}
+                  </option>
+                ))}
+              </select>
+              {(step.action === 'type' || step.action === 'press_key') && (
+                <input
+                  type="text"
+                  className="action-input"
+                  placeholder={step.action === 'type' ? 'Text to type...' : 'Key to press...'}
+                  value={stepValues[step.id] || ''}
+                  onChange={(e) => handleValueChange(step.id, e.target.value)}
+                />
               )}
             </div>
-            {/* Remove the separate arrow div */}
-          </React.Fragment>
+          </div>
         ))}
       </div>
 

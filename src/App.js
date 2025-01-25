@@ -10,7 +10,7 @@ import logo from './logo.png';
 const App = () => {
   const API_URL = process.env.REACT_APP_API_URL;
   const [treeData, setTreeData] = useState([]);
-  const [testCases, setTestCases] = useState({ test_steps: [], test_runs: [] });
+  const [testCase, setTestCase] = useState(null);
   const [showUploadPopup, setShowUploadPopup] = useState(false);
   const [uploadType, setUploadType] = useState(''); // 'UI' or 'API'
   const [testResult, setTestResult] = useState(null); // State for test result
@@ -38,7 +38,7 @@ const App = () => {
     try {
       const response = await fetch(`${API_URL}/api/get_test_cases/${id}`);
       const data = await response.json();
-      setTestCases(data); // Update the test cases based on the selected node
+      setTestCase(data); // Update the test cases based on the selected node
     } catch (error) {
       console.error('Error fetching test cases:', error);
     }
@@ -142,17 +142,20 @@ const App = () => {
           treeData={treeData}
           onNodeClick={handleNodeClick}
           onRunClick={handleRunClick}
+          selectedTestId={selectedTestId}
         />
       </div>
       <div className="content">
-        <TestCaseSteps 
-          test_steps={testCases.test_steps} 
-          test_runs={testCases.test_runs}
-          testCaseId={selectedTestId}
-          test_name={testCases.test_name}
-          test_description={testCases.test_description}
-          updated_at={testCases.updated_at}
-        />
+        {testCase && (
+          <TestCaseSteps
+            test_steps={testCase.test_steps}
+            test_runs={testCase.test_runs}
+            testCaseId={selectedTestId}
+            test_name={testCase.test_name}
+            test_description={testCase.test_description}
+            updated_at={testCase.updated_at}
+          />
+        )}
         {showUploadPopup && (
           <UploadPopup
             uploadType={uploadType}

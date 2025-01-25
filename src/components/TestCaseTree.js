@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './TestCaseTree.css';
 
-const TestCaseTree = ({ onNodeClick }) => {
+const TestCaseTree = ({ onNodeClick, selectedTestId }) => {
   const API_URL = process.env.REACT_APP_API_URL;
   const [treeData, setTreeData] = useState([]);
   const [expandedNodes, setExpandedNodes] = useState({});
@@ -11,9 +11,21 @@ const TestCaseTree = ({ onNodeClick }) => {
       .then((response) => response.json())
       .then((data) => {
         setTreeData(data);
+        // Auto-expand all group nodes
+        const initialExpanded = {};
+        const expandGroups = (nodes) => {
+          nodes.forEach(node => {
+            if (node.children && node.children.length > 0) {
+              initialExpanded[node.id] = true;
+              expandGroups(node.children);
+            }
+          });
+        };
+        expandGroups(data);
+        setExpandedNodes(initialExpanded);
       })
       .catch((error) => console.error('Error fetching tree data:', error));
-  }, []);
+  }, [API_URL]);
 
   const toggleNode = (nodeId) => {
     setExpandedNodes((prevState) => ({
@@ -28,6 +40,7 @@ const TestCaseTree = ({ onNodeClick }) => {
         {nodes.map((node) => {
           const isExpanded = expandedNodes[node.id];
           const hasChildren = node.children && node.children.length > 0;
+          const isSelected = node.id === selectedTestId;
 
           return (
             <li key={node.id}>
@@ -40,22 +53,15 @@ const TestCaseTree = ({ onNodeClick }) => {
                     {isExpanded ? '▼' : '►'}
                   </span>
                 )}
-                {depth === 2 ? (
-                  <div className="test-case-buttons">
-                    <button
-                      onClick={() => onNodeClick(node.id)}
-                      className="tree-node-link"
-                    >
-                      {node.name}
-                    </button>
-                  </div>
+                {hasChildren ? (
+                  <span className="group-label">{node.name}</span>
                 ) : (
-                  <span
-                    onClick={hasChildren ? () => toggleNode(node.id) : undefined}
-                    className={hasChildren ? 'tree-node-label' : ''}
+                  <button
+                    onClick={() => onNodeClick(node.id)}
+                    className={`tree-node-link ${isSelected ? 'selected' : ''}`}
                   >
                     {node.name}
-                  </span>
+                  </button>
                 )}
               </div>
               {hasChildren && isExpanded && renderTreeNodes(node.children, depth + 1)}
