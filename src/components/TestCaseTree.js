@@ -1,19 +1,37 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import './TestCaseTree.css';
 
 const TestCaseTree = ({ onNodeClick, selectedTestId }) => {
   const API_URL = process.env.REACT_APP_API_URL;
+  const { getAuthHeaders } = useAuth();
   const [treeData, setTreeData] = useState([]);
   const [expandedNodes, setExpandedNodes] = useState({});
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/get_tree`)
-      .then((response) => response.json())
-      .then((data) => {
+    const fetchTreeData = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/get_tree`, {
+          headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+          console.warn('Tree data is not an array:', data);
+          setTreeData([]);
+          return;
+        }
+
         setTreeData(data);
         // Auto-expand all group nodes
         const initialExpanded = {};
         const expandGroups = (nodes) => {
+          if (!Array.isArray(nodes)) return;
           nodes.forEach(node => {
             if (node.children && node.children.length > 0) {
               initialExpanded[node.id] = true;
@@ -23,9 +41,16 @@ const TestCaseTree = ({ onNodeClick, selectedTestId }) => {
         };
         expandGroups(data);
         setExpandedNodes(initialExpanded);
-      })
-      .catch((error) => console.error('Error fetching tree data:', error));
-  }, [API_URL]);
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching tree data:', error);
+        setError('Failed to load test cases. Please try again later.');
+        setTreeData([]);
+      }
+    };
+
+    fetchTreeData();
+  }, [API_URL, getAuthHeaders]);
 
   const toggleNode = (nodeId) => {
     setExpandedNodes((prevState) => ({
@@ -35,6 +60,10 @@ const TestCaseTree = ({ onNodeClick, selectedTestId }) => {
   };
 
   const renderTreeNodes = (nodes, depth = 0) => {
+    if (!Array.isArray(nodes) || nodes.length === 0) {
+      return null;
+    }
+
     return (
       <ul>
         {nodes.map((node) => {
@@ -50,19 +79,15 @@ const TestCaseTree = ({ onNodeClick, selectedTestId }) => {
                     onClick={() => toggleNode(node.id)}
                     className="tree-node-toggle"
                   >
-                    {isExpanded ? '▼' : '►'}
+                    {isExpanded ? '▼' : '▶'}
                   </span>
                 )}
-                {hasChildren ? (
-                  <span className="group-label">{node.name}</span>
-                ) : (
-                  <button
-                    onClick={() => onNodeClick(node.id)}
-                    className={`tree-node-link ${isSelected ? 'selected' : ''}`}
-                  >
-                    {node.name}
-                  </button>
-                )}
+                <span
+                  className={`tree-node-label ${isSelected ? 'selected' : ''}`}
+                  onClick={() => onNodeClick && onNodeClick(node.id)}
+                >
+                  {node.name}
+                </span>
               </div>
               {hasChildren && isExpanded && renderTreeNodes(node.children, depth + 1)}
             </li>
@@ -74,11 +99,11 @@ const TestCaseTree = ({ onNodeClick, selectedTestId }) => {
 
   return (
     <div className="test-case-tree">
-      <h2>Test Case Tree</h2>
-      {treeData.length > 0 ? (
-        renderTreeNodes(treeData)
+      {error && <div className="error-message">{error}</div>}
+      {!error && (!Array.isArray(treeData) || treeData.length === 0) ? (
+        <div className="no-data-message">No test cases available</div>
       ) : (
-        <p>No test cases yet</p>
+        renderTreeNodes(treeData)
       )}
     </div>
   );

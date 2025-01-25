@@ -1,25 +1,80 @@
-.header {
+.app {
+  height: 100vh;
   display: flex;
-  justify-content: space-between; /* Space between the left and right items */
-  align-items: center; /* Vertically center the items */
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background-color: #007bff;
+  flex-direction: column;
+}
+
+.header {
+  background-color: #0078d4;
   color: white;
-  padding: 10px;
-  z-index: 1;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  position: relative;
+  z-index: 10;
 }
 
 .header .logo-title-container {
   display: flex;
   align-items: center;
+  gap: 1rem;
 }
 
 .header h1 {
-  margin-left: 10px; /* Add a small space between the logo and title */
-  font-size: 20px;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.generate-from-file-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  background-color: #00594c;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.generate-from-file-button:hover {
+  background-color: #004a3f;
+}
+
+.logout-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  background-color: #757575;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background-color: #616161;
+}
+
+.logout-button svg {
+  font-size: 16px;
 }
 
 .logo {
@@ -42,26 +97,20 @@
   z-index: 100;
 }
 
-.app-container {
+.main-content {
+  flex: 1;
   display: flex;
-  flex-direction: row;
-  height: calc(100vh - 60px);  /* Adjust for the header */
-  margin-top: 60px;
+  overflow: hidden;
 }
 
 .sidebar {
   width: 250px;
-  background-color: #f9f9f9;
-  border-right: 1px solid #ccc;
-  height: 100vh;
-  padding: 10px;
-  z-index: 0;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
 }
 
 .content {
-  flex-grow: 1;
-  padding: 20px;
-  position: relative;
-  overflow-y: auto;  /* Ensure content is scrollable if long */
-  z-index: 0;
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
 }

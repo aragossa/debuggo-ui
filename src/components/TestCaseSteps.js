@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faMagicWandSparkles, faGripVertical } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../context/AuthContext';
 import './TestCaseSteps.css';
 
 const STEP_ACTIONS = [
@@ -24,6 +25,7 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
   const [steps, setSteps] = useState([]);
   const [draggedStep, setDraggedStep] = useState(null);
   const API_URL = process.env.REACT_APP_API_URL;
+  const { getAuthHeaders } = useAuth();
 
   useEffect(() => {
     if (test_steps && Array.isArray(test_steps)) {
@@ -35,7 +37,9 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
 
   const refreshTestCase = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/get_test_cases/${testCaseId}`);
+      const response = await fetch(`${API_URL}/api/get_test_cases/${testCaseId}`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch updated test case');
       }
@@ -61,8 +65,9 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
       const response = await fetch(`${API_URL}/api/run_test_case/${testCaseId}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-        },
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        }
       });
       
       if (!response.ok) {
@@ -70,7 +75,6 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
       }
       
       const result = await response.json();
-      // Optionally handle the result or trigger a refresh of test runs
       console.log('Test run result:', result);
       
     } catch (error) {
@@ -87,8 +91,9 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
       const response = await fetch(`${API_URL}/api/generate_steps/${testCaseId}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-        },
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        }
       });
       
       if (!response.ok) {
@@ -97,6 +102,7 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
       
       const result = await response.json();
       console.log('Steps generation result:', result);
+      await refreshTestCase();
       
     } catch (error) {
       console.error('Error generating steps:', error);
@@ -108,16 +114,16 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
       const response = await fetch(`${API_URL}/api/update_test_step/${stepId}`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ action: newAction }),
+        body: JSON.stringify({ action: newAction })
       });
 
       if (!response.ok) {
         throw new Error('Failed to update test step action');
       }
 
-      // Refresh test case data to get updated values
       await refreshTestCase();
     } catch (error) {
       console.error('Error updating test step action:', error);
@@ -160,26 +166,23 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
     const oldIndex = steps.findIndex(s => s.id === draggedStep.id);
     const newIndex = steps.findIndex(s => s.id === targetStep.id);
     
-    // Create new array with updated order
     const newSteps = [...steps];
     newSteps.splice(oldIndex, 1);
     newSteps.splice(newIndex, 0, draggedStep);
 
-    // Update step_order for affected steps
     const updatedSteps = newSteps.map((step, index) => ({
       ...step,
       step_order: index
     }));
 
-    // Update UI immediately
     setSteps(updatedSteps);
 
-    // Send update to backend
     try {
       const response = await fetch(`${API_URL}/api/update_step_orders`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           test_case_id: testCaseId,
@@ -187,7 +190,7 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
             id: step.id,
             step_order: step.step_order
           }))
-        }),
+        })
       });
 
       if (!response.ok) {
@@ -195,7 +198,6 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
       }
     } catch (error) {
       console.error('Error updating step orders:', error);
-      // Revert to original order on error
       setSteps(test_steps);
     }
   };
@@ -244,7 +246,6 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
             <div className="test-step-drag-handle">
               <FontAwesomeIcon icon={faGripVertical} />
             </div>
-            
             <div className="test-step-description">{step.description}</div>
             <div className="test-step-footer">
               <select 
