@@ -1,0 +1,269 @@
+/* Main layout */
+.landing-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F3E8FF 100%);
+}
+
+/* Navigation */
+.nav-container {
+  padding: 1.5rem;
+}
+
+.nav-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-square {
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF3399 50%, #6366F1 100%);
+  border-radius: 0.75rem;
+}
+
+.logo-text {
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #FF3399 0%, #6366F1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-link {
+  color: #4B5563;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: #111827;
+}
+
+/* Hero Section */
+.hero-section {
+  padding: 5rem 1rem;
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+}
+
+.hero-highlight {
+  background: linear-gradient(90deg, #FF3399 0%, #6366F1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: #6B7280;
+  margin-bottom: 2rem;
+}
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background: linear-gradient(90deg, #FF3399 0%, #6366F1 100%);
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.cta-button:hover {
+  opacity: 0.9;
+}
+
+/* Features Section */
+.features-section {
+  padding: 5rem 1rem;
+  background: white;
+}
+
+.section-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.features-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  padding: 0 1rem;
+}
+
+.feature-card {
+  padding: 1.5rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #F3E8FF 0%, #FFFFFF 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+}
+
+.feature-icon.pink {
+  color: #FF3399;
+}
+
+.feature-icon.blue {
+  color: #6366F1;
+}
+
+.feature-icon.purple {
+  color: #9333EA;
+}
+
+.feature-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.feature-description {
+  color: #6B7280;
+}
+
+/* Timeline Section */
+.timeline-section {
+  padding: 5rem 1rem;
+}
+
+.timeline-card {
+  max-width: 28rem;
+  margin: 0 auto;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.timeline-dot {
+  width: 1rem;
+  height: 1rem;
+  background: #FF3399;
+  border-radius: 9999px;
+}
+
+/* Contact Section */
+.contact-section {
+  padding: 5rem 1rem;
+  background: white;
+}
+
+.contact-grid {
+  max-width: 48rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.contact-card {
+  text-align: center;
+}
+
+.contact-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.contact-name {
+  color: #6B7280;
+}
+
+.contact-email {
+  color: #6366F1;
+  text-decoration: none;
+}
+
+.contact-email:hover {
+  text-decoration: underline;
+}
+
+.contact-phone {
+  color: #6B7280;
+}
+
+/* Footer */
+.footer {
+  padding: 1.5rem;
+  background: linear-gradient(0deg, #F3F4F6 0%, #FFFFFF 100%);
+  text-align: center;
+}
+
+.footer-text {
+  color: #6B7280;
+}
+
+/* Login Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 28rem;
+  width: 90%;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6B7280;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: #111827;
+}
