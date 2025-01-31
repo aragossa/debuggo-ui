@@ -27,9 +27,13 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setTreeData(data);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch tree data');
       }
     } catch (error) {
       console.error('Error fetching tree data:', error);
+      alert(error.message);
     }
   };
 
@@ -42,9 +46,13 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setTestCase(data);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch test case');
       }
     } catch (error) {
       console.error('Error fetching test case:', error);
+      alert(error.message);
     }
   };
 
@@ -53,21 +61,28 @@ const Dashboard = () => {
       const formData = new FormData();
       formData.append('file', file);
 
+      // Get auth headers without Content-Type
+      const headers = getAuthHeaders(false);
+
       const response = await fetch(`${API_URL}/api/generate_test_cases_from_data`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: headers,
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
       }
 
-      await response.json();
+      const data = await response.json();
+      console.log('File upload successful:', data);
+      
       setShowUploadPopup(false);
       fetchTreeData(); // Refresh the tree data
     } catch (error) {
       console.error('Error uploading file:', error);
+      alert(error.message);
     }
   };
 

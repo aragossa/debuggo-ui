@@ -5,13 +5,24 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetchUser(token);
-    }
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          await fetchUser(token);
+        } catch (error) {
+          console.error('Error during auth initialization:', error);
+          logout();
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const fetchUser = async (token) => {
@@ -27,17 +38,27 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         setIsAuthenticated(true);
       } else {
-        logout();
+        if (response.status === 401) {
+          // Token is invalid or expired
+          throw new Error('Invalid or expired token');
+        }
+        throw new Error(`Failed to fetch user: ${response.status}`);
       }
     } catch (error) {
       console.error('Error fetching user:', error);
-      logout();
+      throw error;
     }
   };
 
   const login = async (token) => {
-    localStorage.setItem('token', token);
-    await fetchUser(token);
+    try {
+      localStorage.setItem('token', token);
+      await fetchUser(token);
+      return true;
+    } catch (error) {
+      logout();
+      throw error;
+    }
   };
 
   const logout = () => {
@@ -46,18 +67,24 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
-  const getAuthHeaders = () => {
+  const getAuthHeaders = (includeContentType = true) => {
     const token = localStorage.getItem('token');
-    return token ? {
+    const headers = token ? {
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
     } : {};
+
+    if (includeContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    return headers;
   };
 
   return (
     <AuthContext.Provider value={{
       user,
       isAuthenticated,
+      isLoading,
       login,
       logout,
       getAuthHeaders
