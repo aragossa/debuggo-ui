@@ -10,35 +10,51 @@ const Dashboard = () => {
   const API_URL = process.env.REACT_APP_API_URL;
   const { getAuthHeaders } = useAuth();
   const [treeData, setTreeData] = useState([]);
+  const [treeError, setTreeError] = useState(null);
   const [testCase, setTestCase] = useState(null);
-  const [selectedTestId, setSelectedTestId] = useState(null);
+  const [selectedTestId, setSelectedTestId] = useState(() => {
+    // Try to get the selected test ID from localStorage
+    return localStorage.getItem('selectedTestId');
+  });
   const [showUploadPopup, setShowUploadPopup] = useState(false);
   const [testResult, setTestResult] = useState(null);
 
   useEffect(() => {
     fetchTreeData();
+    // If we have a selected test ID in state, fetch its details
+    if (selectedTestId) {
+      fetchTestCase(selectedTestId);
+    }
   }, []);
 
   const fetchTreeData = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/get_tree`, {
+      const response = await fetch(`${API_URL}/api/tests/tree`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {
         const data = await response.json();
         setTreeData(data);
+        setTreeError(null);
       } else {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to fetch tree data');
       }
     } catch (error) {
       console.error('Error fetching tree data:', error);
-      alert(error.message);
+      setTreeError(error.message || 'Failed to load test cases. Please try again later.');
+      setTreeData([]);
     }
   };
 
   const handleNodeClick = async (id) => {
     setSelectedTestId(id);
+    // Store the selected ID in localStorage
+    localStorage.setItem('selectedTestId', id);
+    fetchTestCase(id);
+  };
+
+  const fetchTestCase = async (id) => {
     try {
       const response = await fetch(`${API_URL}/api/get_test_cases/${id}`, {
         headers: getAuthHeaders()
@@ -52,7 +68,7 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching test case:', error);
-      alert(error.message);
+      setTestCase(null);
     }
   };
 
@@ -104,7 +120,7 @@ const Dashboard = () => {
       <div className="dashboard-content">
         <div className="tree-container">
           <TestCaseTree 
-            data={treeData} 
+            treeData={treeData} 
             onNodeClick={handleNodeClick}
             selectedTestId={selectedTestId}
           />

@@ -30,6 +30,14 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
   useEffect(() => {
     if (test_steps && Array.isArray(test_steps)) {
       setSteps(test_steps);
+      // Initialize stepValues with values from test_steps
+      const initialValues = {};
+      test_steps.forEach(step => {
+        if (step.action === 'type' && step.value) {
+          initialValues[step.id] = step.value;
+        }
+      });
+      setStepValues(initialValues);
     }
   }, [test_steps]);
 
@@ -111,6 +119,15 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
 
   const handleActionChange = async (stepId, newAction) => {
     try {
+      // Update steps state immediately for better UI responsiveness
+      setSteps(prevSteps => 
+        prevSteps.map(step => 
+          step.id === stepId 
+            ? { ...step, action: newAction }
+            : step
+        )
+      );
+
       const response = await fetch(`${API_URL}/api/update_test_step/${stepId}`, {
         method: 'PATCH',
         headers: {
@@ -122,19 +139,41 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
 
       if (!response.ok) {
         throw new Error('Failed to update test step action');
+        // Revert steps state if update failed
+        await refreshTestCase();
       }
-
-      await refreshTestCase();
     } catch (error) {
       console.error('Error updating test step action:', error);
+      // Revert steps state if there was an error
+      await refreshTestCase();
     }
   };
 
-  const handleValueChange = (stepId, value) => {
+  const handleValueChange = async (stepId, value, currentAction) => {
     setStepValues(prev => ({
       ...prev,
       [stepId]: value
     }));
+
+    try {
+      const response = await fetch(`${API_URL}/api/update_test_step/${stepId}`, {
+        method: 'PATCH',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          value: value,
+          action: currentAction 
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update test step value');
+      }
+    } catch (error) {
+      console.error('Error updating test step value:', error);
+    }
   };
 
   const handleDragStart = (e, step) => {
@@ -265,8 +304,8 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
                   type="text"
                   className="action-input"
                   placeholder={step.action === 'type' ? 'Text to type...' : 'Key to press...'}
-                  value={stepValues[step.id] || ''}
-                  onChange={(e) => handleValueChange(step.id, e.target.value)}
+                  value={stepValues[step.id] || step.value || ''}
+                  onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
                 />
               )}
             </div>

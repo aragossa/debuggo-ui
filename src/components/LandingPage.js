@@ -114,7 +114,7 @@ const LandingPage = () => {
             <h3 className="contact-title">Co-founder</h3>
             <p className="contact-name">Ivan Stolpnikov</p>
             <a 
-              href="mailto:istolpnikoff@gmail.com" 
+              href="mailto:ivan.stolpnikov@auroqa.com" 
               className="contact-email"
             >
               istolpnikoff@gmail.com
