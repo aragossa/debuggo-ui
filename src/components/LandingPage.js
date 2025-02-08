@@ -108,7 +108,7 @@ const LandingPage = () => {
             >
               ilya.ploskovitov@auroqa.com
             </a>
-            <p className="contact-phone">053-528-6313</p>
+            <p className="contact-phone">+972 53-528-6313</p>
           </div>
           <div className="contact-card">
             <h3 className="contact-title">Co-founder</h3>
@@ -119,7 +119,7 @@ const LandingPage = () => {
             >
               istolpnikoff@gmail.com
             </a>
-            <p className="contact-phone">052-256-5380</p>
+            <p className="contact-phone">+972 52-256-5380</p>
           </div>
         </div>
       </section>
