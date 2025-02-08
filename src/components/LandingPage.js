@@ -117,7 +117,7 @@ const LandingPage = () => {
               href="mailto:ivan.stolpnikov@auroqa.com" 
               className="contact-email"
             >
-              istolpnikoff@gmail.com
+              ivan.stolpnikov@auroqa.com
             </a>
             <p className="contact-phone">+972 52-256-5380</p>
           </div>
