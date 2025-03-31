@@ -9,6 +9,8 @@ import Clients from './components/Clients';
 import NewClient from './components/NewClient';
 import Users from './components/Users';
 import UserMenu from './components/UserMenu';
+import Projects from './components/Projects';
+import ProjectDetail from './components/ProjectDetail';
 import './App.css';
 
 const AdminMenu = () => {
@@ -39,6 +41,7 @@ const MainMenu = () => {
     return (
       <div className="main-menu">
         <Link to="/dashboard" className="menu-item">Dashboard</Link>
+        <Link to="/projects" className="menu-item">Projects</Link>
       </div>
     );
   }, [isAuthenticated]);
@@ -107,6 +110,22 @@ function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <Users />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects"
+              element={
+                <ProtectedRoute>
+                  <Projects />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/:id"
+              element={
+                <ProtectedRoute>
+                  <ProjectDetail />
                 </ProtectedRoute>
               }
             />

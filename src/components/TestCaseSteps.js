@@ -1,7 +1,7 @@
 // TestCaseSteps.js
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay, faMagicWandSparkles, faGripVertical } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faMagicWandSparkles, faGripVertical, faInfoCircle, faSignInAlt, faChevronUp, faChevronDown, faPlus, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './TestCaseSteps.css';
 
@@ -18,14 +18,55 @@ const STEP_ACTIONS = [
   'press_key'
 ];
 
-const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_description, updated_at }) => {
+const TestCaseSteps = ({ 
+  test_steps, 
+  test_runs, 
+  testCaseId, 
+  test_name, 
+  test_description, 
+  updated_at, 
+  projectId 
+}) => {
   const [expandedRuns, setExpandedRuns] = useState({});
   const [isRunning, setIsRunning] = useState(false);
   const [stepValues, setStepValues] = useState({});
   const [steps, setSteps] = useState([]);
   const [draggedStep, setDraggedStep] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isGeneratingSteps, setIsGeneratingSteps] = useState(false);
+  const [showProjectTooltip, setShowProjectTooltip] = useState(false);
+  const [showGenerateTooltip, setShowGenerateTooltip] = useState(false);
+  const [showRunTooltip, setShowRunTooltip] = useState(false);
+  const [environments, setEnvironments] = useState([]);
+  const [selectedEnvironment, setSelectedEnvironment] = useState('');
+  const [showRunConfirmModal, setShowRunConfirmModal] = useState(false);
+  const [showAddEnvironmentModal, setShowAddEnvironmentModal] = useState(false);
+  const [showEditEnvironmentModal, setShowEditEnvironmentModal] = useState(false);
+  const [showEnvironmentDropdown, setShowEnvironmentDropdown] = useState(false);
+  const [newEnvironment, setNewEnvironment] = useState({
+    name: '',
+    base_url: '',
+    login: '',
+    password: ''
+  });
+  const [editingEnvironment, setEditingEnvironment] = useState(null);
+  const environmentDropdownRef = React.useRef(null);
   const API_URL = process.env.REACT_APP_API_URL;
   const { getAuthHeaders } = useAuth();
+
+  useEffect(() => {
+    // Add click outside listener to close the dropdown
+    function handleClickOutside(event) {
+      if (environmentDropdownRef.current && !environmentDropdownRef.current.contains(event.target)) {
+        setShowEnvironmentDropdown(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (test_steps && Array.isArray(test_steps)) {
@@ -41,7 +82,44 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
     }
   }, [test_steps]);
 
+  useEffect(() => {
+    if (projectId && projectId !== 'all') {
+      fetchEnvironments();
+    } else {
+      setEnvironments([]);
+      setSelectedEnvironment('');
+    }
+  }, [projectId]);
+
+  const fetchEnvironments = async () => {
+    if (!projectId || projectId === 'all') return;
+    
+    try {
+      const response = await fetch(`${API_URL}/api/projects/${projectId}/environments`, {
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch environments');
+      }
+      
+      const data = await response.json();
+      setEnvironments(data);
+      
+      // Reset selected environment if it doesn't belong to the current project
+      if (selectedEnvironment) {
+        const environmentExists = data.some(env => env.id === parseInt(selectedEnvironment));
+        if (!environmentExists) {
+          setSelectedEnvironment('');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching environments:', error);
+    }
+  };
+
   const hasTestSteps = steps && steps.length > 0;
+  const isProjectSelected = projectId && projectId !== 'all';
 
   const refreshTestCase = async () => {
     try {
@@ -65,17 +143,192 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
     }));
   };
 
+  const handleEnvironmentChange = (environmentId) => {
+    setSelectedEnvironment(environmentId);
+    setShowEnvironmentDropdown(false);
+  };
+
+  const handleAddNewEnvironmentClick = () => {
+    setNewEnvironment({
+      name: '',
+      base_url: '',
+      login: '',
+      password: ''
+    });
+    setShowAddEnvironmentModal(true);
+    setShowEnvironmentDropdown(false);
+  };
+
+  const handleEditEnvironmentClick = (environment, e) => {
+    e.stopPropagation(); // Prevent dropdown from closing
+    setEditingEnvironment(environment);
+    setNewEnvironment({
+      name: environment.name,
+      base_url: environment.base_url,
+      login: environment.login || '',
+      password: environment.password || ''
+    });
+    setShowEditEnvironmentModal(true);
+  };
+
+  const handleUpdateEnvironment = async (e) => {
+    e.preventDefault();
+    
+    if (!newEnvironment.name || !newEnvironment.base_url) {
+      alert('Name and Base URL are required fields');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/environments/${editingEnvironment.id}`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newEnvironment)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        
+        let errorMessage;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
+        } catch (e) {
+          errorMessage = `HTTP error! status: ${response.status}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Reset form and close modal
+      setNewEnvironment({
+        name: '',
+        base_url: '',
+        login: '',
+        password: ''
+      });
+      setShowEditEnvironmentModal(false);
+      setEditingEnvironment(null);
+
+      // Refresh environments
+      await fetchEnvironments();
+      
+    } catch (error) {
+      console.error('Error updating environment:', error);
+      alert('Failed to update environment: ' + error.message);
+    }
+  };
+
+  const handleNewEnvironmentChange = (e) => {
+    const { name, value } = e.target;
+    setNewEnvironment(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddEnvironment = async (e) => {
+    e.preventDefault(); // Prevent form submission
+    
+    // Validate form
+    if (!newEnvironment.name || !newEnvironment.base_url) {
+      alert('Name and Base URL are required fields');
+      return;
+    }
+
+    try {
+      console.log('Creating environment:', newEnvironment);
+      console.log('Project ID:', projectId);
+      
+      const response = await fetch(`${API_URL}/api/projects/${projectId}/environments`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newEnvironment)
+      });
+
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        
+        let errorMessage;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
+        } catch (e) {
+          errorMessage = `HTTP error! status: ${response.status}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log('Created environment:', data);
+
+      // Reset form and close modal
+      setNewEnvironment({
+        name: '',
+        base_url: '',
+        login: '',
+        password: ''
+      });
+      setShowAddEnvironmentModal(false);
+
+      // Refresh environments
+      await fetchEnvironments();
+      
+      // Select the newly created environment
+      if (data && data.id) {
+        setSelectedEnvironment(data.id.toString());
+      }
+    } catch (error) {
+      console.error('Error creating environment:', error);
+      alert('Failed to create environment: ' + error.message);
+    }
+  };
+
   const handleRunClick = async () => {
     if (isRunning || !testCaseId || !hasTestSteps) return;
     
+    // If there are environments available but none is selected, show confirmation modal
+    if (environments.length > 0 && !selectedEnvironment) {
+      setShowRunConfirmModal(true);
+      return;
+    }
+    
+    await runTest();
+  };
+
+  const handleRunConfirm = async () => {
+    setShowRunConfirmModal(false);
+    await runTest();
+  };
+
+  const runTest = async () => {
     setIsRunning(true);
     try {
+      const requestBody = {};
+      
+      // If an environment is selected, include it in the request
+      if (selectedEnvironment) {
+        requestBody.environment_id = selectedEnvironment;
+      }
+      
       const response = await fetch(`${API_URL}/api/run_test_case/${testCaseId}`, {
         method: 'POST',
         headers: {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
-        }
+        },
+        body: Object.keys(requestBody).length > 0 ? JSON.stringify(requestBody) : undefined
       });
       
       if (!response.ok) {
@@ -85,6 +338,9 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
       const result = await response.json();
       console.log('Test run result:', result);
       
+      // Refresh the test case to show the latest test run
+      await refreshTestCase();
+      
     } catch (error) {
       console.error('Error running test case:', error);
     } finally {
@@ -93,30 +349,66 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
   };
 
   const handleGenerateSteps = async () => {
-    if (!testCaseId) return;
+    if (!isProjectSelected) {
+      setShowProjectTooltip(true);
+      return;
+    }
     
+    if (test_steps && test_steps.length > 0) {
+      setShowConfirmModal(true);
+      return;
+    }
+    
+    await generateSteps(false);
+  };
+
+  const handleConfirmGenerate = async () => {
+    setShowConfirmModal(false);
+    await generateSteps(true);
+  };
+
+  const generateSteps = async (confirm) => {
+    if (!testCaseId || isGeneratingSteps || !isProjectSelected) return;
+    
+    setIsGeneratingSteps(true);
     try {
-      const response = await fetch(`${API_URL}/api/generate_steps/${testCaseId}`, {
+      const endpoint = confirm 
+        ? `${API_URL}/api/confirm_generate_steps/${testCaseId}` 
+        : `${API_URL}/api/generate_steps/${testCaseId}`;
+      
+      const requestBody = {};
+      
+      // If projectId exists and is not 'all', add it to the request body
+      if (projectId && projectId !== 'all') {
+        requestBody.project_id = projectId;
+      }
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
-        }
+        },
+        body: Object.keys(requestBody).length > 0 ? JSON.stringify(requestBody) : undefined
       });
       
       if (!response.ok) {
         throw new Error('Failed to generate steps');
       }
       
-      const result = await response.json();
-      console.log('Steps generation result:', result);
-      await refreshTestCase();
+      const data = await response.json();
       
+      // Don't set isGeneratingSteps to false here as the backend process is still running
+      // The status check interval will update it when the process completes
+      
+      alert('Test step generation has started. This may take a few minutes to complete.');
     } catch (error) {
       console.error('Error generating steps:', error);
+      alert('Failed to generate steps. Please try again.');
+      setIsGeneratingSteps(false);
     }
   };
-
+  
   const handleActionChange = async (stepId, newAction) => {
     try {
       // Update steps state immediately for better UI responsiveness
@@ -139,12 +431,9 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
 
       if (!response.ok) {
         throw new Error('Failed to update test step action');
-        // Revert steps state if update failed
-        await refreshTestCase();
       }
     } catch (error) {
       console.error('Error updating test step action:', error);
-      // Revert steps state if there was an error
       await refreshTestCase();
     }
   };
@@ -252,23 +541,220 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
       <div className="test-steps-header">
         <h3>Test Steps</h3>
         <div className="test-steps-actions">
-          <button
-            className="generate-steps-button"
-            onClick={handleGenerateSteps}
-            disabled={isRunning}
-          >
-            <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate Steps
-          </button>
-          <button
-            className={`run-button ${(!hasTestSteps || isRunning) ? 'disabled' : ''}`}
-            onClick={handleRunClick}
-            disabled={!hasTestSteps || isRunning}
-          >
-            <FontAwesomeIcon icon={faPlay} className={isRunning ? 'fa-spin' : ''} />
-            {isRunning ? 'Running...' : 'Run Test'}
-          </button>
+          <div className="generate-button-container" 
+               onMouseEnter={() => {
+                 if (!isProjectSelected) {
+                   setShowProjectTooltip(true);
+                 } else if (isGeneratingSteps) {
+                   setShowGenerateTooltip(true);
+                 }
+               }} 
+               onMouseLeave={() => {
+                 setShowProjectTooltip(false);
+                 setShowGenerateTooltip(false);
+               }}>
+            <button
+              className={`generate-steps-button ${(!isProjectSelected || isGeneratingSteps) ? 'disabled' : ''}`}
+              onClick={handleGenerateSteps}
+              disabled={isGeneratingSteps || !isProjectSelected}
+            >
+              <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate Steps
+            </button>
+            {!isProjectSelected && showProjectTooltip && (
+              <div className="tooltip">
+                <FontAwesomeIcon icon={faInfoCircle} /> Please select a project first
+              </div>
+            )}
+            {isGeneratingSteps && showGenerateTooltip && (
+              <div className="tooltip">
+                <FontAwesomeIcon icon={faInfoCircle} /> Generation in progress...
+              </div>
+            )}
+          </div>
+          
+          {/* Custom Environment Selector */}
+          {isProjectSelected && (
+            <div className="environment-selector-container" ref={environmentDropdownRef}>
+              <div 
+                className="environment-selector-button"
+                onClick={() => setShowEnvironmentDropdown(!showEnvironmentDropdown)}
+                disabled={isRunning || isGeneratingSteps}
+              >
+                {selectedEnvironment ? 
+                  environments.find(env => env.id.toString() === selectedEnvironment)?.name : 
+                  'Select Environment'}
+                <FontAwesomeIcon icon={showEnvironmentDropdown ? faChevronUp : faChevronDown} />
+              </div>
+              
+              {showEnvironmentDropdown && (
+                <div className="environment-dropdown">
+                  <div 
+                    className="environment-dropdown-item"
+                    onClick={() => handleEnvironmentChange('')}
+                  >
+                    <div className="environment-item-content">
+                      <span className="environment-name">No Environment</span>
+                      <span className="environment-description">Run with default settings</span>
+                    </div>
+                  </div>
+                  
+                  {environments.map(env => (
+                    <div 
+                      key={env.id} 
+                      className={`environment-dropdown-item ${selectedEnvironment === env.id.toString() ? 'selected' : ''}`}
+                      onClick={() => handleEnvironmentChange(env.id.toString())}
+                    >
+                      <div className="environment-item-content">
+                        <span className="environment-name">{env.name}</span>
+                        <span className="environment-url">{env.base_url}</span>
+                        {env.login && <span className="environment-login">Login: {env.login}</span>}
+                      </div>
+                      <button 
+                        className="environment-edit-button"
+                        onClick={(e) => handleEditEnvironmentClick(env, e)}
+                      >
+                        <FontAwesomeIcon icon={faEdit} />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  <div 
+                    className="environment-dropdown-item add-new"
+                    onClick={handleAddNewEnvironmentClick}
+                  >
+                    <div className="environment-item-content">
+                      <span className="environment-name">
+                        <FontAwesomeIcon icon={faPlus} /> Add New Environment
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <div className="run-button-container"
+               onMouseEnter={() => {
+                 if (isGeneratingSteps) {
+                   setShowRunTooltip(true);
+                 } else if (!hasTestSteps) {
+                   setShowRunTooltip(true);
+                 }
+               }}
+               onMouseLeave={() => {
+                 setShowRunTooltip(false);
+               }}>
+            <button
+              className={`run-button ${(!hasTestSteps || isRunning || isGeneratingSteps) ? 'disabled' : ''}`}
+              onClick={handleRunClick}
+              disabled={!hasTestSteps || isRunning || isGeneratingSteps}
+            >
+              <FontAwesomeIcon icon={faPlay} className={isRunning ? 'fa-spin' : ''} />
+              {isRunning ? 'Running...' : 'Run Test'}
+            </button>
+            {isGeneratingSteps && showRunTooltip && (
+              <div className="tooltip">
+                <FontAwesomeIcon icon={faInfoCircle} /> Cannot run test while generating steps
+              </div>
+            )}
+            {!hasTestSteps && !isGeneratingSteps && showRunTooltip && (
+              <div className="tooltip">
+                <FontAwesomeIcon icon={faInfoCircle} /> There are no test steps yet, please generate them or add manually
+              </div>
+            )}
+          </div>  
         </div>
       </div>
+
+      {/* Confirmation Modal for Generate Steps */}
+      {showConfirmModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Confirm Step Generation</h3>
+            <p>This test case already has steps. Generating new steps will delete all existing steps. Are you sure you want to continue?</p>
+            <div className="modal-actions">
+              <button onClick={() => setShowConfirmModal(false)} className="modal-button cancel">Cancel</button>
+              <button onClick={handleConfirmGenerate} className="modal-button confirm">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal for Running Test without Environment */}
+      {showRunConfirmModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Run Test Without Environment</h3>
+            <p>You have not selected an environment. The test will run with default settings. Would you like to continue or select an environment?</p>
+            <div className="modal-actions">
+              <button onClick={() => setShowRunConfirmModal(false)} className="modal-button cancel">Cancel</button>
+              <button onClick={handleRunConfirm} className="modal-button confirm">Run Without Environment</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Environment Modal */}
+      {showAddEnvironmentModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Add New Environment</h3>
+            <form onSubmit={handleAddEnvironment}>
+              <div className="form-group">
+                <label>Name:</label>
+                <input type="text" name="name" value={newEnvironment.name} onChange={handleNewEnvironmentChange} required />
+              </div>
+              <div className="form-group">
+                <label>Base URL:</label>
+                <input type="text" name="base_url" value={newEnvironment.base_url} onChange={handleNewEnvironmentChange} required />
+              </div>
+              <div className="form-group">
+                <label>Login:</label>
+                <input type="text" name="login" value={newEnvironment.login} onChange={handleNewEnvironmentChange} />
+              </div>
+              <div className="form-group">
+                <label>Password:</label>
+                <input type="password" name="password" value={newEnvironment.password} onChange={handleNewEnvironmentChange} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowAddEnvironmentModal(false)} className="modal-button cancel">Cancel</button>
+                <button type="submit" className="modal-button confirm">Add Environment</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Environment Modal */}
+      {showEditEnvironmentModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Edit Environment</h3>
+            <form onSubmit={handleUpdateEnvironment}>
+              <div className="form-group">
+                <label>Name:</label>
+                <input type="text" name="name" value={newEnvironment.name} onChange={handleNewEnvironmentChange} required />
+              </div>
+              <div className="form-group">
+                <label>Base URL:</label>
+                <input type="text" name="base_url" value={newEnvironment.base_url} onChange={handleNewEnvironmentChange} required />
+              </div>
+              <div className="form-group">
+                <label>Login:</label>
+                <input type="text" name="login" value={newEnvironment.login} onChange={handleNewEnvironmentChange} />
+              </div>
+              <div className="form-group">
+                <label>Password:</label>
+                <input type="password" name="password" value={newEnvironment.password} onChange={handleNewEnvironmentChange} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowEditEnvironmentModal(false)} className="modal-button cancel">Cancel</button>
+                <button type="submit" className="modal-button confirm">Update Environment</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="test-steps-flow">
         {steps && steps.map((step) => (
@@ -364,12 +850,6 @@ const TestCaseSteps = ({ test_steps, test_runs, testCaseId, test_name, test_desc
                   <div className="test-run-output">
                     <strong>Output:</strong>
                     <pre>{run.stdout}</pre>
-                  </div>
-                )}
-                {run.stderr && (
-                  <div className="test-run-error">
-                    <strong>Error Output:</strong>
-                    <pre>{run.stderr}</pre>
                   </div>
                 )}
               </div>
