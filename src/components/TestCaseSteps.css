@@ -561,6 +561,15 @@
   margin-left: 8px;
 }
 
+.environment-selector-button:empty::after {
+  content: 'Select Environment *';
+  color: #333;
+}
+
+.environment-selector-button:empty::after span {
+  color: #dc3545;
+}
+
 .environment-dropdown {
   position: absolute;
   top: 100%;

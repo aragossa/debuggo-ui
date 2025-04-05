@@ -37,6 +37,7 @@ const TestCaseSteps = ({
   const [showProjectTooltip, setShowProjectTooltip] = useState(false);
   const [showGenerateTooltip, setShowGenerateTooltip] = useState(false);
   const [showRunTooltip, setShowRunTooltip] = useState(false);
+  const [showEnvTooltip, setShowEnvTooltip] = useState(false);
   const [environments, setEnvironments] = useState([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
   const [showRunConfirmModal, setShowRunConfirmModal] = useState(false);
@@ -354,6 +355,12 @@ const TestCaseSteps = ({
       return;
     }
     
+    // Check if an environment is selected
+    if (!selectedEnvironment) {
+      alert('Please select an environment before generating test steps');
+      return;
+    }
+    
     if (test_steps && test_steps.length > 0) {
       setShowConfirmModal(true);
       return;
@@ -368,7 +375,7 @@ const TestCaseSteps = ({
   };
 
   const generateSteps = async (confirm) => {
-    if (!testCaseId || isGeneratingSteps || !isProjectSelected) return;
+    if (!testCaseId || isGeneratingSteps || !isProjectSelected || !selectedEnvironment) return;
     
     setIsGeneratingSteps(true);
     try {
@@ -376,7 +383,9 @@ const TestCaseSteps = ({
         ? `${API_URL}/api/confirm_generate_steps/${testCaseId}` 
         : `${API_URL}/api/generate_steps/${testCaseId}`;
       
-      const requestBody = {};
+      const requestBody = {
+        environment_id: parseInt(selectedEnvironment)
+      };
       
       // If projectId exists and is not 'all', add it to the request body
       if (projectId && projectId !== 'all') {
@@ -389,7 +398,7 @@ const TestCaseSteps = ({
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
         },
-        body: Object.keys(requestBody).length > 0 ? JSON.stringify(requestBody) : undefined
+        body: JSON.stringify(requestBody)
       });
       
       if (!response.ok) {
@@ -541,33 +550,34 @@ const TestCaseSteps = ({
       <div className="test-steps-header">
         <h3>Test Steps</h3>
         <div className="test-steps-actions">
-          <div className="generate-button-container" 
+          <div className="generate-button-container"
                onMouseEnter={() => {
                  if (!isProjectSelected) {
                    setShowProjectTooltip(true);
-                 } else if (isGeneratingSteps) {
-                   setShowGenerateTooltip(true);
+                 } else if (!selectedEnvironment) {
+                   setShowEnvTooltip(true);
                  }
-               }} 
+               }}
                onMouseLeave={() => {
                  setShowProjectTooltip(false);
-                 setShowGenerateTooltip(false);
+                 setShowEnvTooltip(false);
                }}>
             <button
-              className={`generate-steps-button ${(!isProjectSelected || isGeneratingSteps) ? 'disabled' : ''}`}
+              className={`generate-button ${(isRunning || isGeneratingSteps || !isProjectSelected || !selectedEnvironment) ? 'disabled' : ''}`}
               onClick={handleGenerateSteps}
-              disabled={isGeneratingSteps || !isProjectSelected}
+              disabled={isRunning || isGeneratingSteps || !isProjectSelected || !selectedEnvironment}
             >
-              <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate Steps
+              <FontAwesomeIcon icon={faMagicWandSparkles} className={isGeneratingSteps ? 'fa-spin' : ''} />
+              {isGeneratingSteps ? 'Generating...' : 'Generate Steps'}
             </button>
             {!isProjectSelected && showProjectTooltip && (
               <div className="tooltip">
                 <FontAwesomeIcon icon={faInfoCircle} /> Please select a project first
               </div>
             )}
-            {isGeneratingSteps && showGenerateTooltip && (
+            {isProjectSelected && !selectedEnvironment && showEnvTooltip && (
               <div className="tooltip">
-                <FontAwesomeIcon icon={faInfoCircle} /> Generation in progress...
+                <FontAwesomeIcon icon={faInfoCircle} /> Please select an environment
               </div>
             )}
           </div>
@@ -582,7 +592,7 @@ const TestCaseSteps = ({
               >
                 {selectedEnvironment ? 
                   environments.find(env => env.id.toString() === selectedEnvironment)?.name : 
-                  'Select Environment'}
+                  'Select Environment *'}
                 <FontAwesomeIcon icon={showEnvironmentDropdown ? faChevronUp : faChevronDown} />
               </div>
               
