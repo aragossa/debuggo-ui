@@ -1,7 +1,7 @@
 // TestCaseSteps.js
 import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay, faMagicWandSparkles, faGripVertical, faInfoCircle, faSignInAlt, faChevronUp, faChevronDown, faPlus, faEdit, faTrash, faCode } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faMagicWandSparkles, faGripVertical, faInfoCircle, faSignInAlt, faChevronUp, faChevronDown, faPlus, faEdit, faTrash, faCode, faSearch, faQuestionCircle, faCheckCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './TestCaseSteps.css';
 
@@ -53,6 +53,9 @@ const TestCaseSteps = ({
   const [editingEnvironment, setEditingEnvironment] = useState(null);
   const [showDeleteStepModal, setShowDeleteStepModal] = useState(false);
   const [stepToDelete, setStepToDelete] = useState(null);
+  const [locatorTooltipStep, setLocatorTooltipStep] = useState(null);
+  const [locatorValidationStatus, setLocatorValidationStatus] = useState({});
+  const [isTestingLocator, setIsTestingLocator] = useState(false);
   const environmentDropdownRef = React.useRef(null);
   const API_URL = process.env.REACT_APP_API_URL;
   const { getAuthHeaders } = useAuth();
@@ -61,6 +64,7 @@ const TestCaseSteps = ({
   const [inputCursorPosition, setInputCursorPosition] = useState(0);
   const envVarsDropdownRef = useRef(null);
   const inputRefs = useRef({});
+  const locatorTooltipRef = useRef(null);
 
   useEffect(() => {
     // Add click outside listener to close the dropdown
@@ -91,7 +95,24 @@ const TestCaseSteps = ({
   }, []);
 
   useEffect(() => {
+    // Add click outside listener to close the locator tooltip
+    function handleClickOutside(event) {
+      if (locatorTooltipRef.current && !locatorTooltipRef.current.contains(event.target)) {
+        setLocatorTooltipStep(null);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
     if (test_steps && Array.isArray(test_steps)) {
+      // Log the test steps to debug
+      console.log("Test steps received:", test_steps);
+      
       setSteps(test_steps);
       // Initialize stepValues with values from test_steps
       const initialValues = {};
@@ -495,6 +516,35 @@ const TestCaseSteps = ({
     }
   };
 
+  const handleElementPathChange = async (stepId, elementPath) => {
+    try {
+      // Update steps state immediately for better UI responsiveness
+      setSteps(prevSteps => 
+        prevSteps.map(step => 
+          step.id === stepId 
+            ? { ...step, element_path: elementPath }
+            : step
+        )
+      );
+
+      const response = await fetch(`${API_URL}/api/update_test_step/${stepId}`, {
+        method: 'PATCH',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ element_path: elementPath })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update element locator');
+      }
+    } catch (error) {
+      console.error('Error updating element locator:', error);
+      await refreshTestCase();
+    }
+  };
+
   const handleDragStart = (e, step) => {
     setDraggedStep(step);
     e.currentTarget.classList.add('dragging');
@@ -637,6 +687,77 @@ const TestCaseSteps = ({
         setInputCursorPosition(newPosition);
       }
     }, 0);
+  };
+
+  const handleTestLocator = async (stepId, elementPath) => {
+    if (!elementPath || !selectedEnvironment) return;
+    
+    const step = steps.find(s => s.id === stepId);
+    if (!step) return;
+    
+    // Set the testing state for this locator
+    setIsTestingLocator(true);
+    setLocatorValidationStatus(prev => ({
+      ...prev,
+      [stepId]: { status: 'testing', message: 'Testing locator...' }
+    }));
+    
+    try {
+      const response = await fetch(`${API_URL}/api/test_element_locator`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          element_path: elementPath,
+          environment_id: selectedEnvironment,
+          test_case_id: testCaseId
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to test locator');
+      }
+      
+      const result = await response.json();
+      
+      // Update the validation status based on the result
+      setLocatorValidationStatus(prev => ({
+        ...prev,
+        [stepId]: { 
+          status: result.valid ? 'valid' : 'invalid', 
+          message: result.message || (result.valid ? 'Element found!' : 'Element not found')
+        }
+      }));
+      
+    } catch (error) {
+      console.error('Error testing locator:', error);
+      setLocatorValidationStatus(prev => ({
+        ...prev,
+        [stepId]: { status: 'invalid', message: 'Error testing locator: ' + error.message }
+      }));
+    } finally {
+      setIsTestingLocator(false);
+    }
+  };
+
+  const toggleLocatorTooltip = (stepId) => {
+    if (locatorTooltipStep === stepId) {
+      setLocatorTooltipStep(null);
+    } else {
+      setLocatorTooltipStep(stepId);
+    }
+  };
+
+  const getLocatorExamples = () => {
+    return [
+      { type: 'XPath', example: '//input[@id="username"]', description: 'Select input with id="username"' },
+      { type: 'CSS', example: '#username', description: 'Select element with id="username"' },
+      { type: 'XPath', example: '//button[contains(text(), "Login")]', description: 'Select button containing text "Login"' },
+      { type: 'CSS', example: '.submit-button', description: 'Select element with class="submit-button"' },
+      { type: 'XPath', example: '//div[@class="form-group"][2]//input', description: 'Select input in the second form-group div' }
+    ];
   };
 
   return (
@@ -881,115 +1002,183 @@ const TestCaseSteps = ({
         </div>
       )}
 
-      <div className="test-steps-flow">
-        {steps && steps.map((step) => (
-          <div
-            key={step.id}
-            className="test-step-box"
-            draggable="true"
-            onDragStart={(e) => handleDragStart(e, step)}
-            onDragEnd={handleDragEnd}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, step)}
-          >
-            <div className="test-step-drag-handle">
-              <FontAwesomeIcon icon={faGripVertical} />
-            </div>
-            <div className="test-step-description">{step.description}</div>
-            <div className="test-step-footer">
-              <select 
-                value={step.action || ''}
-                onChange={(e) => handleActionChange(step.id, e.target.value)}
-                className="action-select"
+      <div className="test-steps-table-container">
+        <table className="test-steps-table">
+          <thead>
+            <tr>
+              <th className="drag-handle-column"></th>
+              <th className="step-description-column">Description</th>
+              <th className="step-action-column">Action</th>
+              <th className="step-locator-column">Element Locator</th>
+              <th className="step-value-column">Value</th>
+              <th className="step-actions-column">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {steps && steps.map((step) => (
+              <tr
+                key={step.id}
+                className="test-step-row"
+                draggable="true"
+                onDragStart={(e) => handleDragStart(e, step)}
+                onDragEnd={handleDragEnd}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, step)}
               >
-                <option value="">Select Action</option>
-                {STEP_ACTIONS.map((action) => (
-                  <option key={action} value={action}>
-                    {action.replace('_', ' ')}
-                  </option>
-                ))}
-              </select>
-              {(step.action === 'type' || step.action === 'press_key') && (
-                <div className="action-input-container">
-                  <input
-                    ref={el => inputRefs.current[step.id] = el}
-                    type="text"
-                    className="action-input"
-                    placeholder={step.action === 'type' ? 'Text to type...' : 'Key to press...'}
-                    value={stepValues[step.id] || step.value || ''}
-                    onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
-                    onFocus={(e) => handleInputFocus(step.id, e)}
-                    onClick={(e) => handleInputClick(step.id, e)}
-                    onKeyUp={handleInputKeyUp}
-                  />
-                  <button 
-                    className="env-vars-button"
-                    onClick={toggleEnvVarsDropdown}
-                    title="Insert environment variable"
-                    disabled={!selectedEnvironment}
+                <td className="drag-handle-cell">
+
+                </td>
+                <td className="step-description-cell">
+                  {step.description}
+                </td>
+                <td className="step-action-cell">
+                  <select 
+                    value={step.action || ''}
+                    onChange={(e) => handleActionChange(step.id, e.target.value)}
+                    className="action-select"
                   >
-                    <FontAwesomeIcon icon={faCode} />
-                  </button>
-                  
-                  {showEnvVarsDropdown && activeInputStepId === step.id && selectedEnvironment && (
-                    <div className="env-vars-dropdown" ref={envVarsDropdownRef}>
-                      <div className="env-vars-dropdown-header">
-                        Environment Variables
+                    <option value="">Select Action</option>
+                    {STEP_ACTIONS.map((action) => (
+                      <option key={action} value={action}>
+                        {action.replace('_', ' ')}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td className="step-locator-cell">
+                  <div className="element-locator-container">
+                    <input
+                      type="text"
+                      className="element-path-input"
+                      placeholder="Element path (e.g., //input[@id='username'])"
+                      value={step.element_path || ''}
+                      onChange={(e) => handleElementPathChange(step.id, e.target.value)}
+                    />
+                    <button 
+                      className="test-locator-button"
+                      onClick={() => handleTestLocator(step.id, step.element_path)}
+                      title="Test locator"
+                      disabled={!step.element_path || !selectedEnvironment || isTestingLocator}
+                    >
+                      <FontAwesomeIcon icon={faSearch} spin={isTestingLocator} />
+                      {isTestingLocator ? ' Testing...' : ' Test'}
+                    </button>
+                    <FontAwesomeIcon 
+                      icon={faQuestionCircle} 
+                      className="locator-help-icon" 
+                      onClick={() => toggleLocatorTooltip(step.id)}
+                      title="Show locator examples"
+                    />
+                    {locatorValidationStatus[step.id] && (
+                      <span className={`locator-status ${locatorValidationStatus[step.id].status}`}>
+                        <FontAwesomeIcon icon={locatorValidationStatus[step.id].status === 'valid' ? faCheckCircle : faTimesCircle} />
+                        {' '}{locatorValidationStatus[step.id].message}
+                      </span>
+                    )}
+                    {locatorTooltipStep === step.id && (
+                      <div className="locator-info-tooltip" ref={locatorTooltipRef}>
+                        <h4>Locator Examples:</h4>
+                        <ul>
+                          {getLocatorExamples().map((example, index) => (
+                            <li key={index}>
+                              <strong>{example.type}:</strong> <code>{example.example}</code>
+                              <br />
+                              <span className="locator-example-description">{example.description}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <div 
-                        className="env-vars-dropdown-item"
-                        onClick={() => insertEnvVariable('base_url')}
+                    )}
+                  </div>
+                </td>
+                <td className="step-value-cell">
+                  {(step.action === 'type' || step.action === 'press_key') ? (
+                    <div className="action-input-container">
+                      <input
+                        ref={el => inputRefs.current[step.id] = el}
+                        type="text"
+                        className="action-input"
+                        placeholder={step.action === 'type' ? 'Text to type...' : 'Key to press...'}
+                        value={stepValues[step.id] || step.value || ''}
+                        onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
+                        onFocus={(e) => handleInputFocus(step.id, e)}
+                        onClick={(e) => handleInputClick(step.id, e)}
+                        onKeyUp={handleInputKeyUp}
+                      />
+                      <button 
+                        className="env-vars-button"
+                        onClick={toggleEnvVarsDropdown}
+                        title="Insert environment variable"
+                        disabled={!selectedEnvironment}
                       >
-                        <div className="env-var-item-content">
-                          <span className="env-var-name">base_url</span>
-                          <span className="env-var-description">Base URL of the environment</span>
-                        </div>
-                      </div>
-                      <div 
-                        className="env-vars-dropdown-item"
-                        onClick={() => insertEnvVariable('login')}
-                      >
-                        <div className="env-var-item-content">
-                          <span className="env-var-name">login</span>
-                          <span className="env-var-description">Login username</span>
-                        </div>
-                      </div>
-                      <div 
-                        className="env-vars-dropdown-item"
-                        onClick={() => insertEnvVariable('password')}
-                      >
-                        <div className="env-var-item-content">
-                          <span className="env-var-name">password</span>
-                          <span className="env-var-description">Login password</span>
-                        </div>
-                      </div>
-                      {environments.find(env => env.id.toString() === selectedEnvironment)?.custom_vars?.map(customVar => (
-                        <div 
-                          key={customVar.name}
-                          className="env-vars-dropdown-item"
-                          onClick={() => insertEnvVariable(customVar.name)}
-                        >
-                          <div className="env-var-item-content">
-                            <span className="env-var-name">{customVar.name}</span>
-                            <span className="env-var-description">{customVar.description || 'Custom variable'}</span>
+                        <FontAwesomeIcon icon={faCode} />
+                      </button>
+                      
+                      {showEnvVarsDropdown && activeInputStepId === step.id && selectedEnvironment && (
+                        <div className="env-vars-dropdown" ref={envVarsDropdownRef}>
+                          <div className="env-vars-dropdown-header">
+                            Environment Variables
                           </div>
+                          <div 
+                            className="env-vars-dropdown-item"
+                            onClick={() => insertEnvVariable('base_url')}
+                          >
+                            <div className="env-var-item-content">
+                              <span className="env-var-name">base_url</span>
+                              <span className="env-var-description">Base URL of the environment</span>
+                            </div>
+                          </div>
+                          <div 
+                            className="env-vars-dropdown-item"
+                            onClick={() => insertEnvVariable('login')}
+                          >
+                            <div className="env-var-item-content">
+                              <span className="env-var-name">login</span>
+                              <span className="env-var-description">Login username</span>
+                            </div>
+                          </div>
+                          <div 
+                            className="env-vars-dropdown-item"
+                            onClick={() => insertEnvVariable('password')}
+                          >
+                            <div className="env-var-item-content">
+                              <span className="env-var-name">password</span>
+                              <span className="env-var-description">Login password</span>
+                            </div>
+                          </div>
+                          {environments.find(env => env.id.toString() === selectedEnvironment)?.custom_vars?.map(customVar => (
+                            <div 
+                              key={customVar.name}
+                              className="env-vars-dropdown-item"
+                              onClick={() => insertEnvVariable(customVar.name)}
+                            >
+                              <div className="env-var-item-content">
+                                <span className="env-var-name">{customVar.name}</span>
+                                <span className="env-var-description">{customVar.description || 'Custom variable'}</span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
+                  ) : (
+                    <span className="empty-value">-</span>
                   )}
-                </div>
-              )}
-              <button 
-                className="delete-step-button"
-                onClick={() => handleDeleteStepClick(step)}
-                title="Delete step"
-              >
-                <FontAwesomeIcon icon={faTrash} />
-              </button>
-            </div>
-          </div>
-        ))}
+                </td>
+                <td className="step-actions-cell">
+                  <button 
+                    className="delete-step-button"
+                    onClick={() => handleDeleteStepClick(step)}
+                    title="Delete step"
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Test Results Table */}
