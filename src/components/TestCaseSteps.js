@@ -1272,78 +1272,74 @@ const TestCaseSteps = ({
                   </div>
                 </td>
                 <td className="step-value-cell">
-                  {(step.action === 'type' || step.action === 'press_key') ? (
-                    <div className="action-input-container">
-                      <input
-                        ref={el => inputRefs.current[step.id] = el}
-                        type="text"
-                        className="action-input"
-                        placeholder={step.action === 'type' ? 'Text to type...' : 'Key to press...'}
-                        value={stepValues[step.id] || step.value || ''}
-                        onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
-                        onFocus={(e) => handleInputFocus(step.id, e)}
-                        onClick={(e) => handleInputClick(step.id, e)}
-                        onKeyUp={handleInputKeyUp}
-                      />
-                      <button 
-                        className="env-vars-button"
-                        onClick={toggleEnvVarsDropdown}
-                        title="Insert environment variable"
-                        disabled={!selectedEnvironment}
-                      >
-                        <FontAwesomeIcon icon={faCode} />
-                      </button>
-                      
-                      {showEnvVarsDropdown && activeInputStepId === step.id && selectedEnvironment && (
-                        <div className="env-vars-dropdown" ref={envVarsDropdownRef}>
-                          <div className="env-vars-dropdown-header">
-                            Environment Variables
-                          </div>
-                          <div 
-                            className="env-vars-dropdown-item"
-                            onClick={() => insertEnvVariable('base_url')}
-                          >
-                            <div className="env-var-item-content">
-                              <span className="env-var-name">base_url</span>
-                              <span className="env-var-description">Base URL of the environment</span>
-                            </div>
-                          </div>
-                          <div 
-                            className="env-vars-dropdown-item"
-                            onClick={() => insertEnvVariable('login')}
-                          >
-                            <div className="env-var-item-content">
-                              <span className="env-var-name">login</span>
-                              <span className="env-var-description">Login username</span>
-                            </div>
-                          </div>
-                          <div 
-                            className="env-vars-dropdown-item"
-                            onClick={() => insertEnvVariable('password')}
-                          >
-                            <div className="env-var-item-content">
-                              <span className="env-var-name">password</span>
-                              <span className="env-var-description">Login password</span>
-                            </div>
-                          </div>
-                          {environments.find(env => env.id.toString() === selectedEnvironment)?.custom_vars?.map(customVar => (
-                            <div 
-                              key={customVar.name}
-                              className="env-vars-dropdown-item"
-                              onClick={() => insertEnvVariable(customVar.name)}
-                            >
-                              <div className="env-var-item-content">
-                                <span className="env-var-name">{customVar.name}</span>
-                                <span className="env-var-description">{customVar.description || 'Custom variable'}</span>
-                              </div>
-                            </div>
-                          ))}
+                  <div className="action-input-container">
+                    <input
+                      ref={el => inputRefs.current[step.id] = el}
+                      type="text"
+                      className="action-input"
+                      placeholder="Value"
+                      value={stepValues[step.id] || step.value || ''}
+                      onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
+                      onFocus={(e) => handleInputFocus(step.id, e)}
+                      onClick={(e) => handleInputClick(step.id, e)}
+                      onKeyUp={handleInputKeyUp}
+                    />
+                    <button 
+                      className="env-vars-button"
+                      onClick={toggleEnvVarsDropdown}
+                      title="Insert environment variable"
+                      disabled={!selectedEnvironment}
+                    >
+                      <FontAwesomeIcon icon={faCode} />
+                    </button>
+                    
+                    {showEnvVarsDropdown && activeInputStepId === step.id && selectedEnvironment && (
+                      <div className="env-vars-dropdown" ref={envVarsDropdownRef}>
+                        <div className="env-vars-dropdown-header">
+                          Environment Variables
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="empty-value">-</span>
-                  )}
+                        <div 
+                          className="env-vars-dropdown-item"
+                          onClick={() => insertEnvVariable('base_url')}
+                        >
+                          <div className="env-var-item-content">
+                            <span className="env-var-name">base_url</span>
+                            <span className="env-var-description">Base URL of the environment</span>
+                          </div>
+                        </div>
+                        <div 
+                          className="env-vars-dropdown-item"
+                          onClick={() => insertEnvVariable('login')}
+                        >
+                          <div className="env-var-item-content">
+                            <span className="env-var-name">login</span>
+                            <span className="env-var-description">Login username</span>
+                          </div>
+                        </div>
+                        <div 
+                          className="env-vars-dropdown-item"
+                          onClick={() => insertEnvVariable('password')}
+                        >
+                          <div className="env-var-item-content">
+                            <span className="env-var-name">password</span>
+                            <span className="env-var-description">Login password</span>
+                          </div>
+                        </div>
+                        {environments.find(env => env.id.toString() === selectedEnvironment)?.custom_vars?.map(customVar => (
+                          <div 
+                            key={customVar.name}
+                            className="env-vars-dropdown-item"
+                            onClick={() => insertEnvVariable(customVar.name)}
+                          >
+                            <div className="env-var-item-content">
+                              <span className="env-var-name">{customVar.name}</span>
+                              <span className="env-var-description">{customVar.description || 'Custom variable'}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td className="step-actions-cell">
                   <button 
