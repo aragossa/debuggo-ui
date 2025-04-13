@@ -189,6 +189,9 @@ const Dashboard = () => {
       setSelectedTestId(null);
       setTestCase(null);
       localStorage.removeItem('selectedTestId');
+    } else if (deletedTestId === null) {
+      // If null is passed, just refresh the tree without clearing the selection
+      // This happens when a group is created, renamed, or a test case is moved
     }
     
     // Refresh the tree data based on the selected project
@@ -251,6 +254,7 @@ const Dashboard = () => {
             selectedTestId={selectedTestId}
             error={treeError}
             onTestCaseDeleted={handleTestCaseDeleted}
+            projectId={selectedProject}
           />
         </div>
         <div className="content-container">

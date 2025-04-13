@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faEdit, faFolderPlus, faPlus, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
 import './TestCaseTree.css';
 
-const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCaseDeleted }) => {
+const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCaseDeleted, projectId }) => {
   const [expandedNodes, setExpandedNodes] = useState({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [testCaseToDelete, setTestCaseToDelete] = useState(null);
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+  const [showRenameGroupModal, setShowRenameGroupModal] = useState(false);
+  const [showMoveTestCaseModal, setShowMoveTestCaseModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [selectedParentId, setSelectedParentId] = useState(null);
+  const [groupToRename, setGroupToRename] = useState(null);
+  const [testCaseToMove, setTestCaseToMove] = useState(null);
+  const [targetGroupId, setTargetGroupId] = useState(null);
+  const [availableGroups, setAvailableGroups] = useState([]);
   const API_URL = process.env.REACT_APP_API_URL;
 
   // Auto-expand all group nodes when treeData changes
@@ -55,7 +64,11 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
         throw new Error('Authentication token not found');
       }
       
-      const response = await fetch(`${API_URL}/api/delete_test_case/${testCaseToDelete.id}`, {
+      const endpoint = testCaseToDelete.type === 'group' 
+        ? `${API_URL}/api/test_groups/${testCaseToDelete.id}`
+        : `${API_URL}/api/delete_test_case/${testCaseToDelete.id}`;
+      
+      const response = await fetch(endpoint, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -64,7 +77,8 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       });
       
       if (!response.ok) {
-        throw new Error('Failed to delete test case');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to delete');
       }
       
       // Close the modal
@@ -76,8 +90,183 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
         onTestCaseDeleted(testCaseToDelete.id);
       }
     } catch (error) {
-      console.error('Error deleting test case:', error);
-      alert('Failed to delete test case. Please try again.');
+      console.error('Error deleting:', error);
+      alert(error.message || 'Failed to delete. Please try again.');
+    }
+  };
+
+  const handleCreateGroupClick = (parentId = null) => {
+    setNewGroupName('');
+    setSelectedParentId(parentId);
+    setShowCreateGroupModal(true);
+  };
+
+  const handleRenameGroupClick = (e, group) => {
+    e.stopPropagation(); // Prevent triggering the node click
+    setGroupToRename(group);
+    setNewGroupName(group.name);
+    setShowRenameGroupModal(true);
+  };
+
+  const handleMoveTestCaseClick = (e, testCase) => {
+    e.stopPropagation(); // Prevent triggering the node click
+    setTestCaseToMove(testCase);
+    
+    // Prepare list of available groups
+    const groups = [];
+    const collectGroups = (nodes, path = '') => {
+      if (!Array.isArray(nodes)) return;
+      
+      nodes.forEach(node => {
+        if ((node.type === 'group' || node.type === 'root') && node.id !== testCase.parent_id) {
+          const fullPath = path ? `${path} / ${node.name}` : node.name;
+          groups.push({ id: node.id, name: node.name, fullPath });
+        }
+        
+        if (node.children && node.children.length > 0) {
+          const newPath = path ? `${path} / ${node.name}` : node.name;
+          collectGroups(node.children, newPath);
+        }
+      });
+    };
+    
+    collectGroups(treeData);
+    setAvailableGroups(groups);
+    setTargetGroupId(null);
+    setShowMoveTestCaseModal(true);
+  };
+
+  const handleConfirmCreateGroup = async () => {
+    if (!newGroupName.trim()) {
+      alert('Group name cannot be empty');
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      const requestBody = {
+        name: newGroupName.trim(),
+        parent_id: selectedParentId
+      };
+      
+      // Add project_id to the request if it's available and not 'all'
+      if (projectId && projectId !== 'all') {
+        requestBody.project_id = projectId;
+      }
+      
+      const response = await fetch(`${API_URL}/api/test_groups`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create group');
+      }
+      
+      // Close the modal
+      setShowCreateGroupModal(false);
+      
+      // Notify parent component to refresh the tree
+      if (onTestCaseDeleted) {
+        onTestCaseDeleted(null); // Pass null to just refresh the tree
+      }
+    } catch (error) {
+      console.error('Error creating group:', error);
+      alert(error.message || 'Failed to create group. Please try again.');
+    }
+  };
+
+  const handleConfirmRenameGroup = async () => {
+    if (!newGroupName.trim() || !groupToRename) {
+      alert('Group name cannot be empty');
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      const response = await fetch(`${API_URL}/api/test_groups/${groupToRename.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: newGroupName.trim()
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to rename group');
+      }
+      
+      // Close the modal
+      setShowRenameGroupModal(false);
+      setGroupToRename(null);
+      
+      // Notify parent component to refresh the tree
+      if (onTestCaseDeleted) {
+        onTestCaseDeleted(null); // Pass null to just refresh the tree
+      }
+    } catch (error) {
+      console.error('Error renaming group:', error);
+      alert(error.message || 'Failed to rename group. Please try again.');
+    }
+  };
+
+  const handleConfirmMoveTestCase = async () => {
+    if (!testCaseToMove || !targetGroupId) {
+      alert('Please select a target group');
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      const response = await fetch(`${API_URL}/api/test_cases/move`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          test_case_id: testCaseToMove.id,
+          target_group_id: parseInt(targetGroupId)
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to move test case');
+      }
+      
+      // Close the modal
+      setShowMoveTestCaseModal(false);
+      setTestCaseToMove(null);
+      
+      // Notify parent component to refresh the tree
+      if (onTestCaseDeleted) {
+        onTestCaseDeleted(null); // Pass null to just refresh the tree
+      }
+    } catch (error) {
+      console.error('Error moving test case:', error);
+      alert(error.message || 'Failed to move test case. Please try again.');
     }
   };
 
@@ -108,16 +297,57 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
           )}
           <span className="node-name">{node.name}</span>
           
-          {/* Only show delete button for test nodes */}
-          {node.type === 'test' && (
-            <button 
-              className="delete-test-button"
-              onClick={(e) => handleDeleteClick(e, node)}
-              title="Delete test case"
-            >
-              <FontAwesomeIcon icon={faTrash} />
-            </button>
-          )}
+          <div className="node-actions">
+            {/* Group actions */}
+            {node.type === 'group' && (
+              <>
+                <button 
+                  className="tree-action-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCreateGroupClick(node.id);
+                  }}
+                  title="Add subgroup"
+                >
+                  <FontAwesomeIcon icon={faFolderPlus} />
+                </button>
+                <button 
+                  className="tree-action-button"
+                  onClick={(e) => handleRenameGroupClick(e, node)}
+                  title="Rename group"
+                >
+                  <FontAwesomeIcon icon={faEdit} />
+                </button>
+                <button 
+                  className="tree-action-button"
+                  onClick={(e) => handleDeleteClick(e, node)}
+                  title="Delete group"
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
+              </>
+            )}
+            
+            {/* Test case actions */}
+            {node.type === 'test' && (
+              <>
+                <button 
+                  className="tree-action-button"
+                  onClick={(e) => handleMoveTestCaseClick(e, node)}
+                  title="Move to another group"
+                >
+                  <FontAwesomeIcon icon={faExchangeAlt} />
+                </button>
+                <button 
+                  className="tree-action-button"
+                  onClick={(e) => handleDeleteClick(e, node)}
+                  title="Delete test case"
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
+              </>
+            )}
+          </div>
         </div>
         {hasChildren && isExpanded && (
           <div className="node-children">
@@ -133,23 +363,127 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   }
 
   if (!treeData || treeData.length === 0) {
-    return <div className="tree-empty">No test cases available.</div>;
+    return (
+      <div className="test-case-tree-container">
+        <div className="tree-empty">No test cases available.</div>
+        <button 
+          className="create-group-button"
+          onClick={() => handleCreateGroupClick(null)}
+        >
+          <FontAwesomeIcon icon={faFolderPlus} /> Create Group
+        </button>
+      </div>
+    );
   }
 
   return (
-    <div className="test-case-tree">
-      {treeData.map(node => renderNode(node))}
+    <div className="test-case-tree-container">
+      <div className="test-case-tree-header">
+        <h3>Test Cases</h3>
+        <button 
+          className="create-group-button"
+          onClick={() => handleCreateGroupClick(null)}
+        >
+          <FontAwesomeIcon icon={faFolderPlus} /> Create Group
+        </button>
+      </div>
       
-      {/* Confirmation Modal for Deleting Test Case */}
+      <div className="test-case-tree">
+        {treeData.map(node => renderNode(node))}
+      </div>
+      
+      {/* Confirmation Modal for Deleting */}
       {showDeleteModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Confirm Delete Test Case</h3>
-            <p>Are you sure you want to delete this test case? This action cannot be undone.</p>
-            <p><strong>Test Case:</strong> {testCaseToDelete?.name}</p>
+            <h3>Confirm Delete {testCaseToDelete?.type === 'group' ? 'Group' : 'Test Case'}</h3>
+            {testCaseToDelete?.type === 'group' ? (
+              <p>Are you sure you want to delete this group? This action cannot be undone. Note that you cannot delete groups that contain test cases or subgroups.</p>
+            ) : (
+              <p>Are you sure you want to delete this test case? This action cannot be undone.</p>
+            )}
+            <p><strong>Name:</strong> {testCaseToDelete?.name}</p>
             <div className="modal-actions">
               <button onClick={() => setShowDeleteModal(false)} className="modal-button cancel">Cancel</button>
               <button onClick={handleConfirmDelete} className="modal-button delete">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Create Group Modal */}
+      {showCreateGroupModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Create New Group</h3>
+            <div className="form-group">
+              <label>Group Name:</label>
+              <input 
+                type="text" 
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="Enter group name"
+              />
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => setShowCreateGroupModal(false)} className="modal-button cancel">Cancel</button>
+              <button onClick={handleConfirmCreateGroup} className="modal-button create">Create</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Rename Group Modal */}
+      {showRenameGroupModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Rename Group</h3>
+            <div className="form-group">
+              <label>New Group Name:</label>
+              <input 
+                type="text" 
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="Enter new group name"
+              />
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => setShowRenameGroupModal(false)} className="modal-button cancel">Cancel</button>
+              <button onClick={handleConfirmRenameGroup} className="modal-button update">Update</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Move Test Case Modal */}
+      {showMoveTestCaseModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Move Test Case to Another Group</h3>
+            <p><strong>Test Case:</strong> {testCaseToMove?.name}</p>
+            <div className="form-group">
+              <label>Select Target Group:</label>
+              <select
+                value={targetGroupId || ''}
+                onChange={(e) => setTargetGroupId(e.target.value)}
+              >
+                <option value="">-- Select a group --</option>
+                {availableGroups.map(group => (
+                  <option key={group.id} value={group.id}>
+                    {group.fullPath}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => setShowMoveTestCaseModal(false)} className="modal-button cancel">Cancel</button>
+              <button 
+                onClick={handleConfirmMoveTestCase} 
+                className="modal-button move"
+                disabled={!targetGroupId}
+              >
+                Move
+              </button>
             </div>
           </div>
         </div>
