@@ -12,6 +12,12 @@
   padding: 0.5rem 1rem;
   background-color: #f5f5f5;
   border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
+}
+
+.tree-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .test-case-tree-header h3 {
@@ -20,22 +26,27 @@
   color: #333;
 }
 
-.create-group-button {
-  background-color: #4caf50;
+.create-group-button,
+.create-test-button {
+  background-color: #4CAF50;
   color: white;
   border: none;
+  padding: 5px 10px;
   border-radius: 4px;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: background-color 0.2s;
+  gap: 5px;
+  font-size: 0.9rem;
 }
 
-.create-group-button:hover {
-  background-color: #388e3c;
+.create-test-button {
+  background-color: #2196F3;
+}
+
+.create-group-button:hover,
+.create-test-button:hover {
+  opacity: 0.9;
 }
 
 .test-case-tree {
@@ -358,4 +369,21 @@
 .delete-test-button:hover {
   color: #ff7875;
   transform: scale(1.1);
+}
+
+/* Modal styles for test case creation */
+.modal-content textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.modal-content select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
