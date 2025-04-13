@@ -56,6 +56,16 @@ const TestCaseSteps = ({
   const [locatorTooltipStep, setLocatorTooltipStep] = useState(null);
   const [locatorValidationStatus, setLocatorValidationStatus] = useState({});
   const [isTestingLocator, setIsTestingLocator] = useState(false);
+  const [showAddStepModal, setShowAddStepModal] = useState(false);
+  const [newStep, setNewStep] = useState({
+    description: '',
+    action: '',
+    element_path: '',
+    value: '',
+    path_type: 'xpath',
+    expected_result: ''
+  });
+  const [isAddingStep, setIsAddingStep] = useState(false);
   const environmentDropdownRef = React.useRef(null);
   const API_URL = process.env.REACT_APP_API_URL;
   const { getAuthHeaders } = useAuth();
@@ -760,6 +770,107 @@ const TestCaseSteps = ({
     ];
   };
 
+  const handleNewStepChange = (e) => {
+    const { name, value } = e.target;
+    setNewStep(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddStepClick = () => {
+    // Reset the form and open the modal
+    setNewStep({
+      description: '',
+      action: '',
+      element_path: '',
+      value: '',
+      path_type: 'xpath',
+      expected_result: ''
+    });
+    setShowAddStepModal(true);
+  };
+
+  const handleAddStep = async (e) => {
+    e.preventDefault();
+    
+    // Validate required fields
+    if (!newStep.description || !newStep.action) {
+      alert('Description and Action are required fields');
+      return;
+    }
+    
+    // If action requires an element path but none is provided, show an error
+    if (['click', 'type', 'select', 'hover', 'assert'].includes(newStep.action) && !newStep.element_path) {
+      alert('Element path is required for this action');
+      return;
+    }
+    
+    // If action is "type" but no value is provided, show an error
+    if (newStep.action === 'type' && !newStep.value) {
+      alert('Value is required for the "type" action');
+      return;
+    }
+    
+    setIsAddingStep(true);
+    
+    try {
+      const response = await fetch(`${API_URL}/api/create_test_step`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          test_case_id: testCaseId,
+          description: newStep.description,
+          action: newStep.action,
+          element_path: newStep.element_path || null,
+          value: newStep.value || null,
+          path_type: newStep.path_type || 'xpath',
+          expected_result: newStep.expected_result || null
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        
+        let errorMessage;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
+        } catch (e) {
+          errorMessage = `HTTP error! status: ${response.status}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      const newStepData = await response.json();
+      
+      // Add the new step to the steps array
+      setSteps(prevSteps => [...prevSteps, newStepData]);
+      
+      // Close the modal and reset the form
+      setShowAddStepModal(false);
+      setNewStep({
+        description: '',
+        action: '',
+        element_path: '',
+        value: '',
+        path_type: 'xpath',
+        expected_result: ''
+      });
+      
+    } catch (error) {
+      console.error('Error adding test step:', error);
+      alert('Failed to add test step: ' + error.message);
+    } finally {
+      setIsAddingStep(false);
+    }
+  };
+
   return (
     <div className="test-steps-container">
       <div className="test-case-header">
@@ -1002,6 +1113,69 @@ const TestCaseSteps = ({
         </div>
       )}
 
+      {/* Add Step Modal */}
+      {showAddStepModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Add New Step</h3>
+            <form onSubmit={handleAddStep}>
+              <div className="form-group">
+                <label>Description:</label>
+                <input type="text" name="description" value={newStep.description} onChange={handleNewStepChange} required />
+              </div>
+              <div className="form-group">
+                <label>Action:</label>
+                <select 
+                  value={newStep.action || ''}
+                  onChange={(e) => handleNewStepChange(e)}
+                  name="action"
+                  required
+                >
+                  <option value="">Select Action</option>
+                  {STEP_ACTIONS.map((action) => (
+                    <option key={action} value={action}>
+                      {action.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Element Path:</label>
+                <input type="text" name="element_path" value={newStep.element_path} onChange={handleNewStepChange} />
+              </div>
+              <div className="form-group">
+                <label>Value:</label>
+                <input type="text" name="value" value={newStep.value} onChange={handleNewStepChange} />
+              </div>
+              <div className="form-group">
+                <label>Path Type:</label>
+                <select 
+                  value={newStep.path_type || ''}
+                  onChange={(e) => handleNewStepChange(e)}
+                  name="path_type"
+                >
+                  <option value="xpath">XPath</option>
+                  <option value="css">CSS</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Expected Result:</label>
+                <input type="text" name="expected_result" value={newStep.expected_result} onChange={handleNewStepChange} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowAddStepModal(false)} className="modal-button cancel">Cancel</button>
+                <button type="submit" className="modal-button confirm">Add Step</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      <button 
+        className="add-step-button"
+        onClick={handleAddStepClick}
+      >
+        <FontAwesomeIcon icon={faPlus} /> Add Step
+      </button>
       <div className="test-steps-table-container">
         <table className="test-steps-table">
           <thead>
@@ -1239,6 +1413,8 @@ const TestCaseSteps = ({
           </div>
         ))}
       </div>
+
+
     </div>
   );
 };
