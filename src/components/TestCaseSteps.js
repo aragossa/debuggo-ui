@@ -159,12 +159,17 @@ const TestCaseSteps = ({
       const data = await response.json();
       setEnvironments(data);
       
-      // Reset selected environment if it doesn't belong to the current project
-      if (selectedEnvironment) {
-        const environmentExists = data.some(env => env.id === parseInt(selectedEnvironment));
+      // If there's at least one environment, select it by default
+      if (data.length > 0) {
+        // If there's a previously selected environment that exists in the current project, keep it
+        const environmentExists = selectedEnvironment && data.some(env => env.id === parseInt(selectedEnvironment));
         if (!environmentExists) {
-          setSelectedEnvironment('');
+          // Otherwise select the first environment
+          setSelectedEnvironment(data[0].id.toString());
         }
+      } else {
+        // No environments available
+        setSelectedEnvironment('');
       }
     } catch (error) {
       console.error('Error fetching environments:', error);
