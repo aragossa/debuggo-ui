@@ -1101,6 +1101,79 @@
   font-style: italic;
 }
 
+/* Custom Variables Styling */
+.custom-variables-container {
+  margin-top: 10px;
+}
+
+.custom-variables-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.custom-variable-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.custom-variable-name,
+.custom-variable-value {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.remove-variable-button {
+  background: none;
+  border: none;
+  color: #f44336;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.remove-variable-button:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.add-variable-button {
+  background: none;
+  border: 1px dashed #2196f3;
+  color: #2196f3;
+  cursor: pointer;
+  padding: 8px 12px;
+  margin-top: 8px;
+  border-radius: 4px;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.add-variable-button:hover {
+  background-color: rgba(33, 150, 243, 0.1);
+}
+
+.custom-variable-labels {
+  display: flex;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.custom-variable-labels span {
+  flex: 1;
+  padding: 0 8px;
+}
+
 /* Add Step Button */
 .add-step-button {
   display: flex;

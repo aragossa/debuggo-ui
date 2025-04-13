@@ -48,7 +48,8 @@ const TestCaseSteps = ({
     name: '',
     base_url: '',
     login: '',
-    password: ''
+    password: '',
+    custom_variables: []
   });
   const [editingEnvironment, setEditingEnvironment] = useState(null);
   const [showDeleteStepModal, setShowDeleteStepModal] = useState(false);
@@ -57,14 +58,6 @@ const TestCaseSteps = ({
   const [locatorValidationStatus, setLocatorValidationStatus] = useState({});
   const [isTestingLocator, setIsTestingLocator] = useState(false);
   const [showAddStepModal, setShowAddStepModal] = useState(false);
-  const [newStep, setNewStep] = useState({
-    description: '',
-    action: '',
-    element_path: '',
-    value: '',
-    path_type: 'xpath',
-    expected_result: ''
-  });
   const [isAddingStep, setIsAddingStep] = useState(false);
   const environmentDropdownRef = React.useRef(null);
   const API_URL = process.env.REACT_APP_API_URL;
@@ -211,7 +204,8 @@ const TestCaseSteps = ({
       name: '',
       base_url: '',
       login: '',
-      password: ''
+      password: '',
+      custom_variables: []
     });
     setShowAddEnvironmentModal(true);
     setShowEnvironmentDropdown(false);
@@ -224,7 +218,8 @@ const TestCaseSteps = ({
       name: environment.name,
       base_url: environment.base_url,
       login: environment.login || '',
-      password: environment.password || ''
+      password: environment.password || '',
+      custom_variables: environment.custom_variables || []
     });
     setShowEditEnvironmentModal(true);
   };
@@ -267,7 +262,8 @@ const TestCaseSteps = ({
         name: '',
         base_url: '',
         login: '',
-        password: ''
+        password: '',
+        custom_variables: []
       });
       setShowEditEnvironmentModal(false);
       setEditingEnvironment(null);
@@ -283,9 +279,45 @@ const TestCaseSteps = ({
 
   const handleNewEnvironmentChange = (e) => {
     const { name, value } = e.target;
+    
+    // Check if this is a custom variable field
+    if (name.startsWith('custom_variables[')) {
+      const match = name.match(/custom_variables\[(\d+)\]\.(\w+)/);
+      if (match) {
+        const index = parseInt(match[1]);
+        const field = match[2]; // 'name' or 'value'
+        
+        setNewEnvironment(prev => {
+          const updatedVars = [...prev.custom_variables];
+          if (!updatedVars[index]) {
+            updatedVars[index] = { name: '', value: '' };
+          }
+          updatedVars[index][field] = value;
+          return {
+            ...prev,
+            custom_variables: updatedVars
+          };
+        });
+      }
+    } else {
+      setNewEnvironment(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleAddCustomVariable = () => {
     setNewEnvironment(prev => ({
       ...prev,
-      [name]: value
+      custom_variables: [...prev.custom_variables, { name: '', value: '' }]
+    }));
+  };
+
+  const handleRemoveCustomVariable = (index) => {
+    setNewEnvironment(prev => ({
+      ...prev,
+      custom_variables: prev.custom_variables.filter((_, i) => i !== index)
     }));
   };
 
@@ -336,7 +368,8 @@ const TestCaseSteps = ({
         name: '',
         base_url: '',
         login: '',
-        password: ''
+        password: '',
+        custom_variables: []
       });
       setShowAddEnvironmentModal(false);
 
@@ -1078,6 +1111,53 @@ const TestCaseSteps = ({
                 <label>Password:</label>
                 <input type="password" name="password" value={newEnvironment.password} onChange={handleNewEnvironmentChange} />
               </div>
+              <div className="form-group">
+                <label>Custom Variables:</label>
+                <div className="custom-variables-container">
+                  {newEnvironment.custom_variables.length > 0 && (
+                    <div className="custom-variable-labels">
+                      <span>Name</span>
+                      <span>Value</span>
+                    </div>
+                  )}
+                  <ul className="custom-variables-list">
+                    {newEnvironment.custom_variables.map((variable, index) => (
+                      <li key={index} className="custom-variable-item">
+                        <input 
+                          type="text" 
+                          className="custom-variable-name"
+                          placeholder="Variable name"
+                          name={`custom_variables[${index}].name`} 
+                          value={variable.name} 
+                          onChange={handleNewEnvironmentChange} 
+                        />
+                        <input 
+                          type="text" 
+                          className="custom-variable-value"
+                          placeholder="Variable value"
+                          name={`custom_variables[${index}].value`} 
+                          value={variable.value} 
+                          onChange={handleNewEnvironmentChange} 
+                        />
+                        <button 
+                          type="button"
+                          className="remove-variable-button"
+                          onClick={() => handleRemoveCustomVariable(index)}
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <button 
+                    type="button"
+                    className="add-variable-button"
+                    onClick={handleAddCustomVariable}
+                  >
+                    <FontAwesomeIcon icon={faPlus} /> Add Variable
+                  </button>
+                </div>
+              </div>
               <div className="modal-actions">
                 <button type="button" onClick={() => setShowAddEnvironmentModal(false)} className="modal-button cancel">Cancel</button>
                 <button type="submit" className="modal-button confirm">Add Environment</button>
@@ -1108,6 +1188,53 @@ const TestCaseSteps = ({
               <div className="form-group">
                 <label>Password:</label>
                 <input type="password" name="password" value={newEnvironment.password} onChange={handleNewEnvironmentChange} />
+              </div>
+              <div className="form-group">
+                <label>Custom Variables:</label>
+                <div className="custom-variables-container">
+                  {newEnvironment.custom_variables.length > 0 && (
+                    <div className="custom-variable-labels">
+                      <span>Name</span>
+                      <span>Value</span>
+                    </div>
+                  )}
+                  <ul className="custom-variables-list">
+                    {newEnvironment.custom_variables.map((variable, index) => (
+                      <li key={index} className="custom-variable-item">
+                        <input 
+                          type="text" 
+                          className="custom-variable-name"
+                          placeholder="Variable name"
+                          name={`custom_variables[${index}].name`} 
+                          value={variable.name} 
+                          onChange={handleNewEnvironmentChange} 
+                        />
+                        <input 
+                          type="text" 
+                          className="custom-variable-value"
+                          placeholder="Variable value"
+                          name={`custom_variables[${index}].value`} 
+                          value={variable.value} 
+                          onChange={handleNewEnvironmentChange} 
+                        />
+                        <button 
+                          type="button"
+                          className="remove-variable-button"
+                          onClick={() => handleRemoveCustomVariable(index)}
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <button 
+                    type="button"
+                    className="add-variable-button"
+                    onClick={handleAddCustomVariable}
+                  >
+                    <FontAwesomeIcon icon={faPlus} /> Add Variable
+                  </button>
+                </div>
               </div>
               <div className="modal-actions">
                 <button type="button" onClick={() => setShowEditEnvironmentModal(false)} className="modal-button cancel">Cancel</button>
@@ -1325,15 +1452,15 @@ const TestCaseSteps = ({
                             <span className="env-var-description">Login password</span>
                           </div>
                         </div>
-                        {environments.find(env => env.id.toString() === selectedEnvironment)?.custom_vars?.map(customVar => (
+                        {environments.find(env => env.id.toString() === selectedEnvironment)?.custom_variables?.map((customVar, index) => (
                           <div 
-                            key={customVar.name}
+                            key={index}
                             className="env-vars-dropdown-item"
                             onClick={() => insertEnvVariable(customVar.name)}
                           >
                             <div className="env-var-item-content">
                               <span className="env-var-name">{customVar.name}</span>
-                              <span className="env-var-description">{customVar.description || 'Custom variable'}</span>
+                              <span className="env-var-description">Custom variable</span>
                             </div>
                           </div>
                         ))}
