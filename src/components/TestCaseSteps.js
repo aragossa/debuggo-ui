@@ -1,7 +1,7 @@
 // TestCaseSteps.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay, faMagicWandSparkles, faGripVertical, faInfoCircle, faSignInAlt, faChevronUp, faChevronDown, faPlus, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faMagicWandSparkles, faGripVertical, faInfoCircle, faSignInAlt, faChevronUp, faChevronDown, faPlus, faEdit, faTrash, faCode } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './TestCaseSteps.css';
 
@@ -56,12 +56,31 @@ const TestCaseSteps = ({
   const environmentDropdownRef = React.useRef(null);
   const API_URL = process.env.REACT_APP_API_URL;
   const { getAuthHeaders } = useAuth();
+  const [showEnvVarsDropdown, setShowEnvVarsDropdown] = useState(false);
+  const [activeInputStepId, setActiveInputStepId] = useState(null);
+  const [inputCursorPosition, setInputCursorPosition] = useState(0);
+  const envVarsDropdownRef = useRef(null);
+  const inputRefs = useRef({});
 
   useEffect(() => {
     // Add click outside listener to close the dropdown
     function handleClickOutside(event) {
       if (environmentDropdownRef.current && !environmentDropdownRef.current.contains(event.target)) {
         setShowEnvironmentDropdown(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Add click outside listener to close the env vars dropdown
+    function handleClickOutside(event) {
+      if (envVarsDropdownRef.current && !envVarsDropdownRef.current.contains(event.target)) {
+        setShowEnvVarsDropdown(false);
       }
     }
     
@@ -570,6 +589,60 @@ const TestCaseSteps = ({
     }
   };
 
+  const handleInputFocus = (stepId, e) => {
+    setActiveInputStepId(stepId);
+    setInputCursorPosition(e.target.selectionStart);
+  };
+
+  const handleInputClick = (stepId, e) => {
+    setInputCursorPosition(e.target.selectionStart);
+  };
+
+  const handleInputKeyUp = (e) => {
+    setInputCursorPosition(e.target.selectionStart);
+  };
+
+  const toggleEnvVarsDropdown = () => {
+    setShowEnvVarsDropdown(!showEnvVarsDropdown);
+  };
+
+  const insertEnvVariable = (varName) => {
+    if (!activeInputStepId) return;
+    
+    const currentValue = stepValues[activeInputStepId] || '';
+    const beforeCursor = currentValue.substring(0, inputCursorPosition);
+    const afterCursor = currentValue.substring(inputCursorPosition);
+    
+    const variableText = `{{${varName}}}`;
+    const newValue = beforeCursor + variableText + afterCursor;
+    
+    // Update the input value
+    setStepValues(prev => ({
+      ...prev,
+      [activeInputStepId]: newValue
+    }));
+    
+    // Save the new value to the database
+    const step = steps.find(s => s.id === activeInputStepId);
+    if (step) {
+      handleValueChange(activeInputStepId, newValue, step.action);
+    }
+    
+    // Close the dropdown
+    setShowEnvVarsDropdown(false);
+    
+    // Focus back on the input and set cursor position after the inserted variable
+    setTimeout(() => {
+      const input = inputRefs.current[activeInputStepId];
+      if (input) {
+        input.focus();
+        const newPosition = inputCursorPosition + variableText.length;
+        input.setSelectionRange(newPosition, newPosition);
+        setInputCursorPosition(newPosition);
+      }
+    }, 0);
+  };
+
   return (
     <div className="test-steps-container">
       <div className="test-case-header">
@@ -842,13 +915,74 @@ const TestCaseSteps = ({
                 ))}
               </select>
               {(step.action === 'type' || step.action === 'press_key') && (
-                <input
-                  type="text"
-                  className="action-input"
-                  placeholder={step.action === 'type' ? 'Text to type...' : 'Key to press...'}
-                  value={stepValues[step.id] || step.value || ''}
-                  onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
-                />
+                <div className="action-input-container">
+                  <input
+                    ref={el => inputRefs.current[step.id] = el}
+                    type="text"
+                    className="action-input"
+                    placeholder={step.action === 'type' ? 'Text to type...' : 'Key to press...'}
+                    value={stepValues[step.id] || step.value || ''}
+                    onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
+                    onFocus={(e) => handleInputFocus(step.id, e)}
+                    onClick={(e) => handleInputClick(step.id, e)}
+                    onKeyUp={handleInputKeyUp}
+                  />
+                  <button 
+                    className="env-vars-button"
+                    onClick={toggleEnvVarsDropdown}
+                    title="Insert environment variable"
+                    disabled={!selectedEnvironment}
+                  >
+                    <FontAwesomeIcon icon={faCode} />
+                  </button>
+                  
+                  {showEnvVarsDropdown && activeInputStepId === step.id && selectedEnvironment && (
+                    <div className="env-vars-dropdown" ref={envVarsDropdownRef}>
+                      <div className="env-vars-dropdown-header">
+                        Environment Variables
+                      </div>
+                      <div 
+                        className="env-vars-dropdown-item"
+                        onClick={() => insertEnvVariable('base_url')}
+                      >
+                        <div className="env-var-item-content">
+                          <span className="env-var-name">base_url</span>
+                          <span className="env-var-description">Base URL of the environment</span>
+                        </div>
+                      </div>
+                      <div 
+                        className="env-vars-dropdown-item"
+                        onClick={() => insertEnvVariable('login')}
+                      >
+                        <div className="env-var-item-content">
+                          <span className="env-var-name">login</span>
+                          <span className="env-var-description">Login username</span>
+                        </div>
+                      </div>
+                      <div 
+                        className="env-vars-dropdown-item"
+                        onClick={() => insertEnvVariable('password')}
+                      >
+                        <div className="env-var-item-content">
+                          <span className="env-var-name">password</span>
+                          <span className="env-var-description">Login password</span>
+                        </div>
+                      </div>
+                      {environments.find(env => env.id.toString() === selectedEnvironment)?.custom_vars?.map(customVar => (
+                        <div 
+                          key={customVar.name}
+                          className="env-vars-dropdown-item"
+                          onClick={() => insertEnvVariable(customVar.name)}
+                        >
+                          <div className="env-var-item-content">
+                            <span className="env-var-name">{customVar.name}</span>
+                            <span className="env-var-description">{customVar.description || 'Custom variable'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
               <button 
                 className="delete-step-button"
