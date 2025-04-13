@@ -609,34 +609,30 @@ const TestCaseSteps = ({
   const insertEnvVariable = (varName) => {
     if (!activeInputStepId) return;
     
-    const currentValue = stepValues[activeInputStepId] || '';
-    const beforeCursor = currentValue.substring(0, inputCursorPosition);
-    const afterCursor = currentValue.substring(inputCursorPosition);
-    
+    // Create the variable text with the format {{variable_name}}
     const variableText = `{{${varName}}}`;
-    const newValue = beforeCursor + variableText + afterCursor;
     
-    // Update the input value
+    // Replace the entire input value with the environment variable
     setStepValues(prev => ({
       ...prev,
-      [activeInputStepId]: newValue
+      [activeInputStepId]: variableText
     }));
     
     // Save the new value to the database
     const step = steps.find(s => s.id === activeInputStepId);
     if (step) {
-      handleValueChange(activeInputStepId, newValue, step.action);
+      handleValueChange(activeInputStepId, variableText, step.action);
     }
     
     // Close the dropdown
     setShowEnvVarsDropdown(false);
     
-    // Focus back on the input and set cursor position after the inserted variable
+    // Focus back on the input and set cursor position at the end
     setTimeout(() => {
       const input = inputRefs.current[activeInputStepId];
       if (input) {
         input.focus();
-        const newPosition = inputCursorPosition + variableText.length;
+        const newPosition = variableText.length;
         input.setSelectionRange(newPosition, newPosition);
         setInputCursorPosition(newPosition);
       }
