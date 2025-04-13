@@ -663,6 +663,30 @@
   gap: 8px;
 }
 
+.delete-step-button {
+  background: none;
+  border: none;
+  color: #ff4d4f;
+  cursor: pointer;
+  padding: 5px;
+  margin-left: 5px;
+  transition: all 0.2s;
+}
+
+.delete-step-button:hover {
+  color: #ff7875;
+  transform: scale(1.1);
+}
+
+.modal-button.delete {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.modal-button.delete:hover {
+  background-color: #ff7875;
+}
+
 /* Media query for responsiveness */
 @media (max-width: 768px) {
   .test-steps-flow {

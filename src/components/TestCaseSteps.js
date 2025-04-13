@@ -1,7 +1,7 @@
 // TestCaseSteps.js
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay, faMagicWandSparkles, faGripVertical, faInfoCircle, faSignInAlt, faChevronUp, faChevronDown, faPlus, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faPlay, faMagicWandSparkles, faGripVertical, faInfoCircle, faSignInAlt, faChevronUp, faChevronDown, faPlus, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './TestCaseSteps.css';
 
@@ -51,6 +51,8 @@ const TestCaseSteps = ({
     password: ''
   });
   const [editingEnvironment, setEditingEnvironment] = useState(null);
+  const [showDeleteStepModal, setShowDeleteStepModal] = useState(false);
+  const [stepToDelete, setStepToDelete] = useState(null);
   const environmentDropdownRef = React.useRef(null);
   const API_URL = process.env.REACT_APP_API_URL;
   const { getAuthHeaders } = useAuth();
@@ -539,6 +541,35 @@ const TestCaseSteps = ({
     }
   };
 
+  const handleDeleteStepClick = (step) => {
+    setStepToDelete(step);
+    setShowDeleteStepModal(true);
+  };
+
+  const handleConfirmDeleteStep = async () => {
+    if (!stepToDelete) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/api/delete_test_step/${stepToDelete.id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete test step');
+      }
+      
+      // Remove the step from the local state
+      setSteps(prevSteps => prevSteps.filter(step => step.id !== stepToDelete.id));
+      
+      setShowDeleteStepModal(false);
+      setStepToDelete(null);
+    } catch (error) {
+      console.error('Error deleting test step:', error);
+      alert('Failed to delete test step. Please try again.');
+    }
+  };
+
   return (
     <div className="test-steps-container">
       <div className="test-case-header">
@@ -704,6 +735,21 @@ const TestCaseSteps = ({
         </div>
       )}
 
+      {/* Confirmation Modal for Deleting Step */}
+      {showDeleteStepModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Confirm Delete Step</h3>
+            <p>Are you sure you want to delete this step? This action cannot be undone.</p>
+            <p><strong>Step:</strong> {stepToDelete?.description}</p>
+            <div className="modal-actions">
+              <button onClick={() => setShowDeleteStepModal(false)} className="modal-button cancel">Cancel</button>
+              <button onClick={handleConfirmDeleteStep} className="modal-button delete">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Environment Modal */}
       {showAddEnvironmentModal && (
         <div className="modal-overlay">
@@ -804,6 +850,13 @@ const TestCaseSteps = ({
                   onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
                 />
               )}
+              <button 
+                className="delete-step-button"
+                onClick={() => handleDeleteStepClick(step)}
+                title="Delete step"
+              >
+                <FontAwesomeIcon icon={faTrash} />
+              </button>
             </div>
           </div>
         ))}

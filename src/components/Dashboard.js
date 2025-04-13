@@ -183,6 +183,22 @@ const Dashboard = () => {
     }
   };
 
+  const handleTestCaseDeleted = (deletedTestId) => {
+    // If the deleted test case is the currently selected one, clear the selection
+    if (deletedTestId === selectedTestId) {
+      setSelectedTestId(null);
+      setTestCase(null);
+      localStorage.removeItem('selectedTestId');
+    }
+    
+    // Refresh the tree data based on the selected project
+    if (selectedProject && selectedProject !== 'all') {
+      fetchTreeDataForProject(selectedProject);
+    } else {
+      fetchTreeData();
+    }
+  };
+
   const handleCloseTestResultPopup = () => {
     setTestResult(null);
   };
@@ -232,7 +248,9 @@ const Dashboard = () => {
           <TestCaseTree 
             treeData={treeData} 
             onNodeClick={handleNodeClick} 
-            selectedNodeId={selectedTestId}
+            selectedTestId={selectedTestId}
+            error={treeError}
+            onTestCaseDeleted={handleTestCaseDeleted}
           />
         </div>
         <div className="content-container">

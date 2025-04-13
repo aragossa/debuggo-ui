@@ -172,3 +172,91 @@
   text-align: center;
   font-style: italic;
 }
+
+.node-content {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.node-content:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.node-content.selected {
+  background-color: #e6f7ff;
+  font-weight: bold;
+}
+
+.delete-test-button {
+  background: none;
+  border: none;
+  color: #ff4d4f;
+  cursor: pointer;
+  padding: 5px;
+  margin-left: auto;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.node-content:hover .delete-test-button {
+  opacity: 1;
+}
+
+.delete-test-button:hover {
+  color: #ff7875;
+  transform: scale(1.1);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.modal-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.modal-button.cancel {
+  background-color: #f0f0f0;
+}
+
+.modal-button.delete {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.modal-button.delete:hover {
+  background-color: #ff7875;
+}
