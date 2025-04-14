@@ -1,7 +1,9 @@
 // TestCaseSteps.js
 import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay, faMagicWandSparkles, faGripVertical, faInfoCircle, faSignInAlt, faChevronUp, faChevronDown, faPlus, faEdit, faTrash, faCode, faSearch, faQuestionCircle, faCheckCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faPlay, faMagicWandSparkles, faGripVertical, faInfoCircle, faSignInAlt, faChevronUp, faChevronDown, faPlus, faEdit, faTrash, faCode, faSearch, faQuestionCircle, faCheckCircle, faTimesCircle, faImage
+} from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './TestCaseSteps.css';
 
@@ -74,6 +76,10 @@ const TestCaseSteps = ({
   });
   const [isUpdatingTestCase, setIsUpdatingTestCase] = useState(false);
   const [showEditTestCaseModal, setShowEditTestCaseModal] = useState(false);
+  const [showScreenshotModal, setShowScreenshotModal] = useState(false);
+  const [currentScreenshot, setCurrentScreenshot] = useState(null);
+  const [screenshotLoading, setScreenshotLoading] = useState(false);
+  const [screenshotError, setScreenshotError] = useState(null);
   const API_URL = process.env.REACT_APP_API_URL;
   const { getAuthHeaders } = useAuth();
   const [showEnvVarsDropdown, setShowEnvVarsDropdown] = useState(false);
@@ -984,6 +990,36 @@ const TestCaseSteps = ({
     }));
   };
 
+  const handleViewScreenshot = async (stepId) => {
+    setScreenshotLoading(true);
+    setShowScreenshotModal(true);
+    setCurrentScreenshot(null);
+    setScreenshotError(null);
+    
+    try {
+      const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch screenshot');
+      }
+      
+      const data = await response.json();
+      setCurrentScreenshot(data);
+    } catch (error) {
+      console.error('Error fetching screenshot:', error);
+      setScreenshotError(error.message);
+    } finally {
+      setScreenshotLoading(false);
+    }
+  };
+
   return (
     <div className="test-steps-container">
       <div className="test-case-header">
@@ -1576,6 +1612,13 @@ const TestCaseSteps = ({
                 </td>
                 <td className="step-actions-cell">
                   <button 
+                    className="view-screenshot-button"
+                    onClick={() => handleViewScreenshot(step.id)}
+                    title="View screenshot"
+                  >
+                    <FontAwesomeIcon icon={faImage} />
+                  </button>
+                  <button 
                     className="delete-step-button"
                     onClick={() => handleDeleteStepClick(step)}
                     title="Delete step"
@@ -1588,6 +1631,38 @@ const TestCaseSteps = ({
           </tbody>
         </table>
       </div>
+
+      {/* Screenshot Modal */}
+      {showScreenshotModal && (
+        <div className="modal-overlay">
+          <div className="modal-content screenshot-modal">
+            <h3>Screenshot</h3>
+            <div className="screenshot-container">
+              {screenshotLoading ? (
+                <div className="loading-indicator">Loading screenshot...</div>
+              ) : screenshotError ? (
+                <div className="error-message">
+                  <p>Error loading screenshot: {screenshotError}</p>
+                </div>
+              ) : currentScreenshot ? (
+                <>
+                  <p className="screenshot-description">{currentScreenshot.description}</p>
+                  <img 
+                    src={`data:image/png;base64,${currentScreenshot.screenshot}`} 
+                    alt="Test step screenshot" 
+                    className="step-screenshot"
+                  />
+                </>
+              ) : (
+                <div className="no-screenshot">No screenshot available</div>
+              )}
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => setShowScreenshotModal(false)} className="modal-button cancel">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Test Results Table */}
       <h3>Test Results</h3>
