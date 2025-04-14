@@ -59,7 +59,13 @@ const TestCaseSteps = ({
   const [isTestingLocator, setIsTestingLocator] = useState(false);
   const [showAddStepModal, setShowAddStepModal] = useState(false);
   const [isAddingStep, setIsAddingStep] = useState(false);
-  const environmentDropdownRef = React.useRef(null);
+  const [isEditingTestCase, setIsEditingTestCase] = useState(false);
+  const [editedTestCase, setEditedTestCase] = useState({
+    name: test_name,
+    description: test_description
+  });
+  const [isUpdatingTestCase, setIsUpdatingTestCase] = useState(false);
+  const [showEditTestCaseModal, setShowEditTestCaseModal] = useState(false);
   const API_URL = process.env.REACT_APP_API_URL;
   const { getAuthHeaders } = useAuth();
   const [showEnvVarsDropdown, setShowEnvVarsDropdown] = useState(false);
@@ -68,6 +74,7 @@ const TestCaseSteps = ({
   const envVarsDropdownRef = useRef(null);
   const inputRefs = useRef({});
   const locatorTooltipRef = useRef(null);
+  const environmentDropdownRef = React.useRef(null);
 
   useEffect(() => {
     // Add click outside listener to close the dropdown
@@ -136,6 +143,13 @@ const TestCaseSteps = ({
       setSelectedEnvironment('');
     }
   }, [projectId]);
+
+  useEffect(() => {
+    setEditedTestCase({
+      name: test_name || '',
+      description: test_description || ''
+    });
+  }, [test_name, test_description]);
 
   const fetchEnvironments = async () => {
     if (!projectId || projectId === 'all') return;
@@ -909,13 +923,97 @@ const TestCaseSteps = ({
     }
   };
 
+  const handleEditTestCaseClick = () => {
+    setIsEditingTestCase(true);
+    setShowEditTestCaseModal(true);
+  };
+
+  const handleUpdateTestCase = async (e) => {
+    e.preventDefault();
+    
+    if (!editedTestCase.name || !editedTestCase.description) {
+      alert('Name and Description are required fields');
+      return;
+    }
+
+    setIsUpdatingTestCase(true);
+    try {
+      const response = await fetch(`${API_URL}/api/test_cases/${testCaseId}`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: editedTestCase.name,
+          description: editedTestCase.description
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update test case');
+      }
+
+      // Refresh the test case to show the latest changes
+      await refreshTestCase();
+
+      // Close the modal and reset the form
+      setShowEditTestCaseModal(false);
+      setIsEditingTestCase(false);
+      setIsUpdatingTestCase(false);
+    } catch (error) {
+      console.error('Error updating test case:', error);
+      alert('Failed to update test case: ' + error.message);
+      setIsUpdatingTestCase(false);
+    }
+  };
+
+  const handleTestCaseChange = (e) => {
+    const { name, value } = e.target;
+    setEditedTestCase(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   return (
     <div className="test-steps-container">
       <div className="test-case-header">
         <h2>{test_name}</h2>
         <p>{test_description}</p>
         <p className="last-updated">Last updated: {updated_at}</p>
+        <button 
+          className="edit-test-case-button" 
+          onClick={handleEditTestCaseClick}
+          title="Edit test case name and description"
+        >
+          <FontAwesomeIcon icon={faEdit} /> Edit
+        </button>
       </div>
+
+      {showEditTestCaseModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Edit Test Case</h3>
+            <form onSubmit={handleUpdateTestCase}>
+              <div className="form-group">
+                <label>Name:</label>
+                <input type="text" name="name" value={editedTestCase.name} onChange={handleTestCaseChange} required />
+              </div>
+              <div className="form-group">
+                <label>Description:</label>
+                <textarea name="description" value={editedTestCase.description} onChange={handleTestCaseChange} required />
+              </div>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowEditTestCaseModal(false)} className="modal-button cancel">Cancel</button>
+                <button type="submit" className="modal-button confirm" disabled={isUpdatingTestCase}>
+                  {isUpdatingTestCase ? 'Updating...' : 'Update'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="test-steps-header">
         <h3>Test Steps</h3>
@@ -1541,8 +1639,6 @@ const TestCaseSteps = ({
           </div>
         ))}
       </div>
-
-
     </div>
   );
 };
