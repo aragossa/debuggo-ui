@@ -59,6 +59,14 @@ const TestCaseSteps = ({
   const [isTestingLocator, setIsTestingLocator] = useState(false);
   const [showAddStepModal, setShowAddStepModal] = useState(false);
   const [isAddingStep, setIsAddingStep] = useState(false);
+  const [newStep, setNewStep] = useState({
+    description: '',
+    action: '',
+    element_path: '',
+    value: '',
+    path_type: 'xpath',
+    expected_result: ''
+  });
   const [isEditingTestCase, setIsEditingTestCase] = useState(false);
   const [editedTestCase, setEditedTestCase] = useState({
     name: test_name,
