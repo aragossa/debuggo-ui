@@ -1,7 +1,7 @@
 // Environments.js
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrash, faCheck, faTimes, faInfoCircle, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrash, faCheck, faTimes, faInfoCircle, faSignInAlt, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './Environments.css';
 
@@ -20,6 +20,7 @@ const Environments = ({ projectId }) => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [generatingLogin, setGeneratingLogin] = useState(false);
+  const [deletingEnvironmentId, setDeletingEnvironmentId] = useState(null);
   const API_URL = process.env.REACT_APP_API_URL;
   const { getAuthHeaders } = useAuth();
 
@@ -96,20 +97,30 @@ const Environments = ({ projectId }) => {
     }
     
     try {
+      setDeletingEnvironmentId(environmentId);
+      setError(null);
+      
       const response = await fetch(`${API_URL}/api/environments/${environmentId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
       
       if (!response.ok) {
-        throw new Error('Failed to delete environment');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to delete environment');
       }
+      
+      // Show success message
+      setSuccessMessage('Environment deleted successfully');
+      setTimeout(() => setSuccessMessage(null), 3000);
       
       // Refresh the environments list
       fetchEnvironments();
     } catch (error) {
       console.error('Error deleting environment:', error);
-      setError('Failed to delete environment. Please try again.');
+      setError(`Failed to delete environment: ${error.message}`);
+    } finally {
+      setDeletingEnvironmentId(null);
     }
   };
 
@@ -311,10 +322,10 @@ const Environments = ({ projectId }) => {
                 <button 
                   className="delete-button" 
                   onClick={() => handleDeleteClick(env.id)}
-                  disabled={showAddForm || showEditForm || generatingLogin}
+                  disabled={showAddForm || showEditForm || generatingLogin || deletingEnvironmentId === env.id}
                   title="Delete environment"
                 >
-                  <FontAwesomeIcon icon={faTrash} />
+                  <FontAwesomeIcon icon={deletingEnvironmentId === env.id ? faSpinner : faTrash} spin={deletingEnvironmentId === env.id} />
                 </button>
               </div>
             </div>

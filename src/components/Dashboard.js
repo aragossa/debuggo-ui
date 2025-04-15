@@ -28,6 +28,7 @@ const Dashboard = () => {
   });
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [activeTab, setActiveTab] = useState('testCases');
 
   useEffect(() => {
     fetchProjects();
@@ -247,30 +248,61 @@ const Dashboard = () => {
       </div>
       
       <div className="dashboard-content">
-        <div className="tree-container">
-          <TestCaseTree 
-            treeData={treeData} 
-            onNodeClick={handleNodeClick} 
-            selectedTestId={selectedTestId}
-            error={treeError}
-            onTestCaseDeleted={handleTestCaseDeleted}
-            projectId={selectedProject}
-          />
+        <div className="dashboard-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'testCases' ? 'active' : ''}`}
+            onClick={() => setActiveTab('testCases')}
+          >
+            <FontAwesomeIcon icon={faFlask} /> Test Cases
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'environments' ? 'active' : ''}`}
+            onClick={() => setActiveTab('environments')}
+          >
+            <FontAwesomeIcon icon={faCog} /> Environments
+          </button>
         </div>
-        <div className="content-container">
-          {testCase && (
-            <TestCaseSteps
-              test_steps={testCase.test_steps}
-              test_runs={testCase.test_runs}
-              testCaseId={selectedTestId}
-              test_name={testCase.test_name}
-              test_description={testCase.test_description}
-              updated_at={testCase.updated_at}
-              onTestResult={setTestResult}
-              projectId={selectedProject}
-            />
-          )}
-        </div>
+        
+        {activeTab === 'testCases' ? (
+          <div className="dashboard-main">
+            <div className="tree-container">
+              <TestCaseTree 
+                treeData={treeData} 
+                onNodeClick={handleNodeClick} 
+                selectedTestId={selectedTestId}
+                error={treeError}
+                onTestCaseDeleted={handleTestCaseDeleted}
+                projectId={selectedProject}
+              />
+            </div>
+            <div className="content-container">
+              {testCase ? (
+                <TestCaseSteps
+                  test_steps={testCase.test_steps}
+                  test_runs={testCase.test_runs}
+                  testCaseId={selectedTestId}
+                  test_name={testCase.test_name}
+                  test_description={testCase.test_description}
+                  updated_at={testCase.updated_at}
+                  onTestResult={setTestResult}
+                  projectId={selectedProject}
+                />
+              ) : (
+                <div className="no-test-selected">
+                  <div className="empty-state">
+                    <FontAwesomeIcon icon={faInfoCircle} size="2x" />
+                    <h3>No Test Case Selected</h3>
+                    <p>Select a test case from the tree to view its details</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="environments-tab-container">
+            <Environments projectId={selectedProject} />
+          </div>
+        )}
       </div>
       
       {showUploadPopup && (
