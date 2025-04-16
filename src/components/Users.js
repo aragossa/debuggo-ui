@@ -4,7 +4,7 @@ import './Users.css';
 
 const Users = () => {
   const API_URL = process.env.REACT_APP_API_URL;
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -159,6 +159,11 @@ const Users = () => {
         return;
       }
       
+      if (newUser.role === 'user' && !newUser.client_id) {
+        setFormError('Client is required for user role');
+        return;
+      }
+      
       const response = await fetch(`${API_URL}/api/users/create`, {
         method: 'POST',
         headers: {
@@ -272,14 +277,19 @@ const Users = () => {
                 name="client_id"
                 value={newUser.client_id}
                 onChange={handleNewUserChange}
+                required={newUser.role === 'user'}
+                style={newUser.role === 'user' ? { borderColor: newUser.client_id ? '' : 'red' } : {}}
               >
-                <option value="">No Client</option>
+                <option value="">{newUser.role === 'user' ? 'Select a client*' : 'No Client'}</option>
                 {clients.map(client => (
                   <option key={client.id} value={client.id}>
                     {client.name}
                   </option>
                 ))}
               </select>
+              {newUser.role === 'user' && !newUser.client_id && (
+                <span className="form-error" style={{ color: 'red', fontSize: '0.9em' }}>Client is required for user role</span>
+              )}
             </div>
             <div className="form-group">
               <label htmlFor="role">Role</label>

@@ -13,11 +13,13 @@ const Projects = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const API_URL = process.env.REACT_APP_API_URL;
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, user } = useAuth();
 
   useEffect(() => {
+    if (user && user.role === 'admin') {
+      fetchClients();
+    }
     fetchProjects();
-    fetchClients();
   }, []);
 
   const fetchProjects = async () => {
@@ -186,28 +188,32 @@ const Projects = () => {
               <label htmlFor="description">Description</label>
               <textarea
                 id="description"
-                value={newProject.description || ''}
+                value={newProject.description}
                 onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                rows={3}
               />
             </div>
             
-            <div className="form-group">
-              <label htmlFor="client">Client</label>
-              <select
-                id="client"
-                value={newProject.client_id || ''}
-                onChange={(e) => setNewProject({ ...newProject, client_id: e.target.value || null })}
-              >
-                <option value="">-- Select Client --</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>{client.name}</option>
-                ))}
-              </select>
-            </div>
+            {user && user.role === 'admin' && (
+              <div className="form-group">
+                <label htmlFor="client_id">Client *</label>
+                <select
+                  id="client_id"
+                  value={newProject.client_id || ''}
+                  onChange={(e) => setNewProject({ ...newProject, client_id: e.target.value })}
+                  required
+                >
+                  <option value="">Select a client</option>
+                  {clients.map(client => (
+                    <option key={client.id} value={client.id}>{client.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             
             <div className="form-actions">
-              <button type="submit" className="submit-button">Create Project</button>
-              <button type="button" className="cancel-button" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit">Create Project</button>
+              <button type="button" onClick={() => setShowForm(false)}>Cancel</button>
             </div>
           </form>
         </div>

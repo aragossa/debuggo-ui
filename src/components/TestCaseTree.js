@@ -469,6 +469,27 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
             <FontAwesomeIcon icon={faPlus} /> Create Test Case
           </button>
         </div>
+        {/* Ensure create group modal is rendered even if tree is empty */}
+        {showCreateGroupModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Create New Group</h3>
+              <div className="form-group">
+                <label>Group Name:</label>
+                <input 
+                  type="text" 
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="Enter group name"
+                />
+              </div>
+              <div className="modal-actions">
+                <button onClick={() => setShowCreateGroupModal(false)} className="modal-button cancel">Cancel</button>
+                <button onClick={handleConfirmCreateGroup} className="modal-button create">Create</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

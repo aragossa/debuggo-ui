@@ -209,6 +209,8 @@ const Dashboard = () => {
 
   const isProjectSelected = selectedProject && selectedProject !== 'all';
 
+  const noProjects = !projects || projects.length === 0;
+
   return (
     <div className="dashboard">
       <div className="dashboard-header">
@@ -228,7 +230,11 @@ const Dashboard = () => {
             ))}
           </select>
         </div>
-        
+        {noProjects && (
+          <div className="dashboard-no-projects" style={{ marginTop: 10, color: '#b00', fontWeight: 500 }}>
+            No projects created
+          </div>
+        )}
         <div className="generate-button-container" 
              onMouseEnter={() => !isProjectSelected && setShowTooltip(true)} 
              onMouseLeave={() => setShowTooltip(false)}>
@@ -266,14 +272,20 @@ const Dashboard = () => {
         {activeTab === 'testCases' ? (
           <div className="dashboard-main">
             <div className="tree-container">
-              <TestCaseTree 
-                treeData={treeData} 
-                onNodeClick={handleNodeClick} 
-                selectedTestId={selectedTestId}
-                error={treeError}
-                onTestCaseDeleted={handleTestCaseDeleted}
-                projectId={selectedProject}
-              />
+              {treeError && treeError !== 'Project not found' ? (
+                <div className="error-message">
+                  {treeError}
+                </div>
+              ) : (
+                <TestCaseTree 
+                  treeData={treeData} 
+                  onNodeClick={handleNodeClick} 
+                  selectedTestId={selectedTestId}
+                  error={treeError}
+                  onTestCaseDeleted={handleTestCaseDeleted}
+                  projectId={selectedProject}
+                />
+              )}
             </div>
             <div className="content-container">
               {testCase ? (
