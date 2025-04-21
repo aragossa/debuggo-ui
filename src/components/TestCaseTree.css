@@ -387,3 +387,22 @@
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+
+.modal-content .form-group .required {
+  color: #e53935;
+  margin-left: 3px;
+}
+
+.loading-indicator {
+  margin-top: 5px;
+  font-size: 0.9rem;
+  color: #2196F3;
+  font-style: italic;
+}
+
+.no-projects-warning {
+  margin-top: 5px;
+  font-size: 0.9rem;
+  color: #e53935;
+  font-style: italic;
+}

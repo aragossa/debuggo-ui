@@ -17,10 +17,13 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   const [testCaseToMove, setTestCaseToMove] = useState(null);
   const [targetGroupId, setTargetGroupId] = useState(null);
   const [availableGroups, setAvailableGroups] = useState([]);
+  const [availableProjects, setAvailableProjects] = useState([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [newTestCase, setNewTestCase] = useState({
     name: '',
     description: '',
-    parent_id: null
+    parent_id: null,
+    project_id: projectId !== 'all' ? projectId : null
   });
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -281,7 +284,8 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     setNewTestCase({
       name: '',
       description: '',
-      parent_id: null
+      parent_id: null,
+      project_id: projectId !== 'all' ? projectId : null
     });
     
     // Prepare list of available groups
@@ -305,13 +309,60 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     collectGroups(treeData);
     setAvailableGroups(groups);
     
+    // Fetch available projects
+    fetchProjects();
+    
     // Show modal
     setShowCreateTestCaseModal(true);
+  };
+
+  const fetchProjects = async () => {
+    try {
+      setIsLoadingProjects(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      const response = await fetch(`${API_URL}/api/projects`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch projects');
+      }
+      
+      const data = await response.json();
+      setAvailableProjects(data);
+      
+      // If the current projectId is set and valid, select it by default
+      if (projectId && projectId !== 'all') {
+        setNewTestCase(prev => ({ ...prev, project_id: projectId }));
+      }
+      // If there's only one project, select it by default
+      else if (data.length === 1) {
+        setNewTestCase(prev => ({ ...prev, project_id: data[0].id }));
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      alert('Failed to load projects. Please try again.');
+    } finally {
+      setIsLoadingProjects(false);
+    }
   };
 
   const handleConfirmCreateTestCase = async () => {
     if (!newTestCase.name.trim()) {
       alert('Test case name cannot be empty');
+      return;
+    }
+    
+    if (!newTestCase.project_id) {
+      alert('Please select a project');
       return;
     }
     
@@ -324,13 +375,9 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       const requestBody = {
         name: newTestCase.name.trim(),
         description: newTestCase.description.trim(),
-        parent_id: newTestCase.parent_id ? parseInt(newTestCase.parent_id) : null
+        parent_id: newTestCase.parent_id ? parseInt(newTestCase.parent_id) : null,
+        project_id: newTestCase.project_id
       };
-      
-      // Add project_id to the request if it's available and not 'all'
-      if (projectId && projectId !== 'all') {
-        requestBody.project_id = projectId;
-      }
       
       const response = await fetch(`${API_URL}/api/test_cases`, {
         method: 'POST',
@@ -621,7 +668,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
           <div className="modal-content">
             <h3>Create New Test Case</h3>
             <div className="form-group">
-              <label>Test Case Name:</label>
+              <label>Test Case Name: <span className="required">*</span></label>
               <input 
                 type="text" 
                 value={newTestCase.name}
@@ -651,11 +698,31 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                 ))}
               </select>
             </div>
+            <div className="form-group">
+              <label>Select Project: <span className="required">*</span></label>
+              <select
+                value={newTestCase.project_id || ''}
+                onChange={(e) => setNewTestCase(prev => ({ ...prev, project_id: e.target.value }))}
+                required
+              >
+                <option value="">-- Select a project --</option>
+                {availableProjects.map(project => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+              {isLoadingProjects && <div className="loading-indicator">Loading projects...</div>}
+              {availableProjects.length === 0 && !isLoadingProjects && (
+                <div className="no-projects-warning">No projects available. Please create a project first.</div>
+              )}
+            </div>
             <div className="modal-actions">
               <button onClick={() => setShowCreateTestCaseModal(false)} className="modal-button cancel">Cancel</button>
               <button 
                 onClick={handleConfirmCreateTestCase} 
                 className="modal-button create"
+                disabled={isLoadingProjects || availableProjects.length === 0}
               >
                 Create
               </button>
