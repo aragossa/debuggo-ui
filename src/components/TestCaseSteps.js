@@ -1319,11 +1319,11 @@ const TestCaseSteps = ({
             >
               {isGeneratingSteps ? (
                 <>
-                  <div className="spinner"></div> Generating...
+                  <div className="spinner"></div> Generating Steps
                 </>
               ) : (
                 <>
-                  <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate Steps
+                  <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate Steps with AI
                 </>
               )}
             </button>

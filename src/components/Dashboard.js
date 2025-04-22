@@ -5,7 +5,7 @@ import UploadPopup from './UploadPopup';
 import TestResultPopup from './TestResultPopup';
 import Environments from './Environments';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faFlask, faCog } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faFlask, faCog, faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -248,7 +248,7 @@ const Dashboard = () => {
             onClick={() => isProjectSelected && setShowUploadPopup(true)}
             disabled={!isProjectSelected}
           >
-            Generate from file
+            <FontAwesomeIcon icon={faFileImport} /> Generate from File
           </button>
           {!isProjectSelected && showTooltip && (
             <div className="tooltip">
