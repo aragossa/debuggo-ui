@@ -90,7 +90,7 @@ const LandingPage = () => {
         <div className="timeline-card">
           <div className="timeline-item">
             <div className="timeline-dot"></div>
-            <p>Beta Testing Expected: May 2025</p>
+            <p>Beta Testing Expected: June 2025</p>
           </div>
         </div>
       </section>

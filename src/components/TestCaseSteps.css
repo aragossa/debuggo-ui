@@ -124,14 +124,51 @@
 
 .test-steps-actions {
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 .environment-selector-container {
   position: relative;
-  display: inline-block;
-  margin-right: 10px;
+}
+
+.environment-selector-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 180px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.environment-selector-button:hover {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+}
+
+.environment-selector-button svg {
+  margin-left: 10px;
+}
+
+.generate-button-container, 
+.run-button-container {
+  position: relative;
+}
+
+/* Make buttons more flexible in the layout */
+.add-step-button {
+  margin-bottom: 0;
+}
+
+.run-button svg {
+  margin-right: 8px;
 }
 
 .environment-selector {
@@ -168,35 +205,95 @@
   display: inline-block;
 }
 
-.generate-steps-button,
-.run-button {
-  padding: 8px 16px;
+.generate-button {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  transition: background-color 0.2s;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+  min-width: 150px;
 }
 
-.generate-steps-button {
-  background-color: #9c27b0;
-  color: white;
+.generate-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #20bf6b 0%, #0b8a45 100%);
 }
 
-.generate-steps-button.disabled,
-.run-button.disabled {
-  background-color: #cccccc;
-  color: #666666;
+.generate-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 5px rgba(50, 50, 93, 0.1), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.generate-button:disabled {
+  background: linear-gradient(135deg, #adb5bd 0%, #6c757d 100%);
   cursor: not-allowed;
   opacity: 0.7;
 }
 
+.generate-button svg {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.generate-button.generating {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.generate-button.disabled {
+  background: linear-gradient(135deg, #adb5bd 0%, #6c757d 100%);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Modern Run Test Button */
 .run-button {
-  background-color: #4CAF50;
+  background: linear-gradient(135deg, #20bf6b 0%, #0b8a45 100%);
   color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+  min-width: 120px;
+}
+
+.run-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #26cc74 0%, #0d9e4f 100%);
+}
+
+.run-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 5px rgba(50, 50, 93, 0.1), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.run-button svg {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.run-button.disabled {
+  background: linear-gradient(135deg, #adb5bd 0%, #6c757d 100%);
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .test-case-header {
@@ -336,8 +433,18 @@
 
 /* Cell styling */
 .drag-handle-cell {
-  cursor: grab;
+  width: 30px;
   text-align: center;
+  cursor: grab;
+}
+
+.drag-handle-cell.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.drag-handle-cell.disabled .drag-handle {
+  color: #adb5bd;
 }
 
 .step-description-cell {
@@ -1226,30 +1333,77 @@
   padding: 0 8px;
 }
 
-/* Add Step Button */
+/* Modern Add Step Button */
 .add-step-button {
+  margin-bottom: 0;
+}
+
+/* Common button styles for action buttons */
+.action-button,
+.add-step-button,
+.generate-button,
+.run-button {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 20px;
-  padding: 10px 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+  min-width: 120px;
 }
 
-.add-step-button:hover {
-  background-color: #3e8e41;
+.action-button:hover,
+.add-step-button:hover,
+.generate-button:hover,
+.run-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #20bf6b 0%, #0b8a45 100%);
 }
 
-.add-step-button:disabled {
-  background-color: #cccccc;
+.action-button:active,
+.add-step-button:active,
+.generate-button:active,
+.run-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 5px rgba(50, 50, 93, 0.1), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.action-button:disabled,
+.action-button.disabled,
+.add-step-button:disabled,
+.generate-button:disabled,
+.run-button:disabled,
+.generate-button.disabled,
+.run-button.disabled {
+  background: linear-gradient(135deg, #adb5bd 0%, #6c757d 100%);
   cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.action-button svg,
+.add-step-button svg,
+.generate-button svg,
+.run-button svg {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+/* Remove any margin-bottom from add-step-button */
+.add-step-button {
+  margin-bottom: 0;
+}
+
+/* Specific styles for generate button when generating */
+.generate-button.generating {
+  background: linear-gradient(135deg, #fd7e14 0%, #e76f51 100%);
 }
 
 /* Form styling for add step modal */
@@ -1305,6 +1459,66 @@
   }
 }
 
+/* Spinner styles */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.generating-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+}
+
+.generating-indicator .spinner {
+  margin-right: 10px;
+  border-top-color: #007bff;
+  border-color: rgba(0, 123, 255, 0.3);
+}
+
+.generating-indicator-text {
+  font-weight: 500;
+  color: #495057;
+  flex-grow: 1;
+}
+
+.stop-generation-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.stop-generation-button:hover {
+  background-color: #c82333;
+}
+
+.stop-generation-button svg {
+  margin-right: 6px;
+}
+
 /* Screenshot Button and Modal */
 .view-screenshot-button {
   background: none;
@@ -1319,6 +1533,16 @@
 
 .view-screenshot-button:hover {
   background-color: rgba(74, 144, 226, 0.1);
+}
+
+.view-screenshot-button:disabled {
+  color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.view-screenshot-button:disabled:hover {
+  background-color: transparent;
 }
 
 .screenshot-modal {
@@ -1373,4 +1597,87 @@
   text-align: center;
   color: #666;
   font-style: italic;
+}
+
+/* Stop Button Styles */
+.stop-button-container {
+  position: relative;
+  display: none; /* Hidden by default, shown when running */
+}
+
+.stop-button {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+  color: white;
+}
+
+.stop-button:hover {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%) !important;
+}
+
+/* Show stop button when test is running */
+.test-steps-actions.running .run-button-container {
+  display: none;
+}
+
+.test-steps-actions.running .stop-button-container {
+  display: block;
+}
+
+/* Running indicator */
+.running-indicator {
+  display: flex;
+  align-items: center;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.running-indicator .spinner {
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top: 3px solid #e74c3c;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  margin-right: 12px;
+}
+
+.running-indicator-text {
+  flex-grow: 1;
+  font-size: 14px;
+  color: #495057;
+}
+
+.stop-execution-button {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stop-execution-button:hover {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stop-execution-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.stop-execution-button svg {
+  margin-right: 8px;
+  font-size: 16px;
 }

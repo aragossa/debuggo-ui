@@ -28,25 +28,37 @@
 
 .create-group-button,
 .create-test-button {
-  background-color: #4CAF50;
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
   color: white;
   border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.9rem;
-}
-
-.create-test-button {
-  background-color: #2196F3;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .create-group-button:hover,
 .create-test-button:hover {
-  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #20bf6b 0%, #0b8a45 100%);
+}
+
+.create-group-button:active,
+.create-test-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 5px rgba(50, 50, 93, 0.1), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.create-group-button svg,
+.create-test-button svg {
+  font-size: 16px;
 }
 
 .test-case-tree {

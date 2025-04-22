@@ -36,10 +36,17 @@ const TestCaseSteps = ({
   const [draggedStep, setDraggedStep] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isGeneratingSteps, setIsGeneratingSteps] = useState(false);
+  const [generatingTestCases, setGeneratingTestCases] = useState(() => {
+    // Initialize from localStorage if available
+    const saved = localStorage.getItem('generatingTestCases');
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [pollingInterval, setPollingInterval] = useState(null);
   const [showProjectTooltip, setShowProjectTooltip] = useState(false);
   const [showGenerateTooltip, setShowGenerateTooltip] = useState(false);
   const [showRunTooltip, setShowRunTooltip] = useState(false);
   const [showEnvTooltip, setShowEnvTooltip] = useState(false);
+  const [showRunningTooltip, setShowRunningTooltip] = useState(false);
   const [environments, setEnvironments] = useState([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
   const [showRunConfirmModal, setShowRunConfirmModal] = useState(false);
@@ -89,6 +96,45 @@ const TestCaseSteps = ({
   const inputRefs = useRef({});
   const locatorTooltipRef = useRef(null);
   const environmentDropdownRef = React.useRef(null);
+
+  // State for tracking steps with screenshots
+  const [stepsWithScreenshots, setStepsWithScreenshots] = useState({});
+
+  // Function to check if a step has a screenshot
+  const checkStepScreenshot = async (stepId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      // If the response is OK, a screenshot exists
+      return response.ok;
+    } catch (error) {
+      console.error('Error checking screenshot availability:', error);
+      return false;
+    }
+  };
+
+  // Check for screenshots when steps are loaded
+  useEffect(() => {
+    const checkScreenshots = async () => {
+      if (steps && steps.length > 0) {
+        const screenshotStatus = {};
+        
+        for (const step of steps) {
+          screenshotStatus[step.id] = await checkStepScreenshot(step.id);
+        }
+        
+        setStepsWithScreenshots(screenshotStatus);
+      }
+    };
+    
+    checkScreenshots();
+  }, [steps]);
 
   useEffect(() => {
     // Add click outside listener to close the dropdown
@@ -164,6 +210,147 @@ const TestCaseSteps = ({
       description: test_description || ''
     });
   }, [test_name, test_description]);
+
+  useEffect(() => {
+    if (test_steps && Array.isArray(test_steps)) {
+      // Log the test steps to debug
+      console.log("Test steps received:", test_steps);
+      
+      setSteps(test_steps);
+      // Initialize stepValues with values from test_steps
+      const initialValues = {};
+      test_steps.forEach(step => {
+        if (step.action === 'type' && step.value) {
+          initialValues[step.id] = step.value;
+        }
+      });
+      setStepValues(initialValues);
+    }
+  }, [test_steps]);
+
+  useEffect(() => {
+    if (testCaseId) {
+      // Check if this test case is in the list of generating test cases
+      const isGenerating = generatingTestCases[testCaseId];
+      
+      if (isGenerating) {
+        setIsGeneratingSteps(true);
+        startPollingForUpdates();
+      }
+    }
+    
+    // Cleanup polling when component unmounts
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [testCaseId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    localStorage.setItem('generatingTestCases', JSON.stringify(generatingTestCases));
+  }, [generatingTestCases]);
+
+  const startPollingForUpdates = () => {
+    // Clear any existing interval
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+    }
+    
+    // Set up a new polling interval
+    const interval = setInterval(async () => {
+      if (!testCaseId) return;
+      
+      try {
+        const response = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
+          headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch test case generation status');
+        }
+        
+        const data = await response.json();
+        
+        // Update steps with the latest from the server
+        if (data.test_steps && Array.isArray(data.test_steps)) {
+          setSteps(data.test_steps);
+          
+          // Initialize stepValues for any new type steps
+          setStepValues(prevValues => {
+            const newValues = { ...prevValues };
+            data.test_steps.forEach(step => {
+              if (step.action === 'type' && step.value && !newValues[step.id]) {
+                newValues[step.id] = step.value;
+              }
+            });
+            return newValues;
+          });
+        }
+        
+        // Check if generation is complete
+        if (!data.is_generating) {
+          setIsGeneratingSteps(false);
+          
+          // Remove this test case from the generating list
+          setGeneratingTestCases(prev => {
+            const updated = { ...prev };
+            delete updated[testCaseId];
+            return updated;
+          });
+          
+          // Stop polling
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+      } catch (error) {
+        console.error('Error checking test case generation status:', error);
+      }
+    }, 3000); // Poll every 3 seconds
+    
+    setPollingInterval(interval);
+  };
+
+  const handleStopGeneration = async () => {
+    if (!testCaseId || !isGeneratingSteps) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/api/stop_test_case_generation/${testCaseId}`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to stop test step generation');
+      }
+      
+      // We'll let the polling handle the UI update once the backend confirms the stop
+      console.log('Requested to stop test step generation');
+    } catch (error) {
+      console.error('Error stopping test step generation:', error);
+      alert('Failed to stop test step generation. Please try again.');
+    }
+  };
+
+  const handleStopExecution = async () => {
+    if (!testCaseId || !isRunning) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/api/stop_test_case_execution/${testCaseId}`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to stop test execution');
+      }
+      
+      console.log('Requested to stop test execution');
+    } catch (error) {
+      console.error('Error stopping test execution:', error);
+      alert('Failed to stop test execution. Please try again.');
+    }
+  };
 
   const fetchEnvironments = async () => {
     if (!projectId || projectId === 'all') return;
@@ -496,6 +683,13 @@ const TestCaseSteps = ({
     if (!testCaseId || isGeneratingSteps || !isProjectSelected || !selectedEnvironment) return;
     
     setIsGeneratingSteps(true);
+    
+    // Add this test case to the generating list
+    setGeneratingTestCases(prev => ({
+      ...prev,
+      [testCaseId]: true
+    }));
+    
     try {
       const endpoint = confirm 
         ? `${API_URL}/api/confirm_generate_steps/${testCaseId}` 
@@ -523,16 +717,20 @@ const TestCaseSteps = ({
         throw new Error('Failed to generate steps');
       }
       
-      const data = await response.json();
+      // Start polling for updates
+      startPollingForUpdates();
       
-      // Don't set isGeneratingSteps to false here as the backend process is still running
-      // The status check interval will update it when the process completes
-      
-      alert('Test step generation has started. This may take a few minutes to complete.');
     } catch (error) {
       console.error('Error generating steps:', error);
       alert('Failed to generate steps. Please try again.');
       setIsGeneratingSteps(false);
+      
+      // Remove this test case from the generating list
+      setGeneratingTestCases(prev => {
+        const updated = { ...prev };
+        delete updated[testCaseId];
+        return updated;
+      });
     }
   };
   
@@ -622,6 +820,12 @@ const TestCaseSteps = ({
   };
 
   const handleDragStart = (e, step) => {
+    // Prevent dragging if generating steps or running test
+    if (isGeneratingSteps || isRunning) {
+      e.preventDefault();
+      return;
+    }
+    
     setDraggedStep(step);
     e.currentTarget.classList.add('dragging');
   };
@@ -1023,168 +1227,151 @@ const TestCaseSteps = ({
   return (
     <div className="test-steps-container">
       <div className="test-case-header">
-        <h2>{test_name}</h2>
-        <p>{test_description}</p>
-        <p className="last-updated">Last updated: {updated_at}</p>
-        <button 
-          className="edit-test-case-button" 
-          onClick={handleEditTestCaseClick}
-          title="Edit test case name and description"
-        >
-          <FontAwesomeIcon icon={faEdit} /> Edit
-        </button>
-      </div>
-
-      {showEditTestCaseModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Edit Test Case</h3>
-            <form onSubmit={handleUpdateTestCase}>
-              <div className="form-group">
-                <label>Name:</label>
-                <input type="text" name="name" value={editedTestCase.name} onChange={handleTestCaseChange} required />
-              </div>
-              <div className="form-group">
-                <label>Description:</label>
-                <textarea name="description" value={editedTestCase.description} onChange={handleTestCaseChange} required />
-              </div>
-              <div className="modal-actions">
-                <button type="button" onClick={() => setShowEditTestCaseModal(false)} className="modal-button cancel">Cancel</button>
-                <button type="submit" className="modal-button confirm" disabled={isUpdatingTestCase}>
-                  {isUpdatingTestCase ? 'Updating...' : 'Update'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <div className="test-steps-header">
-        <h3>Test Steps</h3>
-        <div className="test-steps-actions">
-          <div className="generate-button-container"
-               onMouseEnter={() => {
-                 if (!isProjectSelected) {
-                   setShowProjectTooltip(true);
-                 } else if (!selectedEnvironment) {
-                   setShowEnvTooltip(true);
-                 }
-               }}
-               onMouseLeave={() => {
-                 setShowProjectTooltip(false);
-                 setShowEnvTooltip(false);
-               }}>
-            <button
-              className={`generate-button ${(isRunning || isGeneratingSteps || !isProjectSelected || !selectedEnvironment) ? 'disabled' : ''}`}
-              onClick={handleGenerateSteps}
-              disabled={isRunning || isGeneratingSteps || !isProjectSelected || !selectedEnvironment}
+        <h2>
+          {test_name}
+          <button 
+            className="edit-test-case-button"
+            onClick={() => setShowEditTestCaseModal(true)}
+          >
+            <FontAwesomeIcon icon={faEdit} />
+          </button>
+        </h2>
+        <p className="test-description">{test_description}</p>
+        
+        <div className={`test-steps-actions ${isRunning ? 'running' : ''}`}>
+          <div className="environment-selector-container">
+            <div 
+              className="environment-selector-button"
+              onClick={() => setShowEnvironmentDropdown(!showEnvironmentDropdown)}
+              onMouseEnter={() => setShowEnvTooltip(true)}
+              onMouseLeave={() => setShowEnvTooltip(false)}
             >
-              <FontAwesomeIcon icon={faMagicWandSparkles} className={isGeneratingSteps ? 'fa-spin' : ''} />
-              {isGeneratingSteps ? 'Generating...' : 'Generate Steps'}
+              {selectedEnvironment 
+                ? environments.find(env => env.id.toString() === selectedEnvironment)?.name || 'Select Environment'
+                : 'Select Environment'}
+              <FontAwesomeIcon icon={showEnvironmentDropdown ? faChevronUp : faChevronDown} />
+            </div>
+            {showEnvironmentDropdown && (
+              <div className="environment-dropdown" ref={environmentDropdownRef}>
+                {environments.length > 0 ? (
+                  <>
+                    {environments.map(env => (
+                      <div 
+                        key={env.id} 
+                        className={`environment-option ${selectedEnvironment === env.id.toString() ? 'selected' : ''}`}
+                        onClick={() => handleEnvironmentChange(env.id.toString())}
+                      >
+                        <span>{env.name}</span>
+                        <button 
+                          className="edit-environment-button"
+                          onClick={(e) => handleEditEnvironmentClick(env, e)}
+                        >
+                          <FontAwesomeIcon icon={faEdit} />
+                        </button>
+                      </div>
+                    ))}
+                    <div 
+                      className="environment-option add-environment"
+                      onClick={handleAddNewEnvironmentClick}
+                    >
+                      <FontAwesomeIcon icon={faPlus} /> Add New Environment
+                    </div>
+                  </>
+                ) : (
+                  <div className="no-environments">
+                    <p>No environments available</p>
+                    <button 
+                      className="add-environment-button"
+                      onClick={handleAddNewEnvironmentClick}
+                    >
+                      <FontAwesomeIcon icon={faPlus} /> Add Environment
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <button 
+            className="add-step-button action-button"
+            onClick={handleAddStepClick}
+            disabled={isGeneratingSteps || isRunning}
+          >
+            <FontAwesomeIcon icon={faPlus} /> Add Step
+          </button>
+          
+          <div className="generate-button-container">
+            <button 
+              className={`generate-button action-button ${isGeneratingSteps ? 'generating' : ''} ${(!isProjectSelected || isRunning) ? 'disabled' : ''}`}
+              onClick={handleGenerateSteps}
+              disabled={isGeneratingSteps || !isProjectSelected || isRunning}
+              onMouseEnter={() => {
+                if (!isProjectSelected) {
+                  setShowProjectTooltip(true);
+                } else if (isRunning) {
+                  setShowRunningTooltip(true);
+                }
+              }}
+              onMouseLeave={() => {
+                setShowProjectTooltip(false);
+                setShowRunningTooltip(false);
+              }}
+            >
+              {isGeneratingSteps ? (
+                <>
+                  <div className="spinner"></div> Generating...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate Steps
+                </>
+              )}
             </button>
             {!isProjectSelected && showProjectTooltip && (
               <div className="tooltip">
                 <FontAwesomeIcon icon={faInfoCircle} /> Please select a project first
               </div>
             )}
-            {isProjectSelected && !selectedEnvironment && showEnvTooltip && (
+            {isRunning && showRunningTooltip && (
               <div className="tooltip">
-                <FontAwesomeIcon icon={faInfoCircle} /> Please select an environment
+                <FontAwesomeIcon icon={faInfoCircle} /> Cannot generate steps while test is running
               </div>
             )}
           </div>
           
-          {/* Custom Environment Selector */}
-          {isProjectSelected && (
-            <div className="environment-selector-container" ref={environmentDropdownRef}>
-              <div 
-                className="environment-selector-button"
-                onClick={() => setShowEnvironmentDropdown(!showEnvironmentDropdown)}
-                disabled={isRunning || isGeneratingSteps}
-              >
-                {selectedEnvironment ? 
-                  environments.find(env => env.id.toString() === selectedEnvironment)?.name : 
-                  'Select Environment *'}
-                <FontAwesomeIcon icon={showEnvironmentDropdown ? faChevronUp : faChevronDown} />
-              </div>
-              
-              {showEnvironmentDropdown && (
-                <div className="environment-dropdown">
-                  <div 
-                    className="environment-dropdown-item"
-                    onClick={() => handleEnvironmentChange('')}
-                  >
-                    <div className="environment-item-content">
-                      <span className="environment-name">No Environment</span>
-                      <span className="environment-description">Run with default settings</span>
-                    </div>
-                  </div>
-                  
-                  {environments.map(env => (
-                    <div 
-                      key={env.id} 
-                      className={`environment-dropdown-item ${selectedEnvironment === env.id.toString() ? 'selected' : ''}`}
-                      onClick={() => handleEnvironmentChange(env.id.toString())}
-                    >
-                      <div className="environment-item-content">
-                        <span className="environment-name">{env.name}</span>
-                        <span className="environment-url">{env.base_url}</span>
-                        {env.login && <span className="environment-login">Login: {env.login}</span>}
-                      </div>
-                      <button 
-                        className="environment-edit-button"
-                        onClick={(e) => handleEditEnvironmentClick(env, e)}
-                      >
-                        <FontAwesomeIcon icon={faEdit} />
-                      </button>
-                    </div>
-                  ))}
-                  
-                  <div 
-                    className="environment-dropdown-item add-new"
-                    onClick={handleAddNewEnvironmentClick}
-                  >
-                    <div className="environment-item-content">
-                      <span className="environment-name">
-                        <FontAwesomeIcon icon={faPlus} /> Add New Environment
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          
-          <div className="run-button-container"
-               onMouseEnter={() => {
-                 if (isGeneratingSteps) {
-                   setShowRunTooltip(true);
-                 } else if (!hasTestSteps) {
-                   setShowRunTooltip(true);
-                 }
-               }}
-               onMouseLeave={() => {
-                 setShowRunTooltip(false);
-               }}>
-            <button
-              className={`run-button ${(!hasTestSteps || isRunning || isGeneratingSteps) ? 'disabled' : ''}`}
+          <div className="run-button-container">
+            <button 
+              className={`run-button action-button ${(isRunning || !hasTestSteps || isGeneratingSteps) ? 'disabled' : ''}`}
               onClick={handleRunClick}
-              disabled={!hasTestSteps || isRunning || isGeneratingSteps}
+              disabled={isRunning || !hasTestSteps || isGeneratingSteps}
+              onMouseEnter={() => setShowRunTooltip(true)}
+              onMouseLeave={() => setShowRunTooltip(false)}
             >
-              <FontAwesomeIcon icon={faPlay} className={isRunning ? 'fa-spin' : ''} />
-              {isRunning ? 'Running...' : 'Run Test'}
+              {isRunning ? (
+                <>
+                  <div className="spinner"></div> Running...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faPlay} /> Run Test
+                </>
+              )}
             </button>
-            {isGeneratingSteps && showRunTooltip && (
-              <div className="tooltip">
-                <FontAwesomeIcon icon={faInfoCircle} /> Cannot run test while generating steps
+            {showRunTooltip && !hasTestSteps && (
+              <div className="tooltip run-tooltip">
+                <FontAwesomeIcon icon={faInfoCircle} /> No test steps to run
               </div>
             )}
-            {!hasTestSteps && !isGeneratingSteps && showRunTooltip && (
-              <div className="tooltip">
-                <FontAwesomeIcon icon={faInfoCircle} /> There are no test steps yet, please generate them or add manually
-              </div>
-            )}
-          </div>  
+          </div>
+          <div className="stop-button-container">
+            <button 
+              className={`stop-button action-button ${(!isRunning) ? 'disabled' : ''}`}
+              onClick={handleStopExecution}
+              disabled={!isRunning}
+            >
+              <FontAwesomeIcon icon={faTimesCircle} /> Stop Test
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1444,13 +1631,32 @@ const TestCaseSteps = ({
           </div>
         </div>
       )}
-      <button 
-        className="add-step-button"
-        onClick={handleAddStepClick}
-      >
-        <FontAwesomeIcon icon={faPlus} /> Add Step
-      </button>
       <div className="test-steps-table-container">
+        {isGeneratingSteps && (
+          <div className="generating-indicator">
+            <div className="spinner"></div>
+            <span className="generating-indicator-text">Generating test steps... Steps will appear as they are created.</span>
+            <button 
+              className="stop-generation-button"
+              onClick={handleStopGeneration}
+            >
+              <FontAwesomeIcon icon={faTimesCircle} /> Stop Generation
+            </button>
+          </div>
+        )}
+        
+        {isRunning && (
+          <div className="running-indicator">
+            <div className="spinner"></div>
+            <span className="running-indicator-text">Executing test steps... Results will be updated when complete.</span>
+            <button 
+              className="stop-execution-button"
+              onClick={handleStopExecution}
+            >
+              <FontAwesomeIcon icon={faTimesCircle} /> Stop Execution
+            </button>
+          </div>
+        )}
         <table className="test-steps-table">
           <thead>
             <tr>
@@ -1467,15 +1673,15 @@ const TestCaseSteps = ({
               <tr
                 key={step.id}
                 className="test-step-row"
-                draggable="true"
+                draggable={!isGeneratingSteps && !isRunning}
                 onDragStart={(e) => handleDragStart(e, step)}
                 onDragEnd={handleDragEnd}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, step)}
               >
-                <td className="drag-handle-cell">
-
+                <td className={`drag-handle-cell ${(isGeneratingSteps || isRunning) ? 'disabled' : ''}`}>
+                  <FontAwesomeIcon icon={faGripVertical} className="drag-handle" />
                 </td>
                 <td className="step-description-cell">
                   {step.description}
@@ -1615,6 +1821,7 @@ const TestCaseSteps = ({
                     className="view-screenshot-button"
                     onClick={() => handleViewScreenshot(step.id)}
                     title="View screenshot"
+                    disabled={!stepsWithScreenshots[step.id]}
                   >
                     <FontAwesomeIcon icon={faImage} />
                   </button>
