@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faTrash, faEdit, faSearch, faSpinner, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import './Clients.css';
 
 const Clients = () => {
@@ -11,6 +13,8 @@ const Clients = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDeleting, setIsDeleting] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
 
   useEffect(() => {
     fetchClients();
@@ -35,6 +39,11 @@ const Clients = () => {
 
   const handleNewClient = () => {
     navigate('/clients/new');
+  };
+
+  const handleEditClient = (clientId) => {
+    // This is a placeholder for future edit functionality
+    console.log(`Edit client with ID: ${clientId}`);
   };
 
   const handleDeleteClient = async (clientId) => {
@@ -70,12 +79,48 @@ const Clients = () => {
     }
   };
 
-  if (loading) {
-    return <div className="clients-container">Loading...</div>;
-  }
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
 
-  if (error) {
-    return <div className="clients-container error">{error}</div>;
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Sort and filter clients
+  const sortedClients = [...clients].sort((a, b) => {
+    if (sortConfig.key === 'name') {
+      return sortConfig.direction === 'ascending' 
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name);
+    } else if (sortConfig.key === 'created_at' || sortConfig.key === 'updated_at') {
+      return sortConfig.direction === 'ascending' 
+        ? new Date(a[sortConfig.key]) - new Date(b[sortConfig.key])
+        : new Date(b[sortConfig.key]) - new Date(a[sortConfig.key]);
+    }
+    return 0;
+  });
+
+  const filteredClients = sortedClients.filter(client => 
+    client.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getSortIndicator = (key) => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === 'ascending' ? ' ↑' : ' ↓';
+  };
+
+  if (loading) {
+    return (
+      <div className="clients-container loading-container">
+        <FontAwesomeIcon icon={faSpinner} spin className="loading-icon" />
+        <p>Loading clients...</p>
+      </div>
+    );
   }
 
   return (
@@ -83,38 +128,81 @@ const Clients = () => {
       <div className="clients-header">
         <h1>Clients</h1>
         <button onClick={handleNewClient} className="new-client-btn">
-          New Client
+          <FontAwesomeIcon icon={faPlus} /> New Client
         </button>
       </div>
+
+      {error && (
+        <div className="error-container">
+          <FontAwesomeIcon icon={faExclamationTriangle} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <div className="clients-controls">
+        <div className="search-container">
+          <FontAwesomeIcon icon={faSearch} className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search clients..."
+            value={searchTerm}
+            onChange={handleSearch}
+            className="search-input"
+          />
+        </div>
+      </div>
+
       <div className="clients-list">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Created At</th>
-              <th>Updated At</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((client) => (
-              <tr key={client.id}>
-                <td>{client.name}</td>
-                <td>{new Date(client.created_at).toLocaleString()}</td>
-                <td>{new Date(client.updated_at).toLocaleString()}</td>
-                <td>
+        {filteredClients.length === 0 ? (
+          <div className="no-clients">
+            {searchTerm ? 'No clients match your search' : 'No clients found. Create your first client!'}
+          </div>
+        ) : (
+          <div className="client-cards">
+            {filteredClients.map((client) => (
+              <div key={client.id} className="client-card">
+                <div className="client-card-header">
+                  <h3>{client.name}</h3>
+                </div>
+                <div className="client-card-body">
+                  <div className="client-info">
+                    <div className="info-item">
+                      <span className="info-label">Created:</span>
+                      <span className="info-value">{new Date(client.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div className="info-item">
+                      <span className="info-label">Last Updated:</span>
+                      <span className="info-value">{new Date(client.updated_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="client-card-footer">
+                  <button
+                    onClick={() => handleEditClient(client.id)}
+                    className="edit-btn"
+                  >
+                    <FontAwesomeIcon icon={faEdit} /> Edit
+                  </button>
                   <button
                     onClick={() => handleDeleteClient(client.id)}
                     className="delete-btn"
                     disabled={isDeleting === client.id}
                   >
-                    {isDeleting === client.id ? 'Deleting...' : 'Delete'}
+                    {isDeleting === client.id ? (
+                      <>
+                        <FontAwesomeIcon icon={faSpinner} spin /> Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <FontAwesomeIcon icon={faTrash} /> Delete
+                      </>
+                    )}
                   </button>
-                </td>
-              </tr>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        )}
       </div>
     </div>
   );

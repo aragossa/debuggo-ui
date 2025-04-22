@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faPencilAlt, faTrash, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faPlus, 
+  faPencilAlt, 
+  faTrash, 
+  faFolderOpen, 
+  faProjectDiagram, 
+  faBuilding, 
+  faInfoCircle, 
+  faSpinner,
+  faTimes,
+  faSearch,
+  faExclamationTriangle,
+  faCheck
+} from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './Projects.css';
 
@@ -12,6 +25,8 @@ const Projects = () => {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterClient, setFilterClient] = useState('all');
   const API_URL = process.env.REACT_APP_API_URL;
   const { getAuthHeaders, user } = useAuth();
 
@@ -140,6 +155,7 @@ const Projects = () => {
 
   const handleEditProject = (project) => {
     setEditingProject({ ...project });
+    setShowForm(false); // Close create form if open
   };
 
   const handleCancelEdit = () => {
@@ -151,57 +167,150 @@ const Projects = () => {
     window.location.href = `/projects/${projectId}`;
   };
 
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleFilterClient = (e) => {
+    setFilterClient(e.target.value);
+  };
+
+  // Filter projects based on search term and client filter
+  const filteredProjects = projects.filter(project => {
+    // Search term filter
+    const matchesSearch = 
+      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    // Client filter
+    const matchesClient = 
+      filterClient === 'all' || 
+      (filterClient === 'none' && !project.client_id) ||
+      (project.client_id === filterClient);
+    
+    return matchesSearch && matchesClient;
+  });
+
   if (loading) {
-    return <div className="loading">Loading projects...</div>;
+    return (
+      <div className="projects-container loading-container">
+        <FontAwesomeIcon icon={faSpinner} spin className="loading-icon" />
+        <p>Loading projects...</p>
+      </div>
+    );
   }
 
   return (
     <div className="projects-container">
       <div className="projects-header">
-        <h1>Projects</h1>
+        <h1>
+          <FontAwesomeIcon icon={faProjectDiagram} className="header-icon" /> 
+          Projects
+        </h1>
         <button 
           className="create-project-button"
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setShowForm(!showForm);
+            if (editingProject) setEditingProject(null);
+          }}
         >
-          <FontAwesomeIcon icon={faPlus} /> {showForm ? 'Cancel' : 'New Project'}
+          {showForm ? (
+            <>
+              <FontAwesomeIcon icon={faTimes} /> Cancel
+            </>
+          ) : (
+            <>
+              <FontAwesomeIcon icon={faPlus} /> New Project
+            </>
+          )}
         </button>
       </div>
       
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="error-container">
+          <FontAwesomeIcon icon={faExclamationTriangle} />
+          <span>{error}</span>
+        </div>
+      )}
+      
+      <div className="projects-controls">
+        <div className="search-container">
+          <FontAwesomeIcon icon={faSearch} className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search projects..."
+            value={searchTerm}
+            onChange={handleSearch}
+            className="search-input"
+          />
+        </div>
+        
+        {user && user.role === 'admin' && clients.length > 0 && (
+          <div className="filter-container">
+            <label>
+              <FontAwesomeIcon icon={faBuilding} /> Client:
+            </label>
+            <select 
+              value={filterClient} 
+              onChange={handleFilterClient}
+              className="filter-select"
+            >
+              <option value="all">All Clients</option>
+              <option value="none">No Client</option>
+              {clients.map(client => (
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
       
       {showForm && (
         <div className="project-form-container">
-          <h2>Create New Project</h2>
+          <h2>
+            <FontAwesomeIcon icon={faPlus} /> Create New Project
+          </h2>
           <form onSubmit={handleCreateProject} className="project-form">
             <div className="form-group">
-              <label htmlFor="name">Project Name</label>
+              <label htmlFor="name">
+                <FontAwesomeIcon icon={faProjectDiagram} /> Project Name*
+              </label>
               <input
                 type="text"
                 id="name"
                 value={newProject.name}
                 onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
                 required
+                placeholder="Enter project name"
               />
             </div>
             
             <div className="form-group">
-              <label htmlFor="description">Description</label>
+              <label htmlFor="description">
+                <FontAwesomeIcon icon={faInfoCircle} /> Description
+              </label>
               <textarea
                 id="description"
                 value={newProject.description}
                 onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
                 rows={3}
+                placeholder="Enter project description"
               />
             </div>
             
             {user && user.role === 'admin' && (
               <div className="form-group">
-                <label htmlFor="client_id">Client *</label>
+                <label htmlFor="client_id">
+                  <FontAwesomeIcon icon={faBuilding} /> Client*
+                </label>
                 <select
                   id="client_id"
                   value={newProject.client_id || ''}
                   onChange={(e) => setNewProject({ ...newProject, client_id: e.target.value })}
                   required
+                  className="client-select"
                 >
                   <option value="">Select a client</option>
                   {clients.map(client => (
@@ -212,69 +321,103 @@ const Projects = () => {
             )}
             
             <div className="form-actions">
-              <button type="submit">Create Project</button>
-              <button type="button" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit" className="submit-button">
+                <FontAwesomeIcon icon={faCheck} /> Create Project
+              </button>
+              <button 
+                type="button" 
+                className="cancel-button" 
+                onClick={() => setShowForm(false)}
+              >
+                <FontAwesomeIcon icon={faTimes} /> Cancel
+              </button>
             </div>
           </form>
         </div>
       )}
       
       {editingProject && (
-        <div className="project-form-container">
-          <h2>Edit Project</h2>
+        <div className="project-form-container editing">
+          <h2>
+            <FontAwesomeIcon icon={faPencilAlt} /> Edit Project
+          </h2>
           <form onSubmit={handleUpdateProject} className="project-form">
             <div className="form-group">
-              <label htmlFor="edit-name">Project Name</label>
+              <label htmlFor="edit-name">
+                <FontAwesomeIcon icon={faProjectDiagram} /> Project Name*
+              </label>
               <input
                 type="text"
                 id="edit-name"
                 value={editingProject.name}
                 onChange={(e) => setEditingProject({ ...editingProject, name: e.target.value })}
                 required
+                placeholder="Enter project name"
               />
             </div>
             
             <div className="form-group">
-              <label htmlFor="edit-description">Description</label>
+              <label htmlFor="edit-description">
+                <FontAwesomeIcon icon={faInfoCircle} /> Description
+              </label>
               <textarea
                 id="edit-description"
                 value={editingProject.description || ''}
                 onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
+                placeholder="Enter project description"
               />
             </div>
             
-            <div className="form-group">
-              <label htmlFor="edit-client">Client</label>
-              <select
-                id="edit-client"
-                value={editingProject.client_id || ''}
-                onChange={(e) => setEditingProject({ ...editingProject, client_id: e.target.value || null })}
-              >
-                <option value="">-- Select Client --</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>{client.name}</option>
-                ))}
-              </select>
-            </div>
+            {user && user.role === 'admin' && (
+              <div className="form-group">
+                <label htmlFor="edit-client">
+                  <FontAwesomeIcon icon={faBuilding} /> Client
+                </label>
+                <select
+                  id="edit-client"
+                  value={editingProject.client_id || ''}
+                  onChange={(e) => setEditingProject({ ...editingProject, client_id: e.target.value || null })}
+                  className="client-select"
+                >
+                  <option value="">-- No Client --</option>
+                  {clients.map(client => (
+                    <option key={client.id} value={client.id}>{client.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             
             <div className="form-actions">
-              <button type="submit" className="submit-button">Update Project</button>
-              <button type="button" className="cancel-button" onClick={handleCancelEdit}>Cancel</button>
+              <button type="submit" className="submit-button update">
+                <FontAwesomeIcon icon={faCheck} /> Update Project
+              </button>
+              <button 
+                type="button" 
+                className="cancel-button" 
+                onClick={handleCancelEdit}
+              >
+                <FontAwesomeIcon icon={faTimes} /> Cancel
+              </button>
             </div>
           </form>
         </div>
       )}
       
-      <div className="projects-list">
-        {projects.length === 0 ? (
-          <div className="no-projects">
-            <p>No projects found. Create your first project to get started!</p>
-          </div>
-        ) : (
-          projects.map(project => (
+      {filteredProjects.length === 0 ? (
+        <div className="no-projects">
+          <FontAwesomeIcon icon={faProjectDiagram} className="no-projects-icon" />
+          <p>
+            {searchTerm || filterClient !== 'all' 
+              ? 'No projects match your search criteria' 
+              : 'No projects found. Create your first project to get started!'}
+          </p>
+        </div>
+      ) : (
+        <div className="projects-list">
+          {filteredProjects.map(project => (
             <div key={project.id} className="project-card">
               <div className="project-card-header">
-                <h3>{project.name}</h3>
+                <h3 title={project.name}>{project.name}</h3>
                 <div className="project-actions">
                   <button 
                     className="action-button view"
@@ -300,17 +443,22 @@ const Projects = () => {
                 </div>
               </div>
               <div className="project-card-body">
-                <p className="project-description">{project.description || 'No description provided.'}</p>
+                <p className="project-description">
+                  {project.description || 'No description provided.'}
+                </p>
                 {project.client_id && (
-                  <p className="project-client">
-                    <strong>Client:</strong> {clients.find(c => c.id === project.client_id)?.name || 'Unknown'}
-                  </p>
+                  <div className="project-client">
+                    <FontAwesomeIcon icon={faBuilding} className="client-icon" />
+                    <span>
+                      {clients.find(c => c.id === project.client_id)?.name || 'Unknown Client'}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

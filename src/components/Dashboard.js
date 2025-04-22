@@ -116,6 +116,11 @@ const Dashboard = () => {
     const projectId = e.target.value;
     setSelectedProject(projectId);
     localStorage.setItem('selectedProjectId', projectId);
+    
+    // Clear the selected test case when changing projects
+    setSelectedTestId(null);
+    setTestCase(null);
+    localStorage.removeItem('selectedTestId');
   };
 
   const handleNodeClick = async (id) => {
