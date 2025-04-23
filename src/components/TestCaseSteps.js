@@ -27,15 +27,18 @@ const TestCaseSteps = ({
   test_name, 
   test_description, 
   updated_at, 
-  projectId 
+  projectId,
+  onTestCaseUpdate
 }) => {
   const [expandedRuns, setExpandedRuns] = useState({});
   const [isRunning, setIsRunning] = useState(false);
+  const [isGeneratingSteps, setIsGeneratingSteps] = useState(false);
+  const [steps, setSteps] = useState(test_steps || []);
+  const [currentTestName, setCurrentTestName] = useState(test_name || '');
+  const [currentTestDescription, setCurrentTestDescription] = useState(test_description || '');
   const [stepValues, setStepValues] = useState({});
-  const [steps, setSteps] = useState([]);
   const [draggedStep, setDraggedStep] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [isGeneratingSteps, setIsGeneratingSteps] = useState(false);
   const [generatingTestCases, setGeneratingTestCases] = useState(() => {
     // Initialize from localStorage if available
     const saved = localStorage.getItem('generatingTestCases');
@@ -78,8 +81,8 @@ const TestCaseSteps = ({
   });
   const [isEditingTestCase, setIsEditingTestCase] = useState(false);
   const [editedTestCase, setEditedTestCase] = useState({
-    name: test_name,
-    description: test_description
+    name: currentTestName,
+    description: currentTestDescription
   });
   const [isUpdatingTestCase, setIsUpdatingTestCase] = useState(false);
   const [showEditTestCaseModal, setShowEditTestCaseModal] = useState(false);
@@ -206,10 +209,10 @@ const TestCaseSteps = ({
 
   useEffect(() => {
     setEditedTestCase({
-      name: test_name || '',
-      description: test_description || ''
+      name: currentTestName,
+      description: currentTestDescription
     });
-  }, [test_name, test_description]);
+  }, [currentTestName, currentTestDescription]);
 
   useEffect(() => {
     // This effect runs when the component mounts or when testCaseId changes
@@ -1200,6 +1203,15 @@ const TestCaseSteps = ({
         throw new Error('Failed to update test case');
       }
 
+      // Update the test case details in the parent component
+      if (typeof onTestCaseUpdate === 'function') {
+        onTestCaseUpdate(editedTestCase.name, editedTestCase.description);
+      }
+
+      // Update the local state to reflect the changes immediately
+      setCurrentTestName(editedTestCase.name);
+      setCurrentTestDescription(editedTestCase.description);
+
       // Refresh the test case to show the latest changes
       await refreshTestCase();
 
@@ -1256,7 +1268,7 @@ const TestCaseSteps = ({
     <div className="test-steps-container">
       <div className="test-case-header">
         <h2>
-          {test_name}
+          {currentTestName}
           <button 
             className="edit-test-case-button"
             onClick={() => setShowEditTestCaseModal(true)}
@@ -1264,7 +1276,7 @@ const TestCaseSteps = ({
             <FontAwesomeIcon icon={faEdit} />
           </button>
         </h2>
-        <p className="test-description">{test_description}</p>
+        <p className="test-description">{currentTestDescription}</p>
         
         <div className={`test-steps-actions ${isRunning ? 'running' : ''}`}>
           <div className="environment-selector-container">
@@ -1446,6 +1458,31 @@ const TestCaseSteps = ({
         </div>
       )}
 
+      {/* Edit Test Case Modal */}
+      {showEditTestCaseModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Edit Test Case</h3>
+            <form onSubmit={handleUpdateTestCase}>
+              <div className="form-group">
+                <label>Name:</label>
+                <input type="text" name="name" value={editedTestCase.name} onChange={handleTestCaseChange} required />
+              </div>
+              <div className="form-group">
+                <label>Description:</label>
+                <textarea name="description" value={editedTestCase.description} onChange={handleTestCaseChange} required />
+              </div>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowEditTestCaseModal(false)} className="modal-button cancel">Cancel</button>
+                <button type="submit" className="modal-button confirm" disabled={isUpdatingTestCase}>
+                  {isUpdatingTestCase ? 'Updating...' : 'Update Test Case'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
       {/* Add Environment Modal */}
       {showAddEnvironmentModal && (
         <div className="modal-overlay">
