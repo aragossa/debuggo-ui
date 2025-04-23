@@ -212,24 +212,29 @@ const TestCaseSteps = ({
   }, [test_name, test_description]);
 
   useEffect(() => {
-    if (test_steps && Array.isArray(test_steps)) {
-      // Log the test steps to debug
-      console.log("Test steps received:", test_steps);
-      
-      setSteps(test_steps);
-      // Initialize stepValues with values from test_steps
-      const initialValues = {};
-      test_steps.forEach(step => {
-        if (step.action === 'type' && step.value) {
-          initialValues[step.id] = step.value;
-        }
-      });
-      setStepValues(initialValues);
-    }
-  }, [test_steps]);
-
-  useEffect(() => {
+    // This effect runs when the component mounts or when testCaseId changes
+    console.log("Test case ID changed to:", testCaseId);
+    
+    // Reset relevant state when test case changes
+    setShowAddStepModal(false);
+    setShowDeleteStepModal(false);
+    setShowConfirmModal(false);
+    setShowRunConfirmModal(false);
+    setShowEditTestCaseModal(false);
+    setShowScreenshotModal(false);
+    setLocatorTooltipStep(null);
+    setIsTestingLocator(false);
+    
     if (testCaseId) {
+      // Reset steps when test case changes
+      if (!generatingTestCases[testCaseId]) {
+        setIsGeneratingSteps(false);
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+      }
+      
       // Check if this test case is in the list of generating test cases
       const isGenerating = generatingTestCases[testCaseId];
       
@@ -239,10 +244,11 @@ const TestCaseSteps = ({
       }
     }
     
-    // Cleanup polling when component unmounts
+    // Cleanup polling when component unmounts or testCaseId changes
     return () => {
       if (pollingInterval) {
         clearInterval(pollingInterval);
+        setPollingInterval(null);
       }
     };
   }, [testCaseId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -274,18 +280,24 @@ const TestCaseSteps = ({
         
         // Update steps with the latest from the server
         if (data.test_steps && Array.isArray(data.test_steps)) {
-          setSteps(data.test_steps);
-          
-          // Initialize stepValues for any new type steps
-          setStepValues(prevValues => {
-            const newValues = { ...prevValues };
-            data.test_steps.forEach(step => {
-              if (step.action === 'type' && step.value && !newValues[step.id]) {
-                newValues[step.id] = step.value;
-              }
+          // Only update steps if we're still looking at the same test case
+          if (testCaseId === data.test_case_id) {
+            setSteps(data.test_steps);
+            
+            // Initialize stepValues for any new type steps
+            setStepValues(prevValues => {
+              const newValues = { ...prevValues };
+              data.test_steps.forEach(step => {
+                if (step.action === 'type' && step.value && !newValues[step.id]) {
+                  newValues[step.id] = step.value;
+                }
+              });
+              return newValues;
             });
-            return newValues;
-          });
+            
+            // Check for screenshots for new steps
+            checkNewStepsForScreenshots(data.test_steps);
+          }
         }
         
         // Check if generation is complete
@@ -309,6 +321,22 @@ const TestCaseSteps = ({
     }, 3000); // Poll every 3 seconds
     
     setPollingInterval(interval);
+  };
+
+  // Helper function to check for screenshots for new steps
+  const checkNewStepsForScreenshots = async (newSteps) => {
+    if (!newSteps || newSteps.length === 0) return;
+    
+    const screenshotStatus = { ...stepsWithScreenshots };
+    
+    for (const step of newSteps) {
+      // Only check steps we haven't checked before
+      if (screenshotStatus[step.id] === undefined) {
+        screenshotStatus[step.id] = await checkStepScreenshot(step.id);
+      }
+    }
+    
+    setStepsWithScreenshots(screenshotStatus);
   };
 
   const handleStopGeneration = async () => {
@@ -1323,7 +1351,7 @@ const TestCaseSteps = ({
                 </>
               ) : (
                 <>
-                  <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate Steps with AI
+                  <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate with AI
                 </>
               )}
             </button>
