@@ -213,6 +213,12 @@ const TestCaseSteps = ({
       description: currentTestDescription
     });
   }, [currentTestName, currentTestDescription]);
+  
+  // Update the current test name and description when props change
+  useEffect(() => {
+    setCurrentTestName(test_name || '');
+    setCurrentTestDescription(test_description || '');
+  }, [test_name, test_description]);
 
   useEffect(() => {
     // This effect runs when the component mounts or when testCaseId changes
