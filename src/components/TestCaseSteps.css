@@ -1527,794 +1527,42 @@
   flex-grow: 1;
 }
 
-.stop-generation-button {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: background-color 0.2s;
-}
-
-.stop-generation-button:hover {
-  background-color: #c82333;
-}
-
-.stop-generation-button svg {
-  margin-right: 6px;
-}
-
-/* Screenshot Button and Modal */
-.view-screenshot-button {
-  background: none;
-  border: none;
-  color: #4a90e2;
-  cursor: pointer;
-  margin-right: 8px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.view-screenshot-button:hover {
-  background-color: rgba(74, 144, 226, 0.1);
-}
-
-.view-screenshot-button:disabled {
-  color: #adb5bd;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.view-screenshot-button:disabled:hover {
-  background-color: transparent;
-}
-
-.screenshot-modal {
-  max-width: 90%;
-  max-height: 90%;
-  width: auto;
-  overflow: auto;
-}
-
-.screenshot-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.step-generation-info {
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 10px;
   padding: 10px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  margin-bottom: 15px;
-}
-
-.step-screenshot {
-  max-width: 100%;
-  max-height: 70vh;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.screenshot-description {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 10px;
-  text-align: center;
-}
-
-.loading-indicator {
-  padding: 20px;
-  text-align: center;
-  color: #666;
-}
-
-.error-message {
-  padding: 20px;
-  text-align: center;
-  color: #d32f2f;
-  background-color: #ffebee;
-  border-radius: 4px;
-  border: 1px solid #ffcdd2;
-}
-
-.no-screenshot {
-  padding: 20px;
-  text-align: center;
-  color: #666;
-  font-style: italic;
-}
-
-/* Stop Button Styles */
-.stop-button-container {
-  position: relative;
-  display: none; /* Hidden by default, shown when running */
-}
-
-.stop-button {
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
-  color: white;
-}
-
-.stop-button:hover {
-  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%) !important;
-}
-
-/* Show stop button when test is running */
-.test-steps-actions.running .run-button-container {
-  display: none;
-}
-
-.test-steps-actions.running .stop-button-container {
-  display: block;
-}
-
-/* Running indicator */
-.running-indicator {
-  display: flex;
-  align-items: center;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  padding: 12px 16px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.running-indicator .spinner {
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top: 3px solid #e74c3c;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
-  margin-right: 12px;
-}
-
-.running-indicator-text {
-  flex-grow: 1;
-  font-size: 14px;
-  color: #495057;
-}
-
-.stop-execution-button {
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.stop-execution-button:hover {
-  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.stop-execution-button:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.stop-execution-button svg {
-  margin-right: 8px;
-  font-size: 16px;
-}
-
-/* Tooltip styles */
-.tooltip {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #333;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-  z-index: 100;
-  margin-top: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  width: max-content;
-  max-width: 250px;
-}
-
-.tooltip:before {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: transparent transparent #333 transparent;
-}
-
-/* Custom Environment Selector */
-.environment-selector-container {
-  position: relative;
-  display: inline-block;
-  margin-right: 10px;
-}
-
-.environment-selector-button {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  min-width: 200px;
-  background-color: white;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.environment-selector-button:hover {
-  background-color: #f8f9fa;
-}
-
-.environment-selector-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.environment-selector-button svg {
-  margin-left: 8px;
-}
-
-.environment-selector-button:empty::after {
-  content: 'Select Environment *';
-  color: #333;
-}
-
-.environment-selector-button:empty::after span {
-  color: #dc3545;
-}
-
-.environment-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 300px;
-  max-height: 300px;
-  overflow-y: auto;
-  background-color: white;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  margin-top: 4px;
-}
-
-.environment-dropdown-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  border-bottom: 1px solid #f0f0f0;
-  cursor: pointer;
-}
-
-.environment-dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.environment-dropdown-item:hover {
-  background-color: #f8f9fa;
-}
-
-.environment-dropdown-item.selected {
-  background-color: #e9f5ff;
-}
-
-.environment-item-content {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.environment-name {
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.environment-url {
-  font-size: 12px;
-  color: #6c757d;
-  margin-bottom: 2px;
-}
-
-.environment-login {
-  font-size: 12px;
-  color: #6c757d;
-}
-
-.environment-description {
-  font-size: 12px;
-  color: #6c757d;
-  font-style: italic;
-}
-
-.environment-edit-button {
-  background: none;
-  border: none;
-  color: #6c757d;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
-.environment-edit-button:hover {
-  background-color: #e9ecef;
-  color: #495057;
-}
-
-.environment-dropdown-item.add-new {
-  background-color: #f8f9fa;
-}
-
-.environment-dropdown-item.add-new:hover {
-  background-color: #e9ecef;
-}
-
-.environment-dropdown-item.add-new .environment-name {
-  color: #28a745;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.delete-step-button {
-  background: none;
-  border: none;
-  color: #ff4d4f;
-  cursor: pointer;
-  padding: 5px;
-  margin-left: 5px;
-  transition: all 0.2s;
-}
-
-.delete-step-button:hover {
-  color: #ff7875;
-  transform: scale(1.1);
-}
-
-.modal-button.delete {
-  background-color: #ff4d4f;
-  color: white;
-}
-
-.modal-button.delete:hover {
-  background-color: #ff7875;
-}
-
-/* Action input container for environment variables */
-.action-input-container {
-  display: flex;
-  position: relative;
-  flex: 1;
-  align-items: center;
-}
-
-.action-input {
-  flex: 1;
-  padding: 5px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.env-vars-button {
-  background: none;
-  border: none;
-  color: #1890ff;
-  cursor: pointer;
-  padding: 5px;
-  margin-left: 5px;
-  transition: all 0.2s;
-}
-
-.env-vars-button:hover {
-  color: #40a9ff;
-  transform: scale(1.1);
-}
-
-.env-vars-button:disabled {
-  color: #d9d9d9;
-  cursor: not-allowed;
-}
-
-.env-vars-button:disabled:hover {
-  transform: none;
-}
-
-.env-vars-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  width: 250px;
-  max-height: 300px;
-  overflow-y: auto;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-}
-
-.env-vars-dropdown-header {
-  padding: 8px 12px;
-  font-weight: bold;
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #ddd;
-}
-
-.env-vars-dropdown-item {
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.env-vars-dropdown-item:hover {
-  background-color: #f0f0f0;
-}
-
-.env-var-item-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.env-var-name {
-  font-weight: 500;
-  color: #1890ff;
-}
-
-.env-var-description {
-  font-size: 12px;
-  color: #888;
-  margin-top: 2px;
-}
-
-.element-path-input {
-  width: 100%;
-  padding: 8px;
-  margin-top: 8px;
-  margin-bottom: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  background-color: #f9f9f9;
-  font-family: monospace;
-  color: #333;
-}
-
-.element-path-input:focus {
-  outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 3px rgba(74, 144, 226, 0.5);
-  background-color: #fff;
-}
-
-.element-path-input::placeholder {
-  color: #999;
-  font-style: italic;
-}
-
-.element-path-label {
-  display: block;
-  font-size: 12px;
-  color: #666;
-  margin-top: 5px;
-  font-weight: bold;
-}
-
-.test-step-controls {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-.element-locator-container {
-  margin-top: 10px;
-  background-color: #f0f7ff;
-  padding: 8px;
-  border-radius: 4px;
-  border-left: 3px solid #4a90e2;
-}
-
-.element-path-label {
-  display: block;
-  font-size: 13px;
-  color: #333;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-.element-path-input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: monospace;
-  color: #333;
-  background-color: #fff;
-}
-
-.element-path-input:focus {
-  outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 3px rgba(74, 144, 226, 0.5);
-}
-
-.element-path-input::placeholder {
-  color: #999;
-  font-style: italic;
-}
-
-/* Custom Variables Styling */
-.custom-variables-container {
-  margin-top: 10px;
-}
-
-.custom-variables-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.custom-variable-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  gap: 8px;
-}
-
-.custom-variable-name,
-.custom-variable-value {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.remove-variable-button {
-  background: none;
-  border: none;
-  color: #f44336;
-  cursor: pointer;
-  padding: 4px 8px;
-  font-size: 14px;
-  border-radius: 4px;
-}
-
-.remove-variable-button:hover {
-  background-color: rgba(244, 67, 54, 0.1);
-}
-
-.add-variable-button {
-  background: none;
-  border: 1px dashed #2196f3;
-  color: #2196f3;
-  cursor: pointer;
-  padding: 8px 12px;
-  margin-top: 8px;
-  border-radius: 4px;
-  width: 100%;
-  text-align: center;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.add-variable-button:hover {
-  background-color: rgba(33, 150, 243, 0.1);
-}
-
-.custom-variable-labels {
-  display: flex;
-  margin-bottom: 4px;
-  font-size: 12px;
-  color: #666;
-}
-
-.custom-variable-labels span {
-  flex: 1;
-  padding: 0 8px;
-}
-
-/* Modern Add Step Button */
-.add-step-button {
-  margin-bottom: 0;
-}
-
-/* Common button styles for action buttons */
-.action-button,
-.add-step-button,
-.generate-button,
-.run-button {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
-  min-width: 120px;
-}
-
-.action-button:hover,
-.add-step-button:hover,
-.generate-button:hover,
-.run-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
-  background: linear-gradient(135deg, #20bf6b 0%, #0b8a45 100%);
-}
-
-.action-button:active,
-.add-step-button:active,
-.generate-button:active,
-.run-button:active {
-  transform: translateY(1px);
-  box-shadow: 0 3px 5px rgba(50, 50, 93, 0.1), 0 1px 2px rgba(0, 0, 0, 0.08);
-}
-
-.action-button:disabled,
-.action-button.disabled,
-.add-step-button:disabled,
-.generate-button:disabled,
-.run-button:disabled,
-.generate-button.disabled,
-.run-button.disabled {
-  background: linear-gradient(135deg, #adb5bd 0%, #6c757d 100%);
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.action-button svg,
-.add-step-button svg,
-.generate-button svg,
-.run-button svg {
-  margin-right: 8px;
-  font-size: 16px;
-}
-
-/* Remove any margin-bottom from add-step-button */
-.add-step-button {
-  margin-bottom: 0;
-}
-
-/* Specific styles for generate button when generating */
-.generate-button.generating {
-  background: linear-gradient(135deg, #fd7e14 0%, #e76f51 100%);
-}
-
-/* Form styling for add step modal */
-.modal-content form {
-  width: 100%;
-}
-
-.modal-content .form-group {
-  margin-bottom: 15px;
-}
-
-.modal-content .form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
-}
-
-.modal-content .form-group input,
-.modal-content .form-group select {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.modal-content .form-group input:focus,
-.modal-content .form-group select:focus {
-  outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
-}
-
-/* Media query for responsiveness */
-@media (max-width: 768px) {
-  .test-steps-flow {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .test-step-box {
-    flex: 1 1 100%;
-    max-width: none;
-    margin: 8px 0;
-  }
-  
-  .test-step-box:not(:last-child)::after {
-    content: '↓';
-    right: 50%;
-    top: auto;
-    bottom: -20px;
-    transform: translateX(50%);
-  }
-}
-
-/* Spinner styles */
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  margin-right: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.generating-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  padding: 10px 15px;
   background-color: #f8f9fa;
   border-radius: 4px;
   border-left: 4px solid #007bff;
 }
 
-.generating-indicator .spinner {
+.step-generation-info .spinner {
   margin-right: 10px;
   border-top-color: #007bff;
   border-color: rgba(0, 123, 255, 0.3);
 }
 
-.generating-indicator-text {
+.step-generation-info-text {
   font-weight: 500;
   color: #495057;
   flex-grow: 1;
 }
 
 .stop-generation-button {
-  background-color: #dc3545;
-  color: white;
+  margin-left: auto;
+  background-color: #fee2e2;
+  color: #b91c1c;
   border: none;
   border-radius: 4px;
-  padding: 6px 12px;
+  padding: 5px 10px;
   font-size: 14px;
   cursor: pointer;
+  transition: background-color 0.2s;
   display: flex;
   align-items: center;
-  transition: background-color 0.2s;
+  gap: 5px;
+  align-self: flex-end;
 }
 
 .stop-generation-button:hover {
@@ -2325,20 +1573,38 @@
   margin-right: 6px;
 }
 
-/* Screenshot Button and Modal */
+.spinner {
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 3px solid #0369a1;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+/* Screenshot Button Styles */
 .view-screenshot-button {
   background: none;
   border: none;
   color: #4a90e2;
   cursor: pointer;
   margin-right: 8px;
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .view-screenshot-button:hover {
   background-color: rgba(74, 144, 226, 0.1);
+  transform: translateY(-1px);
+}
+
+.view-screenshot-button:active {
+  transform: translateY(1px);
 }
 
 .view-screenshot-button:disabled {
@@ -2349,37 +1615,80 @@
 
 .view-screenshot-button:disabled:hover {
   background-color: transparent;
+  transform: none;
 }
 
+/* Screenshot Modal Styles */
 .screenshot-modal {
-  max-width: 90%;
-  max-height: 90%;
-  width: auto;
-  overflow: auto;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 80vw;
+  overflow: visible;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 15px;
+}
+
+.modal-close-button {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close-button:hover {
+  color: #f44336;
+  background-color: rgba(244, 67, 54, 0.1);
 }
 
 .screenshot-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px;
+  padding: 15px;
   background-color: #f5f5f5;
   border-radius: 4px;
   margin-bottom: 15px;
+  overflow: auto;
+  max-height: 70vh;
+}
+
+.screenshot-image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  overflow: auto;
+  max-height: 60vh;
 }
 
 .step-screenshot {
   max-width: 100%;
-  max-height: 70vh;
+  height: auto;
   border: 1px solid #ddd;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  object-fit: contain;
+  cursor: zoom-in;
 }
 
 .screenshot-description {
   font-size: 14px;
   color: #666;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   text-align: center;
 }
 
@@ -2387,6 +1696,14 @@
   padding: 20px;
   text-align: center;
   color: #666;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-indicator .spinner {
+  margin-bottom: 10px;
 }
 
 .error-message {
@@ -2403,58 +1720,6 @@
   text-align: center;
   color: #666;
   font-style: italic;
-}
-
-/* Stop Button Styles */
-.stop-button-container {
-  position: relative;
-  display: none; /* Hidden by default, shown when running */
-}
-
-.stop-button {
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
-  color: white;
-}
-
-.stop-button:hover {
-  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%) !important;
-}
-
-/* Show stop button when test is running */
-.test-steps-actions.running .run-button-container {
-  display: none;
-}
-
-.test-steps-actions.running .stop-button-container {
-  display: block;
-}
-
-/* Running indicator */
-.running-indicator {
-  display: flex;
-  align-items: center;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  padding: 12px 16px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.running-indicator .spinner {
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top: 3px solid #e74c3c;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
-  margin-right: 12px;
-}
-
-.running-indicator-text {
-  flex-grow: 1;
-  font-size: 14px;
-  color: #495057;
 }
 
 .stop-execution-button {

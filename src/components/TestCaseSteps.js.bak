@@ -33,8 +33,6 @@ const TestCaseSteps = ({
   const [expandedRuns, setExpandedRuns] = useState({});
   const [isRunning, setIsRunning] = useState(false);
   const [isGeneratingSteps, setIsGeneratingSteps] = useState(false);
-  const [currentGeneratingStep, setCurrentGeneratingStep] = useState("");
-  const [nextGeneratingStep, setNextGeneratingStep] = useState("");
   const [steps, setSteps] = useState(test_steps || []);
   const [currentTestName, setCurrentTestName] = useState(test_name || '');
   const [currentTestDescription, setCurrentTestDescription] = useState(test_description || '');
@@ -236,50 +234,79 @@ const TestCaseSteps = ({
     setLocatorTooltipStep(null);
     setIsTestingLocator(false);
     
+    // Always stop any existing polling when test case changes
+    if (pollingInterval) {
+      console.log('Clearing existing polling interval on test case change');
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    
     if (testCaseId) {
-      // Reset steps when test case changes
-      if (!generatingTestCases[testCaseId]) {
-        setIsGeneratingSteps(false);
-        if (pollingInterval) {
-          clearInterval(pollingInterval);
-          setPollingInterval(null);
-        }
-      }
-      
       // Check if this test case is in the list of generating test cases
       const isGenerating = generatingTestCases[testCaseId];
+      console.log(`Is test case ${testCaseId} generating? ${isGenerating ? 'Yes' : 'No'}`);
       
       if (isGenerating) {
+        console.log('Resuming polling for ongoing generation...');
         setIsGeneratingSteps(true);
-        startPollingForUpdates();
+        // Small delay to ensure state is updated before starting polling
+        setTimeout(() => {
+          startPollingForUpdates();
+        }, 100);
+      } else {
+        setIsGeneratingSteps(false);
       }
     }
     
     // Cleanup polling when component unmounts or testCaseId changes
     return () => {
       if (pollingInterval) {
+        console.log('Cleanup: clearing polling interval');
         clearInterval(pollingInterval);
         setPollingInterval(null);
       }
     };
   }, [testCaseId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+useEffect(() => {
+  localStorage.setItem('generatingTestCases', JSON.stringify(generatingTestCases));
+}, [generatingTestCases]);
+
+
+
   useEffect(() => {
     localStorage.setItem('generatingTestCases', JSON.stringify(generatingTestCases));
   }, [generatingTestCases]);
 
   const startPollingForUpdates = () => {
+    console.log('Starting polling for updates...');
     // Clear any existing interval
     if (pollingInterval) {
       clearInterval(pollingInterval);
+      setPollingInterval(null);
     }
     
     // Set up a new polling interval
     const interval = setInterval(async () => {
-      if (!testCaseId) return;
+      // If component unmounted or test case changed, stop polling
+      if (!testCaseId) {
+        console.log('No test case ID, stopping polling');
+        clearInterval(interval);
+        setPollingInterval(null);
+        return;
+      }
+      
+      // Continue polling as long as we think generation is happening
+      if (!isGeneratingSteps) {
+        console.log('Generation no longer active, stopping polling');
+        clearInterval(interval);
+        setPollingInterval(null);
+        return;
+      }
       
       try {
         // First, check the generation status
+        console.log(`Checking generation status for test case ${testCaseId}...`);
         const statusResponse = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
           headers: getAuthHeaders()
         });
@@ -289,17 +316,10 @@ const TestCaseSteps = ({
         }
         
         const statusData = await statusResponse.json();
+        console.log('Generation status:', statusData);
         
-        // Update current and next step information if available
-        if (statusData.current_step) {
-          setCurrentGeneratingStep(statusData.current_step);
-        }
-        
-        if (statusData.next_step) {
-          setNextGeneratingStep(statusData.next_step);
-        }
-        
-        // Then, get the latest test case data to ensure we have the most up-to-date steps
+        // Always fetch the latest test case data to get the most up-to-date steps
+        console.log(`Fetching latest test case data for ${testCaseId}...`);
         const testCaseResponse = await fetch(`${API_URL}/api/get_test_cases/${testCaseId}`, {
           headers: getAuthHeaders()
         });
@@ -312,7 +332,7 @@ const TestCaseSteps = ({
         
         // Update steps with the latest from the server
         if (testCaseData.test_steps && Array.isArray(testCaseData.test_steps)) {
-          console.log('Received updated steps during polling:', testCaseData.test_steps.length);
+          console.log(`Received ${testCaseData.test_steps.length} steps during polling`);
           setSteps(testCaseData.test_steps);
           
           // Initialize stepValues for any new type steps
@@ -327,11 +347,16 @@ const TestCaseSteps = ({
           });
           
           // Check for screenshots for new steps
-          checkNewStepsForScreenshots(testCaseData.test_steps);
+          if (isGeneratingSteps) {
+            await checkNewStepsForScreenshots(testCaseData.test_steps);
+          }
+        } else {
+          console.log('No test steps received or invalid format');
         }
         
-        // Check if generation is complete
+        // Check if generation is complete after updating the UI
         if (!statusData.is_generating) {
+          console.log('Generation process completed, stopping polling');
           setIsGeneratingSteps(false);
           
           // Remove this test case from the generating list
@@ -341,32 +366,43 @@ const TestCaseSteps = ({
             return updated;
           });
           
-          // Reset current and next step information
-          setCurrentGeneratingStep("");
-          setNextGeneratingStep("");
-          
           // Stop polling
-          clearInterval(pollingInterval);
+          clearInterval(interval);
           setPollingInterval(null);
         }
       } catch (error) {
-        console.error('Error checking test case generation status:', error);
+        console.error('Error during polling:', error);
+        // On error, we should also stop polling to prevent continuous failed requests
+        clearInterval(interval);
+        setPollingInterval(null);
+        setIsGeneratingSteps(false);
       }
-    }, 2000); // Poll every 2 seconds for more responsive updates
+    }, 1500); // Poll every 1.5 seconds for more responsive updates
     
     setPollingInterval(interval);
   };
 
   // Helper function to check for screenshots for new steps
   const checkNewStepsForScreenshots = async (newSteps) => {
-    if (!newSteps || newSteps.length === 0) return;
+    if (!newSteps || newSteps.length === 0 || !isGeneratingSteps) return;
     
     const screenshotStatus = { ...stepsWithScreenshots };
     
-    for (const step of newSteps) {
-      // Only check steps we haven't checked before
-      if (screenshotStatus[step.id] === undefined) {
+    // Only check steps that we haven't checked before and only the most recent ones
+    // This reduces unnecessary requests
+    const stepsToCheck = newSteps
+      .filter(step => screenshotStatus[step.id] === undefined)
+      .slice(-3); // Only check the last 3 new steps to reduce requests
+    
+    for (const step of stepsToCheck) {
+      // Double check that we're still generating before making the request
+      if (!isGeneratingSteps) break;
+      
+      try {
         screenshotStatus[step.id] = await checkStepScreenshot(step.id);
+      } catch (error) {
+        console.error(`Error checking screenshot for step ${step.id}:`, error);
+        screenshotStatus[step.id] = false;
       }
     }
     
@@ -386,8 +422,26 @@ const TestCaseSteps = ({
         throw new Error('Failed to stop test step generation');
       }
       
-      // We'll let the polling handle the UI update once the backend confirms the stop
       console.log('Requested to stop test step generation');
+      
+      // Immediately stop polling and update UI state
+      setIsGeneratingSteps(false);
+      
+      // Remove this test case from the generating list
+      setGeneratingTestCases(prev => {
+        const updated = { ...prev };
+        delete updated[testCaseId];
+        return updated;
+      });
+      
+      // Stop polling immediately instead of waiting for the next poll cycle
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
+      
+      // Fetch the latest test case data to ensure we have the final state
+      await refreshTestCase();
     } catch (error) {
       console.error('Error stopping test step generation:', error);
       alert('Failed to stop test step generation. Please try again.');
@@ -744,6 +798,7 @@ const TestCaseSteps = ({
   const generateSteps = async (confirm) => {
     if (!testCaseId || isGeneratingSteps || !isProjectSelected || !selectedEnvironment) return;
     
+    console.log(`Starting step generation for test case ${testCaseId}...`);
     setIsGeneratingSteps(true);
     
     // Add this test case to the generating list
@@ -766,6 +821,7 @@ const TestCaseSteps = ({
         requestBody.project_id = projectId;
       }
       
+      console.log('Sending request to generate steps with body:', requestBody);
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -776,11 +832,20 @@ const TestCaseSteps = ({
       });
       
       if (!response.ok) {
-        throw new Error('Failed to generate steps');
+        const errorText = await response.text();
+        console.error('Error response from server:', errorText);
+        throw new Error(`Failed to generate steps: ${response.status} ${response.statusText}`);
       }
       
-      // Start polling for updates
+      const responseData = await response.json();
+      console.log('Generation started successfully:', responseData);
+      
+      // Start polling for updates immediately
       startPollingForUpdates();
+      
+      // Fetch initial data to show any steps that might have been created immediately
+      await new Promise(resolve => setTimeout(resolve, 500)); // Small delay to allow backend to process
+      await refreshTestCase();
       
     } catch (error) {
       console.error('Error generating steps:', error);
@@ -1732,14 +1797,6 @@ const TestCaseSteps = ({
           <div className="generating-indicator">
             <div className="spinner"></div>
             <span className="generating-indicator-text">Generating test steps... Steps will appear as they are created.</span>
-            {currentGeneratingStep && (
-              <div className="step-generation-info">
-                <p><strong>Current step:</strong> {currentGeneratingStep}</p>
-                {nextGeneratingStep && nextGeneratingStep !== "Stop" && (
-                  <p><strong>Next step:</strong> {nextGeneratingStep}</p>
-                )}
-              </div>
-            )}
             <button 
               className="stop-generation-button"
               onClick={handleStopGeneration}
@@ -1947,38 +2004,22 @@ const TestCaseSteps = ({
       {showScreenshotModal && (
         <div className="modal-overlay">
           <div className="modal-content screenshot-modal">
-            <div className="modal-header">
-              <h3>Screenshot</h3>
-              <button 
-                onClick={() => setShowScreenshotModal(false)} 
-                className="modal-close-button"
-                title="Close"
-              >
-                <FontAwesomeIcon icon={faTimesCircle} />
-              </button>
-            </div>
+            <h3>Screenshot</h3>
             <div className="screenshot-container">
               {screenshotLoading ? (
-                <div className="loading-indicator">
-                  <div className="spinner"></div>
-                  <span>Loading screenshot...</span>
-                </div>
+                <div className="loading-indicator">Loading screenshot...</div>
               ) : screenshotError ? (
                 <div className="error-message">
                   <p>Error loading screenshot: {screenshotError}</p>
                 </div>
               ) : currentScreenshot ? (
                 <>
-                  {currentScreenshot.description && (
-                    <p className="screenshot-description">{currentScreenshot.description}</p>
-                  )}
-                  <div className="screenshot-image-container">
-                    <img 
-                      src={`data:image/png;base64,${currentScreenshot.screenshot}`} 
-                      alt="Test step screenshot" 
-                      className="step-screenshot"
-                    />
-                  </div>
+                  <p className="screenshot-description">{currentScreenshot.description}</p>
+                  <img 
+                    src={`data:image/png;base64,${currentScreenshot.screenshot}`} 
+                    alt="Test step screenshot" 
+                    className="step-screenshot"
+                  />
                 </>
               ) : (
                 <div className="no-screenshot">No screenshot available</div>
