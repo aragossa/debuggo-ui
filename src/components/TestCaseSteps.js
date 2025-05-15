@@ -277,40 +277,50 @@ const TestCaseSteps = ({
       if (!testCaseId) return;
       
       try {
-        const response = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
+        // First, check the generation status
+        const statusResponse = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
           headers: getAuthHeaders()
         });
         
-        if (!response.ok) {
+        if (!statusResponse.ok) {
           throw new Error('Failed to fetch test case generation status');
         }
         
-        const data = await response.json();
+        const statusData = await statusResponse.json();
+        
+        // Then, get the latest test case data to ensure we have the most up-to-date steps
+        const testCaseResponse = await fetch(`${API_URL}/api/get_test_cases/${testCaseId}`, {
+          headers: getAuthHeaders()
+        });
+        
+        if (!testCaseResponse.ok) {
+          throw new Error('Failed to fetch test case data');
+        }
+        
+        const testCaseData = await testCaseResponse.json();
         
         // Update steps with the latest from the server
-        if (data.test_steps && Array.isArray(data.test_steps)) {
-          // Only update steps if we're still looking at the same test case
-          if (testCaseId === data.test_case_id) {
-            setSteps(data.test_steps);
-            
-            // Initialize stepValues for any new type steps
-            setStepValues(prevValues => {
-              const newValues = { ...prevValues };
-              data.test_steps.forEach(step => {
-                if (step.action === 'type' && step.value && !newValues[step.id]) {
-                  newValues[step.id] = step.value;
-                }
-              });
-              return newValues;
+        if (testCaseData.test_steps && Array.isArray(testCaseData.test_steps)) {
+          console.log('Received updated steps during polling:', testCaseData.test_steps.length);
+          setSteps(testCaseData.test_steps);
+          
+          // Initialize stepValues for any new type steps
+          setStepValues(prevValues => {
+            const newValues = { ...prevValues };
+            testCaseData.test_steps.forEach(step => {
+              if (step.action === 'type' && step.value && !newValues[step.id]) {
+                newValues[step.id] = step.value;
+              }
             });
-            
-            // Check for screenshots for new steps
-            checkNewStepsForScreenshots(data.test_steps);
-          }
+            return newValues;
+          });
+          
+          // Check for screenshots for new steps
+          checkNewStepsForScreenshots(testCaseData.test_steps);
         }
         
         // Check if generation is complete
-        if (!data.is_generating) {
+        if (!statusData.is_generating) {
           setIsGeneratingSteps(false);
           
           // Remove this test case from the generating list
@@ -327,7 +337,7 @@ const TestCaseSteps = ({
       } catch (error) {
         console.error('Error checking test case generation status:', error);
       }
-    }, 3000); // Poll every 3 seconds
+    }, 2000); // Poll every 2 seconds for more responsive updates
     
     setPollingInterval(interval);
   };
