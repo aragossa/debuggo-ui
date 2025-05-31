@@ -110,17 +110,6 @@ const LandingPage = () => {
             </a>
             <p className="contact-phone">+972 53-528-6313</p>
           </div>
-          <div className="contact-card">
-            <h3 className="contact-title">Co-founder</h3>
-            <p className="contact-name">Ivan Stolpnikov</p>
-            <a 
-              href="mailto:ivan.stolpnikov@auroqa.com" 
-              className="contact-email"
-            >
-              ivan.stolpnikov@auroqa.com
-            </a>
-            <p className="contact-phone">+972 52-256-5380</p>
-          </div>
         </div>
       </section>
 

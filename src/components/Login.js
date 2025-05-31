@@ -33,11 +33,12 @@ const Login = () => {
       }
 
       const data = await response.json();
-      if (data.access_token) {
-        await login(data.access_token);
+      if (data.access_token && data.refresh_token) {
+        // Pass the entire token data object to login
+        await login(data);
         navigate('/dashboard');
       } else {
-        throw new Error('No access token received');
+        throw new Error('Authentication tokens not received');
       }
     } catch (err) {
       setError(err.message);
