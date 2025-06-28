@@ -93,6 +93,9 @@ const TestCaseSteps = ({
   const [currentScreenshot, setCurrentScreenshot] = useState(null);
   const [screenshotLoading, setScreenshotLoading] = useState(false);
   const [screenshotError, setScreenshotError] = useState(null);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const API_URL = process.env.REACT_APP_API_URL;
   const { getAuthHeaders } = useAuth();
   const [showEnvVarsDropdown, setShowEnvVarsDropdown] = useState(false);
@@ -1272,11 +1275,61 @@ const TestCaseSteps = ({
     }));
   };
 
+  const handleImageLoad = (event) => {
+    const { naturalWidth, naturalHeight } = event.target;
+    setImageSize({ width: naturalWidth, height: naturalHeight });
+  };
+
+  const handleImageClick = (event) => {
+    const image = event.target;
+    const rect = image.getBoundingClientRect();
+    
+    // Calculate relative position within the image (0 to 1)
+    const relativeX = (event.clientX - rect.left) / rect.width;
+    const relativeY = (event.clientY - rect.top) / rect.height;
+    
+    // Toggle zoom state
+    const newZoomState = !isZoomed;
+    
+    // Set zoom position only when zooming in
+    if (newZoomState) {
+      setZoomPosition({ x: relativeX, y: relativeY });
+      
+      // Scroll the container to center on the clicked point after a short delay
+      setTimeout(() => {
+        const container = image.closest('.screenshot-image-container');
+        if (container) {
+          // Calculate scroll position to center on the clicked point
+          const zoomedWidth = image.width * 1.75; // Match the CSS scale(1.75)
+          const zoomedHeight = image.height * 1.75;
+          
+          // Add padding offset to ensure corners are visible
+          const padding = 100; // Match the CSS padding/margin
+          
+          // Calculate scroll position with absolute positioning in mind
+          const scrollX = Math.max(0, (relativeX * zoomedWidth) - (container.clientWidth / 2));
+          const scrollY = Math.max(0, (relativeY * zoomedHeight) - (container.clientHeight / 2));
+          
+          container.scrollTo({
+            left: scrollX,
+            top: scrollY,
+            behavior: 'smooth'
+          });
+        }
+      }, 50);
+    }
+    
+    setIsZoomed(newZoomState);
+  };
+
   const handleViewScreenshot = async (stepId) => {
     setScreenshotLoading(true);
     setShowScreenshotModal(true);
     setCurrentScreenshot(null);
     setScreenshotError(null);
+    setIsZoomed(false);
+    setImageSize({ width: 0, height: 0 });
+    setZoomPosition({ x: 0, y: 0 });
     
     try {
       const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
@@ -1958,7 +2011,17 @@ const TestCaseSteps = ({
       {/* Screenshot Modal */}
       {showScreenshotModal && (
         <div className="modal-overlay">
-          <div className="modal-content screenshot-modal">
+          <div 
+            className={`modal-content screenshot-modal ${isZoomed ? 'zoomed-modal' : ''}`}
+            style={{
+              width: isZoomed && imageSize.width > 0 ? 
+                `min(95vw, ${Math.max(800, Math.min(imageSize.width * 1.8, window.innerWidth * 0.95))}px)` : 
+                undefined,
+              maxHeight: isZoomed && imageSize.height > 0 ? 
+                `min(95vh, ${Math.max(600, Math.min(imageSize.height * 1.5, window.innerHeight * 0.95))}px)` : 
+                undefined
+            }}
+          >
             <div className="modal-header">
               <h3>Screenshot</h3>
               <button 
@@ -1988,7 +2051,13 @@ const TestCaseSteps = ({
                     <img 
                       src={`data:image/png;base64,${currentScreenshot.screenshot}`} 
                       alt="Test step screenshot" 
-                      className="step-screenshot"
+                      className={`step-screenshot ${isZoomed ? 'zoomed' : ''}`}
+                      onClick={handleImageClick}
+                      onLoad={handleImageLoad}
+                      title={isZoomed ? 'Click to zoom out' : 'Click to zoom in'}
+                      style={isZoomed ? {
+                        transformOrigin: `${zoomPosition.x * 100}% ${zoomPosition.y * 100}%`
+                      } : undefined}
                     />
                   </div>
                 </>
