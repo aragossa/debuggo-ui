@@ -11,6 +11,7 @@ import Users from './components/Users';
 import UserMenu from './components/UserMenu';
 import Projects from './components/Projects';
 import ProjectDetail from './components/ProjectDetail';
+import AIModelsAdmin from './components/AIModelsAdmin';
 import './App.css';
 
 const AdminMenu = () => {
@@ -25,6 +26,7 @@ const AdminMenu = () => {
       <div className="admin-menu">
         <Link to="/clients" className="admin-menu-item">Clients</Link>
         <Link to="/users" className="admin-menu-item">Users</Link>
+        <Link to="/ai-models" className="admin-menu-item">AI Models</Link>
       </div>
     );
   }, [user]);
@@ -126,6 +128,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ProjectDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ai-models"
+              element={
+                <ProtectedRoute adminOnly>
+                  <AIModelsAdmin />
                 </ProtectedRoute>
               }
             />
