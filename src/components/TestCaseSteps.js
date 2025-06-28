@@ -5,6 +5,7 @@ import {
   faPlay, faMagicWandSparkles, faGripVertical, faInfoCircle, faSignInAlt, faChevronUp, faChevronDown, faPlus, faEdit, faTrash, faCode, faSearch, faQuestionCircle, faCheckCircle, faTimesCircle, faImage
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
+import AIModelSelector from './AIModelSelector';
 import './TestCaseSteps.css';
 
 const STEP_ACTIONS = [
@@ -97,6 +98,7 @@ const TestCaseSteps = ({
   const [showEnvVarsDropdown, setShowEnvVarsDropdown] = useState(false);
   const [activeInputStepId, setActiveInputStepId] = useState(null);
   const [inputCursorPosition, setInputCursorPosition] = useState(0);
+  const [selectedAIModel, setSelectedAIModel] = useState(null);
   const envVarsDropdownRef = useRef(null);
   const inputRefs = useRef({});
   const locatorTooltipRef = useRef(null);
@@ -766,6 +768,11 @@ const TestCaseSteps = ({
         requestBody.project_id = projectId;
       }
       
+      // If AI model is selected, add it to the request body
+      if (selectedAIModel) {
+        requestBody.ai_model_id = selectedAIModel;
+      }
+      
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -1362,6 +1369,11 @@ const TestCaseSteps = ({
               </div>
             )}
           </div>
+          
+          <AIModelSelector 
+            onModelSelect={setSelectedAIModel} 
+            selectedModelId={selectedAIModel} 
+          />
           
           <button 
             className="add-step-button action-button"
