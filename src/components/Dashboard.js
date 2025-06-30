@@ -301,6 +301,8 @@ const Dashboard = () => {
                   test_name={testCase.test_name}
                   test_description={testCase.test_description}
                   updated_at={testCase.updated_at}
+                  steps_generation_start_time={testCase.steps_generation_start_time}
+                  steps_generation_end_time={testCase.steps_generation_end_time}
                   onTestResult={setTestResult}
                   projectId={selectedProject}
                 />

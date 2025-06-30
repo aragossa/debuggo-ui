@@ -29,13 +29,16 @@ const TestCaseSteps = ({
   test_description, 
   updated_at, 
   projectId,
-  onTestCaseUpdate
+  onTestCaseUpdate,
+  steps_generation_start_time,
+  steps_generation_end_time
 }) => {
   const [expandedRuns, setExpandedRuns] = useState({});
   const [isRunning, setIsRunning] = useState(false);
   const [isGeneratingSteps, setIsGeneratingSteps] = useState(false);
   const [currentGeneratingStep, setCurrentGeneratingStep] = useState("");
   const [nextGeneratingStep, setNextGeneratingStep] = useState("");
+  const [generationDuration, setGenerationDuration] = useState("");
   const [steps, setSteps] = useState(test_steps || []);
   const [currentTestName, setCurrentTestName] = useState(test_name || '');
   const [currentTestDescription, setCurrentTestDescription] = useState(test_description || '');
@@ -187,6 +190,29 @@ const TestCaseSteps = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Calculate generation duration when start and end times are available
+  useEffect(() => {
+    if (steps_generation_start_time && steps_generation_end_time) {
+      const startTime = new Date(steps_generation_start_time);
+      const endTime = new Date(steps_generation_end_time);
+      let durationMs = endTime - startTime;
+      
+      // Ensure we have a positive duration
+      if (durationMs < 0) {
+        console.warn('Negative duration detected, using absolute value');
+        durationMs = Math.abs(durationMs);
+      }
+      
+      // Format duration as mm:ss
+      const totalSeconds = Math.floor(durationMs / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      setGenerationDuration(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+    } else {
+      setGenerationDuration("");
+    }
+  }, [steps_generation_start_time, steps_generation_end_time]);
 
   useEffect(() => {
     if (test_steps && Array.isArray(test_steps)) {
@@ -1355,19 +1381,32 @@ const TestCaseSteps = ({
     }
   };
 
+  const formatDuration = (milliseconds) => {
+    // Ensure we have a positive duration
+    const posMilliseconds = Math.abs(milliseconds);
+    const totalSeconds = Math.floor(posMilliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const remainingSeconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  };
+
   return (
     <div className="test-steps-container">
       <div className="test-case-header">
-        <h2>
-          {currentTestName}
-          <button 
-            className="edit-test-case-button"
-            onClick={() => setShowEditTestCaseModal(true)}
-          >
-            <FontAwesomeIcon icon={faEdit} />
-          </button>
-        </h2>
-        <p className="test-description">{currentTestDescription}</p>
+        <div className="test-case-title">
+          <h2>{currentTestName}</h2>
+          <p className="test-description">{currentTestDescription}</p>
+          <p className="updated-at">Last updated: {formatDate(updated_at)}</p>
+          {generationDuration && (
+            <p className="generation-duration">Steps generation time: <span className="duration-value">{generationDuration}</span></p>
+          )}
+        </div>
         
         <div className={`test-steps-actions ${isRunning ? 'running' : ''}`}>
           <div className="environment-selector-container">

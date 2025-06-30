@@ -335,7 +335,22 @@
 }
 
 .test-case-header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+}
+
+.test-case-title {
+  margin-bottom: 15px;
+}
+
+.generation-duration {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 5px;
+}
+
+.duration-value {
+  font-weight: 600;
+  color: #8F41E9;
 }
 
 .test-case-header h2 {
