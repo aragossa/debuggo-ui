@@ -15,9 +15,9 @@
 
 .login-form {
   width: 100%;
-  max-width: 400px;
+  max-width: 320px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .login-form h2 {
@@ -61,6 +61,7 @@
   font-size: 1rem;
   background-color: white;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .form-group input:hover {
@@ -85,6 +86,7 @@ button[type="submit"] {
   font-size: 1rem;
   cursor: pointer;
   transition: opacity 0.2s;
+  box-sizing: border-box;
 }
 
 button[type="submit"]:hover {
