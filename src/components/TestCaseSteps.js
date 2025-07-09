@@ -1398,6 +1398,67 @@ const TestCaseSteps = ({
 
   return (
     <div className="test-steps-container">
+      <div className="selectors-container">
+        <div className="environment-selector-container">
+          <div className="environment-selector-label">Environment</div>
+          <div 
+            className="environment-selector-button"
+            onClick={() => setShowEnvironmentDropdown(!showEnvironmentDropdown)}
+            onMouseEnter={() => setShowEnvTooltip(true)}
+            onMouseLeave={() => setShowEnvTooltip(false)}
+          >
+            {selectedEnvironment 
+              ? environments.find(env => env.id.toString() === selectedEnvironment)?.name || 'Select Environment'
+              : 'Select Environment'}
+            <FontAwesomeIcon icon={showEnvironmentDropdown ? faChevronUp : faChevronDown} />
+          </div>
+          {showEnvironmentDropdown && (
+            <div className="environment-dropdown" ref={environmentDropdownRef}>
+              {environments.length > 0 ? (
+                <>
+                  {environments.map(env => (
+                    <div 
+                      key={env.id} 
+                      className={`environment-option ${selectedEnvironment === env.id.toString() ? 'selected' : ''}`}
+                      onClick={() => handleEnvironmentChange(env.id.toString())}
+                    >
+                      <span>{env.name}</span>
+                      <button 
+                        className="edit-environment-button"
+                        onClick={(e) => handleEditEnvironmentClick(env, e)}
+                      >
+                        <FontAwesomeIcon icon={faEdit} />
+                      </button>
+                    </div>
+                  ))}
+                  <div 
+                    className="environment-option add-environment"
+                    onClick={handleAddNewEnvironmentClick}
+                  >
+                    <FontAwesomeIcon icon={faPlus} /> Add New Environment
+                  </div>
+                </>
+              ) : (
+                <div className="no-environments">
+                  <p>No environments available</p>
+                  <button 
+                    className="add-environment-button"
+                    onClick={handleAddNewEnvironmentClick}
+                  >
+                    <FontAwesomeIcon icon={faPlus} /> Add Environment
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        
+        <AIModelSelector 
+          onModelSelect={setSelectedAIModel} 
+          selectedModelId={selectedAIModel} 
+        />
+      </div>
+      
       <div className="test-case-header">
         <div className="test-case-title">
           <h2>{currentTestName}</h2>
@@ -1409,63 +1470,7 @@ const TestCaseSteps = ({
         </div>
         
         <div className={`test-steps-actions ${isRunning ? 'running' : ''}`}>
-          <div className="environment-selector-container">
-            <div 
-              className="environment-selector-button"
-              onClick={() => setShowEnvironmentDropdown(!showEnvironmentDropdown)}
-              onMouseEnter={() => setShowEnvTooltip(true)}
-              onMouseLeave={() => setShowEnvTooltip(false)}
-            >
-              {selectedEnvironment 
-                ? environments.find(env => env.id.toString() === selectedEnvironment)?.name || 'Select Environment'
-                : 'Select Environment'}
-              <FontAwesomeIcon icon={showEnvironmentDropdown ? faChevronUp : faChevronDown} />
-            </div>
-            {showEnvironmentDropdown && (
-              <div className="environment-dropdown" ref={environmentDropdownRef}>
-                {environments.length > 0 ? (
-                  <>
-                    {environments.map(env => (
-                      <div 
-                        key={env.id} 
-                        className={`environment-option ${selectedEnvironment === env.id.toString() ? 'selected' : ''}`}
-                        onClick={() => handleEnvironmentChange(env.id.toString())}
-                      >
-                        <span>{env.name}</span>
-                        <button 
-                          className="edit-environment-button"
-                          onClick={(e) => handleEditEnvironmentClick(env, e)}
-                        >
-                          <FontAwesomeIcon icon={faEdit} />
-                        </button>
-                      </div>
-                    ))}
-                    <div 
-                      className="environment-option add-environment"
-                      onClick={handleAddNewEnvironmentClick}
-                    >
-                      <FontAwesomeIcon icon={faPlus} /> Add New Environment
-                    </div>
-                  </>
-                ) : (
-                  <div className="no-environments">
-                    <p>No environments available</p>
-                    <button 
-                      className="add-environment-button"
-                      onClick={handleAddNewEnvironmentClick}
-                    >
-                      <FontAwesomeIcon icon={faPlus} /> Add Environment
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          
-          <AIModelSelector 
-            onModelSelect={setSelectedAIModel} 
-            selectedModelId={selectedAIModel} 
-          />
+
           
           <button 
             className="add-step-button action-button"
