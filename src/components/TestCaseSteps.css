@@ -443,7 +443,7 @@
 .test-case-title {
   margin-bottom: 0.75rem;
   color: var(--gray-900);
-  font-weight: 600;
+  font-weight: 200;
   font-size: var(--font-size-xl);
 }
 
