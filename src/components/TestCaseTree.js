@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faEdit, faFolderPlus, faPlus, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faEdit, faFolderPlus, faPlus, faExchangeAlt, faMinus } from '@fortawesome/free-solid-svg-icons';
 import './TestCaseTree.css';
 
 const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCaseDeleted, projectId }) => {
@@ -27,27 +27,11 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   });
   const API_URL = process.env.REACT_APP_API_URL;
 
-  // Auto-expand all group nodes when treeData changes
+  // By default, all nodes are collapsed when treeData changes
   React.useEffect(() => {
     if (treeData && treeData.length > 0) {
-      const initialExpanded = {};
-      
-      const expandNodes = (nodes) => {
-        if (!Array.isArray(nodes)) return;
-        nodes.forEach(node => {
-          // Expand root and group nodes by default
-          if (node.type === 'root' || node.type === 'group') {
-            initialExpanded[node.id] = true;
-          }
-          // Recursively process children
-          if (node.children && node.children.length > 0) {
-            expandNodes(node.children);
-          }
-        });
-      };
-      
-      expandNodes(treeData);
-      setExpandedNodes(initialExpanded);
+      // Default is to have all nodes collapsed
+      setExpandedNodes({});
     }
   }, [treeData]);
 
@@ -56,6 +40,31 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       ...prev,
       [nodeId]: !prev[nodeId]
     }));
+  };
+
+  // Expand all nodes in the tree
+  const expandAll = () => {
+    const allExpanded = {};
+    
+    const expandNodes = (nodes) => {
+      if (!Array.isArray(nodes)) return;
+      nodes.forEach(node => {
+        if (node.type === 'root' || node.type === 'group') {
+          allExpanded[node.id] = true;
+        }
+        if (node.children && node.children.length > 0) {
+          expandNodes(node.children);
+        }
+      });
+    };
+    
+    expandNodes(treeData);
+    setExpandedNodes(allExpanded);
+  };
+
+  // Collapse all nodes in the tree
+  const collapseAll = () => {
+    setExpandedNodes({});
   };
 
   const handleDeleteClick = (e, node) => {
@@ -544,24 +553,42 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   return (
     <div className="test-case-tree-container">
       <div className="test-case-tree-header">
-        <h3>Test Cases</h3>
-        <div className="tree-actions">
-          <button 
-            className="create-group-button"
-            onClick={() => handleCreateGroupClick(null)}
-          >
-            <FontAwesomeIcon icon={faFolderPlus} /> Create Group
-          </button>
-          <button 
-            className="create-test-button"
-            onClick={handleCreateTestCaseClick}
-          >
-            <FontAwesomeIcon icon={faPlus} /> Create Test Case
-          </button>
+        <div className="header-title-section">
+          <h3>Test Cases</h3>
+          <div className="title-buttons">
+            <button 
+              className="create-group-button"
+              onClick={() => handleCreateGroupClick(null)}
+            >
+              <FontAwesomeIcon icon={faFolderPlus} /> Create Group
+            </button>
+            <button 
+              className="create-test-button"
+              onClick={handleCreateTestCaseClick}
+            >
+              <FontAwesomeIcon icon={faPlus} /> Create Test Case
+            </button>
+          </div>
         </div>
       </div>
       
       <div className="test-case-tree">
+        <div className="tree-controls">
+          <button 
+            className="tree-control-button collapse"
+            onClick={collapseAll}
+            title="Collapse All"
+          >
+            <FontAwesomeIcon icon={faMinus} />
+          </button>
+          <button 
+            className="tree-control-button expand"
+            onClick={expandAll}
+            title="Expand All"
+          >
+            <FontAwesomeIcon icon={faPlus} />
+          </button>
+        </div>
         {treeData.map(node => renderNode(node))}
       </div>
       

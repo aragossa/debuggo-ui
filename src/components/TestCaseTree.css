@@ -15,9 +15,21 @@
   margin-bottom: 10px;
 }
 
+.header-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title-buttons {
+  display: flex;
+  gap: 10px;
+}
+
 .tree-actions {
   display: flex;
   gap: 10px;
+  align-items: center;
 }
 
 .test-case-tree-header h3 {
@@ -59,6 +71,45 @@
 .create-group-button svg,
 .create-test-button svg {
   font-size: 16px;
+}
+
+/* Tree controls container */
+.tree-controls {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+  padding: 0 0 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* Tree control buttons (collapse/expand all) */
+.tree-control-button {
+  background: #f0f0f0;
+  color: #666;
+  border: 1px solid #ddd;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  width: 24px;
+  height: 24px;
+}
+
+.tree-control-button:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.tree-control-button:active {
+  transform: translateY(1px);
+  background: #d5d5d5;
+}
+
+.tree-control-button svg {
+  font-size: 12px;
 }
 
 .test-case-tree {
