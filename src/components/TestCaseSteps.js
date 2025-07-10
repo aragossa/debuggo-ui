@@ -1,8 +1,33 @@
 // TestCaseSteps.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faPlay, faMagicWandSparkles, faGripVertical, faInfoCircle, faSignInAlt, faChevronUp, faChevronDown, faPlus, faEdit, faTrash, faCode, faSearch, faQuestionCircle, faCheckCircle, faTimesCircle, faImage
+import {
+  faPlay,
+  faStop,
+  faPlus,
+  faTrash,
+  faPencilAlt,
+  faMagic,
+  faChevronDown,
+  faChevronUp,
+  faVial,
+  faSpinner,
+  faCheck,
+  faTimes,
+  faExclamationTriangle,
+  faRobot,
+  faInfoCircle,
+  faCog,
+  faEdit,
+  faCode,
+  faSearch,
+  faQuestionCircle,
+  faCheckCircle,
+  faTimesCircle,
+  faGripVertical,
+  faImage,
+  faMagicWandSparkles,
+  faSignInAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import AIModelSelector from './AIModelSelector';
@@ -103,7 +128,10 @@ const TestCaseSteps = ({
   const { getAuthHeaders } = useAuth();
   const [showEnvVarsDropdown, setShowEnvVarsDropdown] = useState(false);
   const [activeInputStepId, setActiveInputStepId] = useState(null);
+  const [activeInputPosition, setActiveInputPosition] = useState({ top: 0, left: 0 });
   const [inputCursorPosition, setInputCursorPosition] = useState(0);
+  const [actionDropdownStepId, setActionDropdownStepId] = useState(null);
+  const actionDropdownRefs = useRef({});
   const [selectedAIModel, setSelectedAIModel] = useState(null);
   const envVarsDropdownRef = useRef(null);
   const inputRefs = useRef({});
@@ -150,18 +178,27 @@ const TestCaseSteps = ({
   }, [steps]);
 
   useEffect(() => {
-    // Add click outside listener to close the dropdown
-    function handleClickOutside(event) {
+    const handleClickOutside = (event) => {
+      if (envVarsDropdownRef.current && !envVarsDropdownRef.current.contains(event.target)) {
+        setShowEnvVarsDropdown(false);
+      }
       if (environmentDropdownRef.current && !environmentDropdownRef.current.contains(event.target)) {
         setShowEnvironmentDropdown(false);
       }
-    }
-    
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      
+      // Close action dropdown when clicking outside
+      if (actionDropdownStepId && 
+          actionDropdownRefs.current[actionDropdownStepId] && 
+          !actionDropdownRefs.current[actionDropdownStepId].contains(event.target)) {
+        setActionDropdownStepId(null);
+      }
     };
-  }, []);
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [actionDropdownStepId]);
 
   useEffect(() => {
     // Add click outside listener to close the env vars dropdown
@@ -834,7 +871,10 @@ const TestCaseSteps = ({
   
   const handleActionChange = async (stepId, newAction) => {
     try {
-      // Update steps state immediately for better UI responsiveness
+      // Close the dropdown
+      setActionDropdownStepId(null);
+      
+      // Update local state first for immediate feedback
       setSteps(prevSteps => 
         prevSteps.map(step => 
           step.id === stepId 
@@ -842,7 +882,8 @@ const TestCaseSteps = ({
             : step
         )
       );
-
+      
+      // Send update to backend
       const response = await fetch(`${API_URL}/api/update_test_step/${stepId}`, {
         method: 'PATCH',
         headers: {
@@ -857,8 +898,13 @@ const TestCaseSteps = ({
       }
     } catch (error) {
       console.error('Error updating test step action:', error);
-      await refreshTestCase();
+      // Revert the state change if the API call failed
+      refreshTestCase();
     }
+  };
+  
+  const toggleActionDropdown = (stepId) => {
+    setActionDropdownStepId(actionDropdownStepId === stepId ? null : stepId);
   };
 
   const handleValueChange = async (stepId, value, currentAction) => {
@@ -1900,18 +1946,41 @@ const TestCaseSteps = ({
                   {step.description}
                 </td>
                 <td className="step-action-cell">
-                  <select 
-                    value={step.action || ''}
-                    onChange={(e) => handleActionChange(step.id, e.target.value)}
-                    className="action-select"
-                  >
-                    <option value="">Select Action</option>
-                    {STEP_ACTIONS.map((action) => (
-                      <option key={action} value={action}>
-                        {action.replace('_', ' ')}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="action-dropdown-container" ref={el => actionDropdownRefs.current[step.id] = el}>
+                    <div 
+                      className="action-dropdown-button"
+                      onClick={() => toggleActionDropdown(step.id)}
+                    >
+                      <FontAwesomeIcon icon={faCog} className="action-icon" />
+                      <span>
+                        {step.action ? step.action.replace('_', ' ') : 'Select Action'}
+                      </span>
+                      <FontAwesomeIcon 
+                        icon={actionDropdownStepId === step.id ? faChevronUp : faChevronDown} 
+                        className="dropdown-icon" 
+                      />
+                    </div>
+                    
+                    {actionDropdownStepId === step.id && (
+                      <div className="action-dropdown">
+                        <div 
+                          className={`action-option ${!step.action ? 'selected' : ''}`}
+                          onClick={() => handleActionChange(step.id, '')}
+                        >
+                          <span>Select Action</span>
+                        </div>
+                        {STEP_ACTIONS.map((action) => (
+                          <div 
+                            key={action} 
+                            className={`action-option ${step.action === action ? 'selected' : ''}`}
+                            onClick={() => handleActionChange(step.id, action)}
+                          >
+                            <span>{action.replace('_', ' ')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td className="step-locator-cell">
                   <div className="element-locator-container">

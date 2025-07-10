@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TestCaseTree from './TestCaseTree';
 import TestCaseSteps from './TestCaseSteps';
 import UploadPopup from './UploadPopup';
 import TestResultPopup from './TestResultPopup';
 import Environments from './Environments';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faFlask, faCog, faFileImport } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faFlask, faCog, faFileImport, faChevronDown, faChevronUp, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -29,6 +29,8 @@ const Dashboard = () => {
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [activeTab, setActiveTab] = useState('testCases');
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+  const projectDropdownRef = useRef(null);
 
   useEffect(() => {
     fetchProjects();
@@ -41,6 +43,18 @@ const Dashboard = () => {
     if (selectedTestId) {
       fetchTestCase(selectedTestId);
     }
+    
+    // Close project dropdown when clicking outside
+    const handleClickOutside = (event) => {
+      if (projectDropdownRef.current && !projectDropdownRef.current.contains(event.target)) {
+        setShowProjectDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   useEffect(() => {
@@ -219,21 +233,49 @@ const Dashboard = () => {
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <div className="project-selector-container">
-          <label htmlFor="project-selector">Project:</label>
-          <select
-            id="project-selector"
-            value={selectedProject}
-            onChange={handleProjectChange}
-            disabled={isLoadingProjects}
+        <div className="project-selector-container" ref={projectDropdownRef}>
+          <div className="project-selector-label">Project:</div>
+          <div 
+            className="project-selector-button"
+            onClick={() => setShowProjectDropdown(!showProjectDropdown)}
           >
-            <option value="all">All Projects</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </select>
+            <FontAwesomeIcon icon={faFolderOpen} className="project-icon" />
+            <span>
+              {selectedProject === 'all' ? 'All Projects' : 
+                (isLoadingProjects ? 'Loading...' : 
+                  projects.find(p => p.id === selectedProject)?.name || 'Select Project')}
+            </span>
+            <FontAwesomeIcon 
+              icon={showProjectDropdown ? faChevronUp : faChevronDown} 
+              className="dropdown-icon" 
+            />
+          </div>
+          
+          {showProjectDropdown && (
+            <div className="project-dropdown">
+              <div 
+                className={`project-option ${selectedProject === 'all' ? 'selected' : ''}`}
+                onClick={() => {
+                  handleProjectChange({ target: { value: 'all' } });
+                  setShowProjectDropdown(false);
+                }}
+              >
+                <span>All Projects</span>
+              </div>
+              {projects.map((project) => (
+                <div 
+                  key={project.id} 
+                  className={`project-option ${selectedProject === project.id ? 'selected' : ''}`}
+                  onClick={() => {
+                    handleProjectChange({ target: { value: project.id } });
+                    setShowProjectDropdown(false);
+                  }}
+                >
+                  <span>{project.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         {noProjects && (
           <div className="dashboard-no-projects" style={{ marginTop: 10, color: '#b00', fontWeight: 500 }}>
