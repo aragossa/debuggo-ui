@@ -11,6 +11,8 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   const [showRenameGroupModal, setShowRenameGroupModal] = useState(false);
   const [showMoveTestCaseModal, setShowMoveTestCaseModal] = useState(false);
   const [showCreateTestCaseModal, setShowCreateTestCaseModal] = useState(false);
+  const [showEditTestCaseModal, setShowEditTestCaseModal] = useState(false);
+  const [testCaseToEdit, setTestCaseToEdit] = useState(null);
   const [newGroupName, setNewGroupName] = useState('');
   const [selectedParentId, setSelectedParentId] = useState(null);
   const [groupToRename, setGroupToRename] = useState(null);
@@ -126,32 +128,102 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     setShowRenameGroupModal(true);
   };
 
-  const handleMoveTestCaseClick = (e, testCase) => {
+  const handleEditTestCaseClick = async (e, testCase) => {
+    e.stopPropagation(); // Prevent triggering the node click
+    setTestCaseToEdit(testCase);
+    
+    // Fetch available groups for the dropdown
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      const response = await fetch(`${API_URL}/api/test_groups`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch groups');
+      }
+      
+      const groups = await response.json();
+      
+      // Transform groups into a flat list with paths
+      const flatGroups = [];
+      
+      const buildGroupPath = (group, parentPath = '') => {
+        const currentPath = parentPath ? `${parentPath} / ${group.name}` : group.name;
+        flatGroups.push({
+          id: group.id,
+          name: group.name,
+          path: currentPath
+        });
+        
+        if (group.children && group.children.length > 0) {
+          group.children.forEach(child => buildGroupPath(child, currentPath));
+        }
+      };
+      
+      groups.forEach(group => buildGroupPath(group));
+      setAvailableGroups(flatGroups);
+      
+      setShowEditTestCaseModal(true);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      alert('Failed to load groups. Please try again.');
+    }
+  };
+
+  const handleMoveTestCaseClick = async (e, testCase) => {
     e.stopPropagation(); // Prevent triggering the node click
     setTestCaseToMove(testCase);
     
-    // Prepare list of available groups
-    const groups = [];
-    const collectGroups = (nodes, path = '') => {
-      if (!Array.isArray(nodes)) return;
+    // Fetch available groups for the dropdown
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
       
-      nodes.forEach(node => {
-        if ((node.type === 'group' || node.type === 'root') && node.id !== testCase.parent_id) {
-          const fullPath = path ? `${path} / ${node.name}` : node.name;
-          groups.push({ id: node.id, name: node.name, fullPath });
-        }
-        
-        if (node.children && node.children.length > 0) {
-          const newPath = path ? `${path} / ${node.name}` : node.name;
-          collectGroups(node.children, newPath);
+      const response = await fetch(`${API_URL}/api/test_groups`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
       });
-    };
-    
-    collectGroups(treeData);
-    setAvailableGroups(groups);
-    setTargetGroupId(null);
-    setShowMoveTestCaseModal(true);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch groups');
+      }
+      
+      const groups = await response.json();
+      
+      // Transform groups into a flat list with paths
+      const flatGroups = [];
+      
+      const buildGroupPath = (group, parentPath = '') => {
+        const currentPath = parentPath ? `${parentPath} / ${group.name}` : group.name;
+        flatGroups.push({
+          id: group.id,
+          name: group.name,
+          path: currentPath
+        });
+        
+        if (group.children && group.children.length > 0) {
+          group.children.forEach(child => buildGroupPath(child, currentPath));
+        }
+      };
+      
+      groups.forEach(group => buildGroupPath(group));
+      setAvailableGroups(flatGroups);
+      
+      setShowMoveTestCaseModal(true);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      alert('Failed to load groups. Please try again.');
+    }
   };
 
   const handleConfirmCreateGroup = async () => {
@@ -265,7 +337,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
         },
         body: JSON.stringify({
           test_case_id: testCaseToMove.id,
-          target_group_id: parseInt(targetGroupId)
+          target_group_id: targetGroupId
         })
       });
       
@@ -277,6 +349,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       // Close the modal
       setShowMoveTestCaseModal(false);
       setTestCaseToMove(null);
+      setTargetGroupId(null);
       
       // Notify parent component to refresh the tree
       if (onTestCaseDeleted) {
@@ -284,45 +357,110 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       }
     } catch (error) {
       console.error('Error moving test case:', error);
-      alert(error.message || 'Failed to move test case. Please try again.');
+      alert(`Failed to move test case: ${error.message}`);
     }
   };
 
-  const handleCreateTestCaseClick = () => {
+  const handleConfirmEditTestCase = async () => {
+    if (!testCaseToEdit || !testCaseToEdit.name.trim()) {
+      alert('Test case name cannot be empty');
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      const response = await fetch(`${API_URL}/api/test_cases/${testCaseToEdit.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: testCaseToEdit.name.trim(),
+          description: testCaseToEdit.description || '',
+          parent_id: testCaseToEdit.parent_id
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update test case');
+      }
+      
+      // Close the modal
+      setShowEditTestCaseModal(false);
+      setTestCaseToEdit(null);
+      
+      // Notify parent component to refresh the tree
+      if (onTestCaseDeleted) {
+        onTestCaseDeleted(null); // Pass null to just refresh the tree
+      }
+    } catch (error) {
+      console.error('Error updating test case:', error);
+      alert(`Failed to update test case: ${error.message}`);
+    }
+  };
+  
+  const handleCreateTestCaseClick = async (parentId = null) => {
     // Reset form
     setNewTestCase({
       name: '',
       description: '',
-      parent_id: null,
+      parent_id: parentId,
       project_id: projectId !== 'all' ? projectId : null
     });
     
-    // Prepare list of available groups
-    const groups = [];
-    const collectGroups = (nodes, path = '') => {
-      if (!Array.isArray(nodes)) return;
+    // Fetch available groups for the dropdown
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
       
-      nodes.forEach(node => {
-        if (node.type === 'group' || node.type === 'root') {
-          const fullPath = path ? `${path} / ${node.name}` : node.name;
-          groups.push({ id: node.id, name: node.name, fullPath });
-        }
-        
-        if (node.children && node.children.length > 0) {
-          const newPath = path ? `${path} / ${node.name}` : node.name;
-          collectGroups(node.children, newPath);
+      const response = await fetch(`${API_URL}/api/test_groups`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
       });
-    };
-    
-    collectGroups(treeData);
-    setAvailableGroups(groups);
-    
-    // Fetch available projects
-    fetchProjects();
-    
-    // Show modal
-    setShowCreateTestCaseModal(true);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch groups');
+      }
+      
+      const groups = await response.json();
+      
+      // Transform groups into a flat list with paths
+      const flatGroups = [];
+      
+      const buildGroupPath = (group, parentPath = '') => {
+        const currentPath = parentPath ? `${parentPath} / ${group.name}` : group.name;
+        flatGroups.push({
+          id: group.id,
+          name: group.name,
+          path: currentPath
+        });
+        
+        if (group.children && group.children.length > 0) {
+          group.children.forEach(child => buildGroupPath(child, currentPath));
+        }
+      };
+      
+      groups.forEach(group => buildGroupPath(group));
+      setAvailableGroups(flatGroups);
+      
+      // Fetch available projects
+      fetchProjects();
+      
+      // Show modal
+      setShowCreateTestCaseModal(true);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      alert('Failed to load groups. Please try again.');
+    }
   };
 
   const fetchProjects = async () => {
@@ -476,6 +614,13 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
             {/* Test case actions */}
             {node.type === 'test' && (
               <>
+                <button 
+                  className="tree-action-button"
+                  onClick={(e) => handleEditTestCaseClick(e, node)}
+                  title="Edit test case"
+                >
+                  <FontAwesomeIcon icon={faEdit} />
+                </button>
                 <button 
                   className="tree-action-button"
                   onClick={(e) => handleMoveTestCaseClick(e, node)}
@@ -659,31 +804,64 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       {showMoveTestCaseModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Move Test Case to Another Group</h3>
-            <p><strong>Test Case:</strong> {testCaseToMove?.name}</p>
+            <h3>Move Test Case</h3>
             <div className="form-group">
               <label>Select Target Group:</label>
-              <select
+              <select 
                 value={targetGroupId || ''}
-                onChange={(e) => setTargetGroupId(e.target.value)}
+                onChange={(e) => setTargetGroupId(e.target.value ? parseInt(e.target.value) : null)}
               >
                 <option value="">-- Select a group --</option>
                 {availableGroups.map(group => (
-                  <option key={group.id} value={group.id}>
-                    {group.fullPath}
-                  </option>
+                  <option key={group.id} value={group.id}>{group.path}</option>
                 ))}
               </select>
             </div>
             <div className="modal-actions">
               <button onClick={() => setShowMoveTestCaseModal(false)} className="modal-button cancel">Cancel</button>
-              <button 
-                onClick={handleConfirmMoveTestCase} 
-                className="modal-button move"
-                disabled={!targetGroupId}
+              <button onClick={handleConfirmMoveTestCase} className="modal-button update">Move</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditTestCaseModal && testCaseToEdit && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Edit Test Case</h3>
+            <div className="form-group">
+              <label>Name:</label>
+              <input 
+                type="text" 
+                value={testCaseToEdit.name || ''}
+                onChange={(e) => setTestCaseToEdit({...testCaseToEdit, name: e.target.value})}
+                placeholder="Enter test case name"
+              />
+            </div>
+            <div className="form-group">
+              <label>Description:</label>
+              <textarea 
+                value={testCaseToEdit.description || ''}
+                onChange={(e) => setTestCaseToEdit({...testCaseToEdit, description: e.target.value})}
+                placeholder="Enter test case description"
+                rows="4"
+              />
+            </div>
+            <div className="form-group">
+              <label>Group:</label>
+              <select 
+                value={testCaseToEdit.parent_id || ''}
+                onChange={(e) => setTestCaseToEdit({...testCaseToEdit, parent_id: e.target.value ? parseInt(e.target.value) : null})}
               >
-                Move
-              </button>
+                <option value="">-- Root --</option>
+                {availableGroups.map(group => (
+                  <option key={group.id} value={group.id}>{group.path}</option>
+                ))}
+              </select>
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => setShowEditTestCaseModal(false)} className="modal-button cancel">Cancel</button>
+              <button onClick={handleConfirmEditTestCase} className="modal-button update">Update</button>
             </div>
           </div>
         </div>
@@ -720,7 +898,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                 <option value="">-- Select a group --</option>
                 {availableGroups.map(group => (
                   <option key={group.id} value={group.id}>
-                    {group.fullPath}
+                    {group.path}
                   </option>
                 ))}
               </select>
