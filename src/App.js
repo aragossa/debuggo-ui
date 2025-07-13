@@ -12,6 +12,7 @@ import UserMenu from './components/UserMenu';
 import Projects from './components/Projects';
 import ProjectDetail from './components/ProjectDetail';
 import AIModelsAdmin from './components/AIModelsAdmin';
+import ContactRequests from './components/ContactRequests';
 import './App.css';
 
 const AdminMenu = () => {
@@ -27,6 +28,7 @@ const AdminMenu = () => {
         <Link to="/clients" className="admin-menu-item">Clients</Link>
         <Link to="/users" className="admin-menu-item">Users</Link>
         <Link to="/ai-models" className="admin-menu-item">AI Models</Link>
+        <Link to="/contact-requests" className="admin-menu-item">Contact Requests</Link>
       </div>
     );
   }, [user]);
@@ -136,6 +138,14 @@ function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <AIModelsAdmin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/contact-requests"
+              element={
+                <ProtectedRoute adminOnly>
+                  <ContactRequests />
                 </ProtectedRoute>
               }
             />

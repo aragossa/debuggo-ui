@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowRight, CheckCircle, Clock, Database, Code, Zap, Shield, BarChart, Layers, GitBranch, Users, Cpu, RefreshCw, Sliders } from 'lucide-react';
 import Login from './Login';
 import './LandingPage.css';
+import axios from 'axios';
 
 const LandingPage = () => {
-  const [showLogin, setShowLogin] = React.useState(false);
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000';
+  const [showLogin, setShowLogin] = useState(false);
+  const [formData, setFormData] = useState({ name: '', message: '' });
+  const [formStatus, setFormStatus] = useState({ submitted: false, error: false, message: '' });
 
   return (
     <div className="landing-page">
@@ -343,21 +347,84 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="contact-form-container">
-            <form className="contact-form">
-              <div className="form-group">
-                <label htmlFor="name">Name</label>
-                <input type="text" id="name" name="name" placeholder="Your name" />
+            {formStatus.submitted ? (
+              <div className={`form-message ${formStatus.error ? 'error' : 'success'}`}>
+                <h3>{formStatus.error ? 'Error' : 'Thank You!'}</h3>
+                <p>{formStatus.message}</p>
+                {formStatus.error && (
+                  <div className="form-actions">
+                    <button 
+                      onClick={() => setFormStatus({ submitted: false, error: false, message: '' })}
+                      className="retry-button"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                )}
               </div>
-              <div className="form-group">
-                <label htmlFor="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="Your email" />
-              </div>
-              <div className="form-group">
-                <label htmlFor="message">Message</label>
-                <textarea id="message" name="message" placeholder="Your message" rows="4"></textarea>
-              </div>
-              <button type="submit" className="contact-submit">Send Message</button>
-            </form>
+            ) : (
+              <form 
+                className="contact-form" 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  
+                  // Validate form
+                  if (!formData.name || !formData.message) {
+                    setFormStatus({
+                      submitted: true,
+                      error: true,
+                      message: 'Please fill out all required fields.'
+                    });
+                    return;
+                  }
+                  
+                  // Submit form data
+                  axios.post(`${API_URL}/api/contact`, formData)
+                    .then(response => {
+                      setFormStatus({
+                        submitted: true,
+                        error: false,
+                        message: 'Your message has been sent successfully. We will get back to you soon!'
+                      });
+                      setFormData({ name: '', message: '' });
+                    })
+                    .catch(error => {
+                      setFormStatus({
+                        submitted: true,
+                        error: true,
+                        message: 'There was an error sending your message. Please try again later.'
+                      });
+                      console.error('Error submitting contact form:', error);
+                    });
+                }}
+              >
+                <div className="form-group">
+                  <label htmlFor="name">Name</label>
+                  <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    placeholder="Your name" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="message">Message</label>
+                  <textarea 
+                    id="message" 
+                    name="message" 
+                    placeholder="Your message" 
+                    rows="4"
+                    value={formData.message}
+                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    required
+                  ></textarea>
+                </div>
+                <button type="submit" className="contact-submit">Send Message</button>
+              </form>
+            )}
           </div>
         </div>
       </section>
