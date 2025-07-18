@@ -27,7 +27,8 @@ import {
   faGripVertical,
   faImage,
   faMagicWandSparkles,
-  faSignInAlt
+  faSignInAlt,
+  faEye
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import AIModelSelector from './AIModelSelector';
@@ -83,6 +84,9 @@ const TestCaseSteps = ({
   const [showRunningTooltip, setShowRunningTooltip] = useState(false);
   const [environments, setEnvironments] = useState([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
+  const [sessionInfo, setSessionInfo] = useState(null);
+  const [testCase, setTestCase] = useState(null);
+  const [showVncTooltip, setShowVncTooltip] = useState(false);
   const [showRunConfirmModal, setShowRunConfirmModal] = useState(false);
   const [showAddEnvironmentModal, setShowAddEnvironmentModal] = useState(false);
   const [showEditEnvironmentModal, setShowEditEnvironmentModal] = useState(false);
@@ -213,6 +217,133 @@ const TestCaseSteps = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (locatorTooltipRef.current && !locatorTooltipRef.current.contains(event.target)) {
+        setLocatorTooltipStep(null);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Function to fetch session info from the backend
+  const fetchSessionInfo = async () => {
+    if (!testCaseId) return;
+    
+    try {
+      // First try to get session info from our backend
+      const response = await fetch(`${API_URL}/api/test-cases/${testCaseId}/session-info`, {
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log('No active session found for this test case');
+          setSessionInfo(null);
+          return null;
+        }
+        throw new Error(`Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Session info from backend:', data);
+      
+      if (data && data.session_id) {
+        // Try multiple approaches to get Grid session details
+        let gridInfo = null;
+        
+        // Approach 1: Try the direct session endpoint
+        try {
+          const gridResponse = await fetch(`http://localhost:4444/session/${data.session_id}`);
+          if (gridResponse.ok) {
+            const gridData = await gridResponse.json();
+            console.log('Grid session details from direct endpoint:', gridData);
+            gridInfo = gridData.value;
+          }
+        } catch (error) {
+          console.log('Could not get session details from direct endpoint:', error);
+        }
+        
+        // Approach 2: Try getting all sessions and finding ours
+        if (!gridInfo) {
+          try {
+            const gridStatusResponse = await fetch('http://localhost:4444/status');
+            if (gridStatusResponse.ok) {
+              const gridStatus = await gridStatusResponse.json();
+              console.log('Grid status:', gridStatus);
+              
+              // Look for our session in all nodes
+              if (gridStatus.value && gridStatus.value.nodes) {
+                for (const node of gridStatus.value.nodes) {
+                  if (node.slots) {
+                    for (const slot of node.slots) {
+                      if (slot.session && slot.session.sessionId === data.session_id) {
+                        console.log('Found session in grid status:', slot);
+                        gridInfo = {
+                          nodeId: node.id,
+                          slot: slot,
+                          sessionDetails: slot.session
+                        };
+                        break;
+                      }
+                    }
+                  }
+                  if (gridInfo) break;
+                }
+              }
+            }
+          } catch (error) {
+            console.log('Could not get session details from grid status:', error);
+          }
+        }
+        
+        // Combine all the information
+        const sessionInfo = {
+          ...data,
+          grid_info: gridInfo
+        };
+        
+        console.log('Final session info:', sessionInfo);
+        setSessionInfo(sessionInfo);
+        return sessionInfo;
+      } else {
+        setSessionInfo(null);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching session info:', error);
+      setSessionInfo(null);
+      return null;
+    }
+  };
+
+  // Check for active session when component mounts or when test case ID changes
+  useEffect(() => {
+    if (testCaseId) {
+      fetchSessionInfo();
+    }
+  }, [testCaseId]);
+  
+  // Start polling for session info when test generation starts
+  useEffect(() => {
+    let intervalId = null;
+    
+    if (isGeneratingSteps && testCaseId) {
+      intervalId = startSessionInfoPolling();
+    }
+    
+    // Cleanup function to clear interval when component unmounts or dependencies change
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isGeneratingSteps, testCaseId]);
 
   useEffect(() => {
     // Add click outside listener to close the locator tooltip
@@ -416,6 +547,9 @@ const TestCaseSteps = ({
           // Stop polling
           clearInterval(pollingInterval);
           setPollingInterval(null);
+          
+          // Fetch session info after generation is complete
+          fetchSessionInfo();
         }
       } catch (error) {
         console.error('Error checking test case generation status:', error);
@@ -425,6 +559,72 @@ const TestCaseSteps = ({
     setPollingInterval(interval);
   };
 
+  // The fetchSessionInfo function has been moved to the top of the component
+  
+  // Start polling for session info when test generation is in progress
+  const startSessionInfoPolling = () => {
+    console.log('Starting session info polling');
+    // Poll every 5 seconds
+    const intervalId = setInterval(async () => {
+      if (isGeneratingSteps) {
+        console.log('Polling for session info...');
+        const sessionData = await fetchSessionInfo();
+        if (sessionData) {
+          console.log('Active session found, stopping polling');
+          clearInterval(intervalId);
+        }
+      } else {
+        console.log('Test generation completed, stopping polling');
+        clearInterval(intervalId);
+      }
+    }, 5000);
+    
+    // Store the interval ID for cleanup
+    return intervalId;
+  };
+  
+  // Function to refresh test case data after async task completion
+  const refreshTestCaseData = async () => {
+    if (!testCaseId) return;
+    
+    try {
+      console.log(`Refreshing test case data for test case ${testCaseId}`);
+      
+      // Fetch test case details
+      const testCaseResponse = await fetch(`${API_URL}/api/test-cases/${testCaseId}`, {
+        headers: getAuthHeaders()
+      });
+      
+      if (!testCaseResponse.ok) {
+        throw new Error(`Failed to fetch test case: ${testCaseResponse.status}`);
+      }
+      
+      const testCaseData = await testCaseResponse.json();
+      
+      // Fetch test steps
+      const stepsResponse = await fetch(`${API_URL}/api/test-cases/${testCaseId}/steps`, {
+        headers: getAuthHeaders()
+      });
+      
+      if (!stepsResponse.ok) {
+        throw new Error(`Failed to fetch test steps: ${stepsResponse.status}`);
+      }
+      
+      const stepsData = await stepsResponse.json();
+      
+      // Update state with new data
+      setTestCase(testCaseData);
+      setSteps(stepsData);
+      
+      // Check for screenshots
+      await checkNewStepsForScreenshots(stepsData);
+      
+      console.log('Test case data refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing test case data:', error);
+    }
+  };
+  
   // Helper function to check for screenshots for new steps
   const checkNewStepsForScreenshots = async (newSteps) => {
     if (!newSteps || newSteps.length === 0) return;
@@ -439,6 +639,113 @@ const TestCaseSteps = ({
     }
     
     setStepsWithScreenshots(screenshotStatus);
+  };
+  
+  // Poll for test case generation status
+  const startTestCaseStatusPolling = (testCaseId) => {
+    console.log(`Starting test case status polling for test case ${testCaseId}`);
+    
+    // Poll every 3 seconds
+    const intervalId = setInterval(async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
+          headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Test case generation status:', data);
+        
+        // If generation is no longer in progress, stop polling
+        if (!data.is_generating) {
+          console.log('Test case generation completed');
+          clearInterval(intervalId);
+          setIsGeneratingSteps(false);
+          
+          // Remove this test case from the generating list
+          setGeneratingTestCases(prev => {
+            const newState = { ...prev };
+            delete newState[testCaseId];
+            return newState;
+          });
+          
+          // Refresh test case data to show new steps
+          refreshTestCaseData();
+          
+          // Fetch session info one more time to ensure we have the latest
+          fetchSessionInfo();
+        } else {
+          // Update UI with current generation progress
+          console.log(`Current step: ${data.current_step}`);
+          console.log(`Next step: ${data.next_step}`);
+          
+          // You could update some UI state here to show progress
+        }
+      } catch (error) {
+        console.error('Error polling test case generation status:', error);
+      }
+    }, 3000);
+    
+    return intervalId;
+  };
+  
+  // This function is kept for backward compatibility but not used
+  const startTaskStatusPolling = (taskId) => {
+    console.log(`Task status polling not used, using test case status polling instead`);
+    return null;
+  };
+
+  const openVncSession = async () => {
+    // Refresh session info first to ensure we have the latest data
+    await fetchSessionInfo();
+    
+    if (!sessionInfo || !sessionInfo.session_id) {
+      console.log('No active session found, opening Selenium Grid UI');
+      window.open('http://localhost:4444/ui', '_blank');
+      return;
+    }
+    
+    console.log('Session info found:', sessionInfo);
+    console.log('Session ID:', sessionInfo.session_id);
+    
+    // APPROACH 1: Use the most reliable method - Selenium Grid's built-in VNC viewer
+    // This URL format works with Selenium Grid 4.x
+    const gridVncUrl = `http://localhost:4444/ui#/sessions/${sessionInfo.session_id}`;
+    console.log(`Opening Selenium Grid session view: ${gridVncUrl}`);
+    window.open(gridVncUrl, '_blank');
+    
+    // APPROACH 2: Try to determine the correct noVNC port
+    let vncPort = 7900; // Default port
+    
+    // If we have grid_info with node details
+    if (sessionInfo.grid_info && sessionInfo.grid_info.nodeId) {
+      console.log('Using grid_info to determine VNC port');
+      
+      // If we have slot information with noVncPort
+      if (sessionInfo.grid_info.slot && 
+          sessionInfo.grid_info.slot.stereotype && 
+          sessionInfo.grid_info.slot.stereotype['se:noVncPort']) {
+        vncPort = sessionInfo.grid_info.slot.stereotype['se:noVncPort'];
+        console.log(`Found noVncPort in slot stereotype: ${vncPort}`);
+      }
+    } 
+    // If we have a VNC port from the backend
+    else if (sessionInfo.vnc_port) {
+      vncPort = sessionInfo.vnc_port;
+      console.log(`Using VNC port from backend: ${vncPort}`);
+    }
+    
+    // Open the direct noVNC viewer
+    const directVncUrl = `http://localhost:${vncPort}`;
+    console.log(`Opening direct noVNC viewer: ${directVncUrl}`);
+    window.open(directVncUrl, '_blank');
+    
+    // Also open the Selenium Grid UI for reference
+    console.log('Opening Selenium Grid UI for reference');
+    window.open('http://localhost:4444/ui', '_blank');
   };
 
   const handleStopGeneration = async () => {
@@ -812,6 +1119,8 @@ const TestCaseSteps = ({
   const generateSteps = async (confirm) => {
     if (!testCaseId || isGeneratingSteps || !isProjectSelected || !selectedEnvironment) return;
     
+    // Clear any existing session info before starting new generation
+    setSessionInfo(null);
     setIsGeneratingSteps(true);
     
     // Add this test case to the generating list
@@ -821,12 +1130,12 @@ const TestCaseSteps = ({
     }));
     
     try {
-      const endpoint = confirm 
-        ? `${API_URL}/api/confirm_generate_steps/${testCaseId}` 
-        : `${API_URL}/api/generate_steps/${testCaseId}`;
+      // Use the generate_steps endpoint
+      const endpoint = `${API_URL}/api/generate_steps/${testCaseId}`;
       
       const requestBody = {
-        environment_id: parseInt(selectedEnvironment)
+        environment_id: parseInt(selectedEnvironment),
+        url: testCase?.url || ''
       };
       
       // If projectId exists and is not 'all', add it to the request body
@@ -847,24 +1156,28 @@ const TestCaseSteps = ({
         },
         body: JSON.stringify(requestBody)
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to generate steps');
+        throw new Error(`Error: ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log('Task submitted successfully:', data);
       
-      // Start polling for updates
-      startPollingForUpdates();
+      // Start polling for test case generation status
+      startTestCaseStatusPolling(testCaseId);
       
+      // Session info polling will start automatically due to the useEffect hook
+      console.log('Starting session info polling for VNC viewer');
     } catch (error) {
       console.error('Error generating steps:', error);
-      alert('Failed to generate steps. Please try again.');
       setIsGeneratingSteps(false);
       
       // Remove this test case from the generating list
       setGeneratingTestCases(prev => {
-        const updated = { ...prev };
-        delete updated[testCaseId];
-        return updated;
+        const newState = { ...prev };
+        delete newState[testCaseId];
+        return newState;
       });
     }
   };
@@ -1260,7 +1573,7 @@ const TestCaseSteps = ({
         
         throw new Error(errorMessage);
       }
-      
+
       const newStepData = await response.json();
       
       // Add the new step to the steps array
@@ -1553,6 +1866,15 @@ const TestCaseSteps = ({
                 </>
               )}
             </button>
+            <button
+              className={`vnc-button ${sessionInfo ? 'active-session' : 'inactive-session'}`}
+              onClick={openVncSession}
+              title={sessionInfo ? "View active browser session" : "View Selenium Grid (no active session)"}
+              onMouseEnter={() => setShowVncTooltip(true)}
+              onMouseLeave={() => setShowVncTooltip(false)}
+            >
+              <FontAwesomeIcon icon={faEye} /> {sessionInfo ? "View Session" : "View Grid"}
+            </button>
             {!isProjectSelected && showProjectTooltip && (
               <div className="tooltip">
                 <FontAwesomeIcon icon={faInfoCircle} /> Please select a project first
@@ -1561,6 +1883,11 @@ const TestCaseSteps = ({
             {isRunning && showRunningTooltip && (
               <div className="tooltip">
                 <FontAwesomeIcon icon={faInfoCircle} /> Cannot generate steps while test is running
+              </div>
+            )}
+            {showVncTooltip && (
+              <div className="tooltip">
+                <FontAwesomeIcon icon={faInfoCircle} /> View browser session
               </div>
             )}
           </div>
@@ -2246,5 +2573,58 @@ const TestCaseSteps = ({
     </div>
   );
 };
+
+/* CSS Styles */
+const styles = `
+  .vnc-button {
+    margin-left: 8px;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .active-session {
+    background-color: #28a745; /* Green for active session */
+  }
+
+  .inactive-session {
+    background-color: #6c757d; /* Gray for inactive session */
+  }
+
+  .active-session:hover {
+    background-color: #218838;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+  }
+
+  .inactive-session:hover {
+    background-color: #5a6268;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+  }
+
+  .vnc-button svg {
+    font-size: 16px;
+    margin-right: 6px;
+  }
+
+  .tooltip {
+    z-index: 100;
+  }
+`;
+
+// Add styles to the document
+const styleSheet = document.createElement("style");
+styleSheet.type = "text/css";
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
 
 export default TestCaseSteps;
