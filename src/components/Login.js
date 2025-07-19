@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import GoogleLoginButton from './GoogleLoginButton';
 import './Login.css';
 
 const Login = () => {
@@ -9,7 +10,8 @@ const Login = () => {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
-  const API_URL = process.env.REACT_APP_API_URL;
+  const location = useLocation();
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,6 +48,30 @@ const Login = () => {
     }
   };
 
+  // Check for token in URL when component mounts
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const token = queryParams.get('token');
+    
+    if (token) {
+      // Remove the token from URL to prevent it from being visible
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Login with the token
+      const handleTokenLogin = async () => {
+        try {
+          await login({ access_token: token });
+          navigate('/dashboard');
+        } catch (err) {
+          setError('Failed to authenticate with Google. Please try again.');
+          console.error('Google auth error:', err);
+        }
+      };
+      
+      handleTokenLogin();
+    }
+  }, [location, login, navigate]);
+
   return (
     <div className="login-form">
       <h2>Welcome Back</h2>
@@ -77,6 +103,12 @@ const Login = () => {
         </div>
         <button type="submit">Sign In</button>
       </form>
+      
+      <div className="login-divider">
+        <span>OR</span>
+      </div>
+      
+      <GoogleLoginButton />
     </div>
   );
 };

@@ -93,6 +93,27 @@ button[type="submit"]:hover {
   opacity: 0.9;
 }
 
+/* Login divider */
+.login-divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  color: #6B7280;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.login-divider span {
+  padding: 0 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 /* Modal specific styles */
 .modal-overlay {
   background-color: rgba(0, 0, 0, 0.5);
