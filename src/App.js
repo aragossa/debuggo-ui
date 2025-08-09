@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import React, { useMemo, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './components/Dashboard';
@@ -67,21 +67,61 @@ const NavAuth = () => {
   }, [isAuthenticated]);
 };
 
+// Component to handle token detection and redirection
+const TokenHandler = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const token = queryParams.get('token');
+    
+    if (token) {
+      // Remove the token from URL to prevent it from being visible
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Login with the token
+      const handleTokenLogin = async () => {
+        try {
+          await login({ access_token: token });
+          navigate('/dashboard');
+        } catch (err) {
+          console.error('SSO auth error:', err);
+          // Redirect to login page on error
+          navigate('/login');
+        }
+      };
+      
+      handleTokenLogin();
+    }
+  }, [location, login, navigate]);
+  
+  return null; // This component doesn't render anything
+};
+
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <TokenHandler />
         <div className="app">
-          <nav className="top-nav">
-            <div className="nav-brand">
-              <Link to="/">AuroQA</Link>
-            </div>
-            <div className="nav-menu">
-              <MainMenu />
-              <AdminMenu />
-            </div>
-            <NavAuth />
-          </nav>
+          <Routes>
+            <Route path="/" element={null} />
+            <Route path="/login" element={null} />
+            <Route path="*" element={
+              <nav className="top-nav">
+                <div className="nav-brand">
+                  <Link to="/">AuroQA</Link>
+                </div>
+                <div className="nav-menu">
+                  <MainMenu />
+                  <AdminMenu />
+                </div>
+                <NavAuth />
+              </nav>
+            } />
+          </Routes>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowRight, CheckCircle, Clock, Database, Code, Zap, Shield, BarChart, Layers, GitBranch, Users, Cpu, RefreshCw, Sliders } from 'lucide-react';
+import { ArrowRight, CheckCircle, Clock, Database, Code, Zap, Shield, BarChart, Layers, GitBranch, Users, Cpu, RefreshCw, Sliders, Target, Bug, Bot, Linkedin } from 'lucide-react';
 import Login from './Login';
 import './LandingPage.css';
 import axios from 'axios';
+import { ReactComponent as Logo } from '../logo.svg';
 
 const LandingPage = () => {
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000';
@@ -16,12 +17,18 @@ const LandingPage = () => {
       <nav className="nav-container">
         <div className="nav-content">
           <div className="logo-container">
-            <div className="logo-square"></div>
+            <div className="logo-square">
+              <Logo width="100%" height="100%" />
+            </div>
             <span className="logo-text">AuroQA</span>
           </div>
           <div className="nav-links">
+            <a href="#about" className="nav-link">About</a>
+            <a href="#team" className="nav-link">Team</a>
+            <a href="#product" className="nav-link">Product</a>
             <a href="#features" className="nav-link">Features</a>
             <a href="#contact" className="nav-link">Contact</a>
+            <a href="/login" className="nav-link">Login</a>
           </div>
         </div>
       </nav>
@@ -73,6 +80,163 @@ const LandingPage = () => {
             <div className="stat-item">
               <span className="stat-number">24/7</span>
               <span className="stat-label">Availability</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="about-section">
+        <div className="container">
+          <div className="section-header">
+            <h2 className="section-title">About AuroQA</h2>
+            <p className="section-subtitle">Revolutionizing Test Automation with AI-Powered Intelligence</p>
+          </div>
+          <div className="about-content">
+            <div className="about-text">
+              <h3>What We Do</h3>
+              <p>
+                AuroQA solves the critical challenges facing QA teams, developers, and enterprises in today's fast-paced development environment. 
+                We generate complete test automation flows that seamlessly combine UI and API testing, eliminating the fragmentation 
+                that plagues traditional testing approaches.
+              </p>
+              <h3>The Problems We Solve</h3>
+              <div className="problem-solutions">
+                <div className="solution-item">
+                  <Target className="solution-icon" />
+                  <div>
+                    <h4>Fragmented Testing Workflows</h4>
+                    <p>Traditional tools force teams to manage UI and API tests separately, creating gaps in coverage and inefficient processes.</p>
+                  </div>
+                </div>
+                <div className="solution-item">
+                  <Bug className="solution-icon" />
+                  <div>
+                    <h4>AI Bug Detection</h4>
+                    <p>Our AI actively searches for bugs on pages during test execution, catching issues that manual testing often misses.</p>
+                  </div>
+                </div>
+                <div className="solution-item">
+                  <Bot className="solution-icon" />
+                  <div>
+                    <h4>Time-Intensive Test Creation</h4>
+                    <p>AI-powered test generation from screenshots, API schemas, and documentation reduces test creation time by 80%.</p>
+                  </div>
+                </div>
+              </div>
+              <h3>Our Target Audience</h3>
+              <p>
+                We serve QA teams looking to modernize their testing approach, developers seeking integrated testing solutions, 
+                and enterprises requiring scalable, maintainable test automation across their entire technology stack.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Team Section */}
+      <section id="team" className="team-section">
+        <div className="container">
+          <div className="section-header">
+            <h2 className="section-title">Meet Our Team</h2>
+            <p className="section-subtitle">Experienced leaders driving innovation in test automation</p>
+          </div>
+          <div className="team-grid">
+            <div className="team-member">
+              <div className="member-photo">
+                <img src="/images/photo.jpg" alt="Ilya Ploskovitov" className="member-image" />
+              </div>
+              <div className="member-info">
+                <h3>Ilya Ploskovitov</h3>
+                <p className="member-role">Founder & CEO | Senior QA Engineer</p>
+                <p className="member-bio">
+                  Experienced QA Engineer (Manual, Automation, Performance) with expertise in automation for high-loaded information systems.
+                  Specialized in building comprehensive test automation frameworks using modern DevOps practices and AI-powered testing solutions.
+                </p>
+                <div className="member-links">
+                  <a 
+                    href="https://www.linkedin.com/in/aragossa/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="linkedin-link"
+                  >
+                    <Linkedin size={20} />
+                    LinkedIn Profile
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Product Details Section */}
+      <section id="product" className="product-section">
+        <div className="container">
+          <div className="section-header">
+            <h2 className="section-title">Our Product</h2>
+            <p className="section-subtitle">Comprehensive test automation platform ready for real-world deployment</p>
+          </div>
+          <div className="product-content">
+            <div className="product-overview">
+              <h3>Current Development Stage</h3>
+              <div className="stage-indicator">
+                <div className="stage-badge">Pre-Launch Testing Phase</div>
+                <p>
+                  AuroQA is currently in an advanced development stage, actively seeking test groups to validate 
+                  our platform with real test cases in production environments. We've completed core development 
+                  and are preparing for full market launch.
+                </p>
+              </div>
+            </div>
+            
+            <div className="product-features">
+              <h3>What Users Can Expect</h3>
+              <div className="feature-highlights">
+                <div className="highlight-item">
+                  <CheckCircle className="highlight-icon" />
+                  <div>
+                    <h4>AI-Powered Test Generation</h4>
+                    <p>Upload screenshots, API schemas, or documentation and watch AI create comprehensive test suites</p>
+                  </div>
+                </div>
+                <div className="highlight-item">
+                  <CheckCircle className="highlight-icon" />
+                  <div>
+                    <h4>Unified UI & API Testing</h4>
+                    <p>Single platform for complete test automation workflows covering both frontend and backend</p>
+                  </div>
+                </div>
+                <div className="highlight-item">
+                  <CheckCircle className="highlight-icon" />
+                  <div>
+                    <h4>Intelligent Bug Detection</h4>
+                    <p>AI actively analyzes pages during test execution to identify potential issues and anomalies</p>
+                  </div>
+                </div>
+                <div className="highlight-item">
+                  <CheckCircle className="highlight-icon" />
+                  <div>
+                    <h4>Database-Driven Architecture</h4>
+                    <p>All test cases, steps, and locators stored centrally for maximum reusability and maintenance</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="product-cta">
+              <h3>Ready to Join Our Testing Program?</h3>
+              <p>
+                We're actively seeking forward-thinking teams to participate in our pre-launch testing program. 
+                Get early access to AuroQA and help shape the future of test automation.
+              </p>
+              <button 
+                onClick={() => setShowLogin(true)}
+                className="cta-button"
+              >
+                Join Testing Program
+                <ArrowRight size={20} />
+              </button>
             </div>
           </div>
         </div>
@@ -133,39 +297,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="how-it-works-section">
-        <div className="section-header">
-          <h2 className="section-title">How It Works</h2>
-          <p className="section-subtitle">Simple 3-step process to automate your testing</p>
-          <p className="section-description">
-            Our database-driven approach ensures that all test components are reusable and maintainable. No hardcoded tests or locators - everything is dynamically generated by AI and stored in a centralized database, allowing your entire team to benefit from the accumulated testing knowledge.
-          </p>
-        </div>
-        <div className="process-container">
-          <div className="process-step">
-            <div className="process-number">1</div>
-            <h3 className="process-title">Input Your URL</h3>
-            <p className="process-description">Provide the URL of your web application, upload screenshots, or share technical documentation. The system associates all tests with your selected project for better organization and management.</p>
-          </div>
-          <div className="process-arrow">
-            <ArrowRight size={24} />
-          </div>
-          <div className="process-step">
-            <div className="process-number">2</div>
-            <h3 className="process-title">AI Analysis</h3>
-            <p className="process-description">Our AI analyzes the page structure and generates optimal test cases. All test steps, locators, and actions are stored in the database in a standardized format, making them reusable across your organization.</p>
-          </div>
-          <div className="process-arrow">
-            <ArrowRight size={24} />
-          </div>
-          <div className="process-step">
-            <div className="process-number">3</div>
-            <h3 className="process-title">Execute Tests</h3>
-            <p className="process-description">Run tests automatically and receive detailed reports. Our asynchronous task processing system allows multiple tests to run concurrently without blocking your UI.</p>
-          </div>
-        </div>
-      </section>
 
       {/* Database-Driven Approach Section */}
       <section className="database-driven-section">
@@ -433,16 +564,12 @@ const LandingPage = () => {
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-logo">
-            <div className="logo-square"></div>
+            <div className="logo-square">
+              <Logo width="100%" height="100%" />
+            </div>
             <span className="logo-text">AuroQA</span>
           </div>
           <div className="footer-links">
-            <div className="footer-column">
-              <h4>Product</h4>
-              <a href="#features">Features</a>
-              <a href="#how-it-works">How It Works</a>
-              <a href="#">Pricing</a>
-            </div>
             <div className="footer-column">
               <h4>Company</h4>
               <a href="#">About Us</a>
