@@ -139,7 +139,6 @@ const LandingPage = () => {
         <div className="container">
           <div className="section-header">
             <h2 className="section-title">Meet Our Team</h2>
-            <p className="section-subtitle">Experienced leaders driving innovation in test automation</p>
           </div>
           <div className="team-grid">
             <div className="team-member">
@@ -148,14 +147,37 @@ const LandingPage = () => {
               </div>
               <div className="member-info">
                 <h3>Ilya Ploskovitov</h3>
-                <p className="member-role">Founder & CEO | Senior QA Engineer</p>
+                <p className="member-role">Founder & CEO</p>
                 <p className="member-bio">
-                  Experienced QA Engineer (Manual, Automation, Performance) with expertise in automation for high-loaded information systems.
-                  Specialized in building comprehensive test automation frameworks using modern DevOps practices and AI-powered testing solutions.
+                Leading QA efforts at startup LUCY Awareness, driving quality assurance strategies. Experienced QA Engineer skilled in automation for high-loaded systems. Specializes in building test automation frameworks and QA processes using DevOps practices and AI-powered testing solutions to ensure robust, scalable systems.
                 </p>
                 <div className="member-links">
                   <a 
                     href="https://www.linkedin.com/in/aragossa/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="linkedin-link"
+                  >
+                    <Linkedin size={20} />
+                    LinkedIn Profile
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            <div className="team-member">
+              <div className="member-photo">
+                <img src="/images/1656436650919.jpeg" alt="Sasha Zelenin" className="member-image" />
+              </div>
+              <div className="member-info">
+                <h3>Sasha Zelenin</h3>
+                <p className="member-role">Mentor</p>
+                <p className="member-bio">
+                Entrepreneur since 2001, psychologist, and inventor. Founded seven profitable companies, sold five. Mentors startup founders, sharing insights to navigate challenges and scale ventures. Key lessons: passion drives sales, open communication unites teams, leadership starts with self-management, and transparency builds trust through constructive feedback.
+                </p>
+                <div className="member-links">
+                  <a 
+                    href="https://www.linkedin.com/in/aleksandr-zelenin/" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="linkedin-link"

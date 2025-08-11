@@ -655,7 +655,6 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   if (!treeData || treeData.length === 0) {
     return (
       <div className="test-case-tree-container">
-        <div className="tree-empty">No test cases available.</div>
         <div className="tree-actions">
           <button 
             className="create-group-button"
@@ -670,6 +669,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
             <FontAwesomeIcon icon={faPlus} /> Create Test Case
           </button>
         </div>
+        <div className="tree-empty">No test cases available.</div>
         {/* Ensure create group modal is rendered even if tree is empty */}
         {showCreateGroupModal && (
           <div className="modal-overlay">

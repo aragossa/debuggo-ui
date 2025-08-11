@@ -765,11 +765,12 @@
 }
 
 .team-grid {
-  display: grid;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
   gap: 2rem;
-  max-width: 800px;
   margin: 0 auto;
-  justify-items: center;
+  flex-wrap: wrap;
 }
 
 .team-member {
