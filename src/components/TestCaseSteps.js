@@ -233,13 +233,23 @@ const TestCaseSteps = ({
       const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       
-      // If the response is OK, a screenshot exists
-      return response.ok;
+      if (!response.ok) {
+        return false;
+      }
+      
+      const data = await response.json();
+      
+      // Check if it's the new format with screenshot_available flag
+      if (data.hasOwnProperty('screenshot_available')) {
+        return data.screenshot_available;
+      }
+      
+      // Check if it's the old format with screenshot data
+      return data.screenshot ? true : false;
     } catch (error) {
       console.error('Error checking screenshot availability:', error);
       return false;
@@ -1548,21 +1558,31 @@ const TestCaseSteps = ({
       const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to fetch screenshot');
+      if (response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          if (!data.screenshot_available) {
+            setScreenshotError(data.message || 'Screenshot not available');
+            setCurrentScreenshot(null);
+          }
+        } else {
+          const blob = await response.blob();
+          const imageUrl = URL.createObjectURL(blob);
+          setCurrentScreenshot(imageUrl);
+        }
+      } else {
+        setScreenshotError('Failed to load screenshot');
+        setCurrentScreenshot(null);
       }
-      
-      const data = await response.json();
-      setCurrentScreenshot(data);
     } catch (error) {
-      console.error('Error fetching screenshot:', error);
-      setScreenshotError(error.message);
+      console.error('Error loading screenshot:', error);
+      setScreenshotError('Error loading screenshot');
+      setCurrentScreenshot(null);
     } finally {
       setScreenshotLoading(false);
     }
@@ -2471,7 +2491,7 @@ const TestCaseSteps = ({
                   )}
                   <div className="screenshot-image-container">
                     <img 
-                      src={`data:image/png;base64,${currentScreenshot.screenshot}`} 
+                      src={typeof currentScreenshot === 'string' ? currentScreenshot : `data:image/png;base64,${currentScreenshot.screenshot}`} 
                       alt="Test step screenshot" 
                       className={`step-screenshot ${isZoomed ? 'zoomed' : ''}`}
                       onClick={handleImageClick}
