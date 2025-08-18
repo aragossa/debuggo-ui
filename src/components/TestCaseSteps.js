@@ -24,10 +24,12 @@ import {
   faQuestionCircle,
   faCheckCircle,
   faTimesCircle,
+  faMinusCircle,
   faGripVertical,
   faImage,
   faMagicWandSparkles,
-  faSignInAlt
+  faSignInAlt,
+  faCamera
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import AIModelSelector from './AIModelSelector';
@@ -76,6 +78,7 @@ const TestCaseSteps = ({
     return saved ? JSON.parse(saved) : {};
   });
   const [pollingInterval, setPollingInterval] = useState(null);
+  const [stepResultsPollingInterval, setStepResultsPollingInterval] = useState(null);
   const [showProjectTooltip, setShowProjectTooltip] = useState(false);
   const [showGenerateTooltip, setShowGenerateTooltip] = useState(false);
   const [showRunTooltip, setShowRunTooltip] = useState(false);
@@ -133,6 +136,7 @@ const TestCaseSteps = ({
   const [actionDropdownStepId, setActionDropdownStepId] = useState(null);
   const actionDropdownRefs = useRef({});
   const [selectedAIModel, setSelectedAIModel] = useState(null);
+  const [activeTab, setActiveTab] = useState('description');
   const envVarsDropdownRef = useRef(null);
   const inputRefs = useRef({});
   const locatorTooltipRef = useRef(null);
@@ -141,19 +145,111 @@ const TestCaseSteps = ({
   // State for tracking steps with screenshots
   const [stepsWithScreenshots, setStepsWithScreenshots] = useState({});
 
+  // State for step execution results
+  const [stepExecutionResults, setStepExecutionResults] = useState({});
+
+  // Function to fetch step execution results for a test run
+  const fetchStepExecutionResults = async (runId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/test_run/${runId}/step_execution_results`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStepExecutionResults(prev => ({
+          ...prev,
+          [runId]: data.step_results
+        }));
+      } else {
+        console.error('Failed to fetch step execution results:', response.statusText);
+        setStepExecutionResults(prev => ({
+          ...prev,
+          [runId]: []
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching step execution results:', error);
+      setStepExecutionResults(prev => ({
+        ...prev,
+        [runId]: []
+      }));
+    }
+  };
+
+  // Function to refresh step execution results for the latest test run during execution
+  const refreshLatestStepResults = async () => {
+    if (!testCaseData?.test_runs || testCaseData.test_runs.length === 0) return;
+    
+    // Get the most recent test run
+    const latestRun = testCaseData.test_runs[0];
+    if (latestRun && latestRun.id) {
+      await fetchStepExecutionResults(latestRun.id);
+    }
+  };
+
+  // Function to open step screenshot
+  const openStepScreenshot = async (stepId) => {
+    setScreenshotLoading(true);
+    setScreenshotError(null);
+    setShowScreenshotModal(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          if (!data.screenshot_available) {
+            setScreenshotError(data.message || 'Screenshot not available');
+            setCurrentScreenshot(null);
+          }
+        } else {
+          const blob = await response.blob();
+          const imageUrl = URL.createObjectURL(blob);
+          setCurrentScreenshot(imageUrl);
+        }
+      } else {
+        setScreenshotError('Failed to load screenshot');
+        setCurrentScreenshot(null);
+      }
+    } catch (error) {
+      console.error('Error loading screenshot:', error);
+      setScreenshotError('Error loading screenshot');
+      setCurrentScreenshot(null);
+    } finally {
+      setScreenshotLoading(false);
+    }
+  };
+
   // Function to check if a step has a screenshot
   const checkStepScreenshot = async (stepId) => {
     try {
       const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       
-      // If the response is OK, a screenshot exists
-      return response.ok;
+      if (!response.ok) {
+        return false;
+      }
+      
+      const data = await response.json();
+      
+      // Check if it's the new format with screenshot_available flag
+      if (data.hasOwnProperty('screenshot_available')) {
+        return data.screenshot_available;
+      }
+      
+      // Check if it's the old format with screenshot data
+      return data.screenshot ? true : false;
     } catch (error) {
       console.error('Error checking screenshot availability:', error);
       return false;
@@ -329,6 +425,10 @@ const TestCaseSteps = ({
         clearInterval(pollingInterval);
         setPollingInterval(null);
       }
+      if (stepResultsPollingInterval) {
+        clearInterval(stepResultsPollingInterval);
+        setStepResultsPollingInterval(null);
+      }
     };
   }, [testCaseId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -423,6 +523,43 @@ const TestCaseSteps = ({
     }, 2000); // Poll every 2 seconds for more responsive updates
     
     setPollingInterval(interval);
+  };
+
+  // Function to start polling for step execution results during test execution
+  const startStepResultsPolling = () => {
+    // Clear any existing interval
+    if (stepResultsPollingInterval) {
+      clearInterval(stepResultsPollingInterval);
+    }
+    
+    // Set up a new polling interval for step results
+    const interval = setInterval(async () => {
+      if (!testCaseData?.test_runs || testCaseData.test_runs.length === 0) return;
+      
+      try {
+        // Get the most recent test run
+        const latestRun = testCaseData.test_runs[0];
+        if (latestRun && latestRun.id && (latestRun.result === 'running' || latestRun.result === 'pending')) {
+          await fetchStepExecutionResults(latestRun.id);
+        } else {
+          // Test is complete, stop polling
+          clearInterval(stepResultsPollingInterval);
+          setStepResultsPollingInterval(null);
+        }
+      } catch (error) {
+        console.error('Error polling step execution results:', error);
+      }
+    }, 3000); // Poll every 3 seconds for step results
+    
+    setStepResultsPollingInterval(interval);
+  };
+
+  // Function to stop step results polling
+  const stopStepResultsPolling = () => {
+    if (stepResultsPollingInterval) {
+      clearInterval(stepResultsPollingInterval);
+      setStepResultsPollingInterval(null);
+    }
   };
 
   // Helper function to check for screenshots for new steps
@@ -533,10 +670,19 @@ const TestCaseSteps = ({
   };
 
   const toggleRunDetails = (runId) => {
-    setExpandedRuns((prevState) => ({
-      ...prevState,
-      [runId]: !prevState[runId],
-    }));
+    setExpandedRuns((prevState) => {
+      const newState = {
+        ...prevState,
+        [runId]: !prevState[runId],
+      };
+      
+      // If expanding the run details and we don't have step execution results yet, fetch them
+      if (newState[runId] && !stepExecutionResults[runId]) {
+        fetchStepExecutionResults(runId);
+      }
+      
+      return newState;
+    });
   };
 
   const handleEnvironmentChange = (environmentId) => {
@@ -773,6 +919,11 @@ const TestCaseSteps = ({
       
       const result = await response.json();
       console.log('Test run result:', result);
+      
+      // Start polling for step execution results if test is running
+      if (result.status === 'running' || result.status === 'pending') {
+        startStepResultsPolling();
+      }
       
       // Refresh the test case to show the latest test run
       await refreshTestCase();
@@ -1407,21 +1558,31 @@ const TestCaseSteps = ({
       const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to fetch screenshot');
+      if (response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          if (!data.screenshot_available) {
+            setScreenshotError(data.message || 'Screenshot not available');
+            setCurrentScreenshot(null);
+          }
+        } else {
+          const blob = await response.blob();
+          const imageUrl = URL.createObjectURL(blob);
+          setCurrentScreenshot(imageUrl);
+        }
+      } else {
+        setScreenshotError('Failed to load screenshot');
+        setCurrentScreenshot(null);
       }
-      
-      const data = await response.json();
-      setCurrentScreenshot(data);
     } catch (error) {
-      console.error('Error fetching screenshot:', error);
-      setScreenshotError(error.message);
+      console.error('Error loading screenshot:', error);
+      setScreenshotError('Error loading screenshot');
+      setCurrentScreenshot(null);
     } finally {
       setScreenshotLoading(false);
     }
@@ -1599,6 +1760,412 @@ const TestCaseSteps = ({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <button 
+          className={`tab-button ${activeTab === 'description' ? 'active' : ''}`}
+          onClick={() => setActiveTab('description')}
+        >
+          Description
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'results' ? 'active' : ''}`}
+          onClick={() => setActiveTab('results')}
+        >
+          Test Results
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      <div className="tab-content">
+        {activeTab === 'description' && (
+          <div className="description-tab">
+            {isGeneratingSteps && (
+              <div className="generating-indicator">
+                <div className="spinner"></div>
+                <span className="generating-indicator-text">Generating test steps... Steps will appear as they are created.</span>
+                {currentGeneratingStep && (
+                  <div className="step-generation-info">
+                    <p><strong>Current step:</strong> {currentGeneratingStep}</p>
+                    {nextGeneratingStep && nextGeneratingStep !== "Stop" && (
+                      <p><strong>Next step:</strong> {nextGeneratingStep}</p>
+                    )}
+                  </div>
+                )}
+                <button 
+                  className="stop-generation-button"
+                  onClick={handleStopGeneration}
+                >
+                  <FontAwesomeIcon icon={faTimesCircle} /> Stop Generation
+                </button>
+              </div>
+            )}
+            
+            {isRunning && (
+              <div className="running-indicator">
+                <div className="spinner"></div>
+                <span className="running-indicator-text">Executing test steps... Results will be updated when complete.</span>
+                <button 
+                  className="stop-execution-button"
+                  onClick={handleStopExecution}
+                >
+                  <FontAwesomeIcon icon={faTimesCircle} /> Stop Execution
+                </button>
+              </div>
+            )}
+
+            <div className="test-steps-table-container">
+              <table className="test-steps-table">
+                <thead>
+                  <tr>
+                    <th className="drag-handle-column"></th>
+                    <th className="step-description-column">Description</th>
+                    <th className="step-action-column">Action</th>
+                    <th className="step-locator-column">Element Locator</th>
+                    <th className="step-value-column">Value</th>
+                    <th className="step-actions-column">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {steps && steps.map((step) => (
+                    <tr
+                      key={step.id}
+                      className="test-step-row"
+                      draggable={!isGeneratingSteps && !isRunning}
+                      onDragStart={(e) => handleDragStart(e, step)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, step)}
+                    >
+                      <td className={`drag-handle-cell ${(isGeneratingSteps || isRunning) ? 'disabled' : ''}`}>
+                        <FontAwesomeIcon icon={faGripVertical} className="drag-handle" />
+                      </td>
+                      <td className="step-description-cell">
+                        {step.description}
+                      </td>
+                      <td className="step-action-cell">
+                        <div className="action-dropdown-container" ref={el => actionDropdownRefs.current[step.id] = el}>
+                          <div 
+                            className="action-dropdown-button"
+                            onClick={() => toggleActionDropdown(step.id)}
+                          >
+                            <FontAwesomeIcon icon={faCog} className="action-icon" />
+                            <span>
+                              {step.action ? step.action.replace('_', ' ') : 'Select Action'}
+                            </span>
+                            <FontAwesomeIcon 
+                              icon={actionDropdownStepId === step.id ? faChevronUp : faChevronDown} 
+                              className="dropdown-icon" 
+                            />
+                          </div>
+                          
+                          {actionDropdownStepId === step.id && (
+                            <div className="action-dropdown">
+                              <div 
+                                className={`action-option ${!step.action ? 'selected' : ''}`}
+                                onClick={() => handleActionChange(step.id, '')}
+                              >
+                                <span>Select Action</span>
+                              </div>
+                              {STEP_ACTIONS.map((action) => (
+                                <div 
+                                  key={action} 
+                                  className={`action-option ${step.action === action ? 'selected' : ''}`}
+                                  onClick={() => handleActionChange(step.id, action)}
+                                >
+                                  <span>{action.replace('_', ' ')}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="step-locator-cell">
+                        <div className="element-locator-container">
+                          <input
+                            type="text"
+                            className="element-path-input"
+                            placeholder="Element path (e.g., //input[@id='username'])"
+                            value={step.element_path || ''}
+                            onChange={(e) => handleElementPathChange(step.id, e.target.value)}
+                          />
+                          <button 
+                            className="test-locator-button"
+                            onClick={() => handleTestLocator(step.id, step.element_path)}
+                            title="Test locator"
+                            disabled={!step.element_path || !selectedEnvironment || isTestingLocator}
+                          >
+                            <FontAwesomeIcon icon={faSearch} spin={isTestingLocator} />
+                            {isTestingLocator ? ' Testing...' : ' Test'}
+                          </button>
+                          <FontAwesomeIcon 
+                            icon={faQuestionCircle} 
+                            className="locator-help-icon" 
+                            onClick={() => toggleLocatorTooltip(step.id)}
+                            title="Show locator examples"
+                          />
+                          {locatorValidationStatus[step.id] && (
+                            <span className={`locator-status ${locatorValidationStatus[step.id].status}`}>
+                              <FontAwesomeIcon icon={locatorValidationStatus[step.id].status === 'valid' ? faCheckCircle : faTimesCircle} />
+                              {' '}{locatorValidationStatus[step.id].message}
+                            </span>
+                          )}
+                          {locatorTooltipStep === step.id && (
+                            <div className="locator-info-tooltip" ref={locatorTooltipRef}>
+                              <h4>Locator Examples:</h4>
+                              <ul>
+                                {getLocatorExamples().map((example, index) => (
+                                  <li key={index}>
+                                    <strong>{example.type}:</strong> <code>{example.example}</code>
+                                    <br />
+                                    <span className="locator-example-description">{example.description}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="step-value-cell">
+                        <div className="action-input-container">
+                          <input
+                            ref={el => inputRefs.current[step.id] = el}
+                            type="text"
+                            className="action-input"
+                            placeholder="Value"
+                            value={stepValues[step.id] || step.value || ''}
+                            onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
+                            onFocus={(e) => handleInputFocus(step.id, e)}
+                            onClick={(e) => handleInputClick(step.id, e)}
+                            onKeyUp={handleInputKeyUp}
+                          />
+                          <button 
+                            className="env-vars-button"
+                            onClick={toggleEnvVarsDropdown}
+                            title="Insert environment variable"
+                            disabled={!selectedEnvironment}
+                          >
+                            <FontAwesomeIcon icon={faCode} />
+                          </button>
+                          
+                          {showEnvVarsDropdown && activeInputStepId === step.id && selectedEnvironment && (
+                            <div className="env-vars-dropdown" ref={envVarsDropdownRef}>
+                              <div className="env-vars-dropdown-header">
+                                Environment Variables
+                              </div>
+                              <div 
+                                className="env-vars-dropdown-item"
+                                onClick={() => insertEnvVariable('base_url')}
+                              >
+                                <div className="env-var-item-content">
+                                  <span className="env-var-name">base_url</span>
+                                  <span className="env-var-description">Base URL of the environment</span>
+                                </div>
+                              </div>
+                              <div 
+                                className="env-vars-dropdown-item"
+                                onClick={() => insertEnvVariable('login')}
+                              >
+                                <div className="env-var-item-content">
+                                  <span className="env-var-name">login</span>
+                                  <span className="env-var-description">Login username</span>
+                                </div>
+                              </div>
+                              <div 
+                                className="env-vars-dropdown-item"
+                                onClick={() => insertEnvVariable('password')}
+                              >
+                                <div className="env-var-item-content">
+                                  <span className="env-var-name">password</span>
+                                  <span className="env-var-description">Login password</span>
+                                </div>
+                              </div>
+                              {environments.find(env => env.id.toString() === selectedEnvironment)?.custom_variables?.map((customVar, index) => (
+                                <div 
+                                  key={index}
+                                  className="env-vars-dropdown-item"
+                                  onClick={() => insertEnvVariable(customVar.name)}
+                                >
+                                  <div className="env-var-item-content">
+                                    <span className="env-var-name">{customVar.name}</span>
+                                    <span className="env-var-description">Custom variable</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="step-actions-cell">
+                        <button 
+                          className="view-screenshot-button"
+                          onClick={() => handleViewScreenshot(step.id)}
+                          title="View screenshot"
+                          disabled={!stepsWithScreenshots[step.id]}
+                        >
+                          <FontAwesomeIcon icon={faImage} />
+                        </button>
+                        <button 
+                          className="delete-step-button"
+                          onClick={() => handleDeleteStepClick(step)}
+                          title="Delete step"
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'results' && (
+          <div className="results-tab">
+            <h3>Test Results</h3>
+            <table className="test-results-table">
+              <thead>
+                <tr>
+                  <th>Run ID</th>
+                  <th>Duration (s)</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {test_runs.map((run) => (
+                  <tr key={run.id}>
+                    <td>{run.id}</td>
+                    <td>{run.duration !== null ? run.duration.toFixed(2) : 'N/A'}</td>
+                    <td className={run.result.toLowerCase()}>{run.result}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <h3>Test Runs</h3>
+            <div className="test-runs-list">
+              {test_runs.map((run) => (
+                <div key={run.id} className={`test-run-item ${run.result.toLowerCase()}`}>
+                  <div className="test-run-header" onClick={() => toggleRunDetails(run.id)}>
+                    <span className="test-run-id">Run ID: {run.id}</span>
+                    <span className={`test-run-result ${run.result.toLowerCase()}`}>
+                      {run.result}
+                    </span>
+                    <button className="toggle-details-btn">
+                      {expandedRuns[run.id] ? '▲' : '▼'}
+                    </button>
+                  </div>
+                  {expandedRuns[run.id] && (
+                    <div className="test-run-details">
+                      <div>
+                        <strong>Date:</strong> {run.run_date}
+                      </div>
+                      <div>
+                        <strong>Duration:</strong> {run.duration !== null ? run.duration.toFixed(2) : 'N/A'} seconds
+                      </div>
+                      {run.exception && (
+                        <div className="test-run-exception">
+                          <strong>Exception:</strong> {run.exception}
+                        </div>
+                      )}
+                      {run.stdout && (
+                        <div className="test-run-output">
+                          <strong>Output:</strong>
+                          <pre>{run.stdout}</pre>
+                        </div>
+                      )}
+                      
+                      {/* Step Execution Results */}
+                      <div className="step-execution-results">
+                        <h4>Step Execution Details</h4>
+                        {stepExecutionResults[run.id] ? (
+                          <div className="step-results-container">
+                            {stepExecutionResults[run.id].length > 0 ? (
+                              <table className="step-results-table">
+                                <thead>
+                                  <tr>
+                                    <th>Step</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Duration</th>
+                                    <th>Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {stepExecutionResults[run.id].map((stepResult) => (
+                                    <tr key={stepResult.id} className={`step-result-row ${stepResult.status}`}>
+                                      <td className="step-order">{stepResult.step_order}</td>
+                                      <td className="step-description">
+                                        <div className="step-action-info">
+                                          <strong>{stepResult.action}</strong>
+                                          {stepResult.element_path && (
+                                            <div className="step-element-path">{stepResult.element_path}</div>
+                                          )}
+                                          {stepResult.value && (
+                                            <div className="step-value">Value: {stepResult.value}</div>
+                                          )}
+                                        </div>
+                                        <div className="step-description-text">{stepResult.description}</div>
+                                      </td>
+                                      <td className="step-status">
+                                        <span className={`status-indicator ${stepResult.status}`}>
+                                          {stepResult.status === 'passed' && <FontAwesomeIcon icon={faCheckCircle} />}
+                                          {stepResult.status === 'failed' && <FontAwesomeIcon icon={faTimesCircle} />}
+                                          {stepResult.status === 'skipped' && <FontAwesomeIcon icon={faMinusCircle} />}
+                                          {stepResult.status === 'running' && <FontAwesomeIcon icon={faSpinner} className="fa-spin" />}
+                                          {stepResult.status}
+                                        </span>
+                                        {stepResult.error_message && (
+                                          <div className="error-message">
+                                            <FontAwesomeIcon icon={faExclamationTriangle} />
+                                            {stepResult.error_message}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="step-duration">
+                                        {stepResult.execution_time_ms ? 
+                                          `${stepResult.execution_time_ms}ms` : 'N/A'}
+                                      </td>
+                                      <td className="step-actions">
+                                        {stepResult.has_screenshot && (
+                                          <button 
+                                            className="screenshot-btn"
+                                            onClick={() => openStepScreenshot(stepResult.test_step_id)}
+                                            title="View Screenshot"
+                                          >
+                                            <FontAwesomeIcon icon={faCamera} />
+                                          </button>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            ) : (
+                              <div className="no-step-results">
+                                <p>No step execution details available for this run.</p>
+                                <p>This may be an older test run from before step tracking was implemented.</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="loading-step-results">
+                            <FontAwesomeIcon icon={faSpinner} className="fa-spin" />
+                            Loading step execution details...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Modal for Generate Steps */}
@@ -1882,244 +2449,6 @@ const TestCaseSteps = ({
           </div>
         </div>
       )}
-      <div className="test-steps-table-container">
-        {isGeneratingSteps && (
-          <div className="generating-indicator">
-            <div className="spinner"></div>
-            <span className="generating-indicator-text">Generating test steps... Steps will appear as they are created.</span>
-            {currentGeneratingStep && (
-              <div className="step-generation-info">
-                <p><strong>Current step:</strong> {currentGeneratingStep}</p>
-                {nextGeneratingStep && nextGeneratingStep !== "Stop" && (
-                  <p><strong>Next step:</strong> {nextGeneratingStep}</p>
-                )}
-              </div>
-            )}
-            <button 
-              className="stop-generation-button"
-              onClick={handleStopGeneration}
-            >
-              <FontAwesomeIcon icon={faTimesCircle} /> Stop Generation
-            </button>
-          </div>
-        )}
-        
-        {isRunning && (
-          <div className="running-indicator">
-            <div className="spinner"></div>
-            <span className="running-indicator-text">Executing test steps... Results will be updated when complete.</span>
-            <button 
-              className="stop-execution-button"
-              onClick={handleStopExecution}
-            >
-              <FontAwesomeIcon icon={faTimesCircle} /> Stop Execution
-            </button>
-          </div>
-        )}
-        <table className="test-steps-table">
-          <thead>
-            <tr>
-              <th className="drag-handle-column"></th>
-              <th className="step-description-column">Description</th>
-              <th className="step-action-column">Action</th>
-              <th className="step-locator-column">Element Locator</th>
-              <th className="step-value-column">Value</th>
-              <th className="step-actions-column">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {steps && steps.map((step) => (
-              <tr
-                key={step.id}
-                className="test-step-row"
-                draggable={!isGeneratingSteps && !isRunning}
-                onDragStart={(e) => handleDragStart(e, step)}
-                onDragEnd={handleDragEnd}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, step)}
-              >
-                <td className={`drag-handle-cell ${(isGeneratingSteps || isRunning) ? 'disabled' : ''}`}>
-                  <FontAwesomeIcon icon={faGripVertical} className="drag-handle" />
-                </td>
-                <td className="step-description-cell">
-                  {step.description}
-                </td>
-                <td className="step-action-cell">
-                  <div className="action-dropdown-container" ref={el => actionDropdownRefs.current[step.id] = el}>
-                    <div 
-                      className="action-dropdown-button"
-                      onClick={() => toggleActionDropdown(step.id)}
-                    >
-                      <FontAwesomeIcon icon={faCog} className="action-icon" />
-                      <span>
-                        {step.action ? step.action.replace('_', ' ') : 'Select Action'}
-                      </span>
-                      <FontAwesomeIcon 
-                        icon={actionDropdownStepId === step.id ? faChevronUp : faChevronDown} 
-                        className="dropdown-icon" 
-                      />
-                    </div>
-                    
-                    {actionDropdownStepId === step.id && (
-                      <div className="action-dropdown">
-                        <div 
-                          className={`action-option ${!step.action ? 'selected' : ''}`}
-                          onClick={() => handleActionChange(step.id, '')}
-                        >
-                          <span>Select Action</span>
-                        </div>
-                        {STEP_ACTIONS.map((action) => (
-                          <div 
-                            key={action} 
-                            className={`action-option ${step.action === action ? 'selected' : ''}`}
-                            onClick={() => handleActionChange(step.id, action)}
-                          >
-                            <span>{action.replace('_', ' ')}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="step-locator-cell">
-                  <div className="element-locator-container">
-                    <input
-                      type="text"
-                      className="element-path-input"
-                      placeholder="Element path (e.g., //input[@id='username'])"
-                      value={step.element_path || ''}
-                      onChange={(e) => handleElementPathChange(step.id, e.target.value)}
-                    />
-                    <button 
-                      className="test-locator-button"
-                      onClick={() => handleTestLocator(step.id, step.element_path)}
-                      title="Test locator"
-                      disabled={!step.element_path || !selectedEnvironment || isTestingLocator}
-                    >
-                      <FontAwesomeIcon icon={faSearch} spin={isTestingLocator} />
-                      {isTestingLocator ? ' Testing...' : ' Test'}
-                    </button>
-                    <FontAwesomeIcon 
-                      icon={faQuestionCircle} 
-                      className="locator-help-icon" 
-                      onClick={() => toggleLocatorTooltip(step.id)}
-                      title="Show locator examples"
-                    />
-                    {locatorValidationStatus[step.id] && (
-                      <span className={`locator-status ${locatorValidationStatus[step.id].status}`}>
-                        <FontAwesomeIcon icon={locatorValidationStatus[step.id].status === 'valid' ? faCheckCircle : faTimesCircle} />
-                        {' '}{locatorValidationStatus[step.id].message}
-                      </span>
-                    )}
-                    {locatorTooltipStep === step.id && (
-                      <div className="locator-info-tooltip" ref={locatorTooltipRef}>
-                        <h4>Locator Examples:</h4>
-                        <ul>
-                          {getLocatorExamples().map((example, index) => (
-                            <li key={index}>
-                              <strong>{example.type}:</strong> <code>{example.example}</code>
-                              <br />
-                              <span className="locator-example-description">{example.description}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="step-value-cell">
-                  <div className="action-input-container">
-                    <input
-                      ref={el => inputRefs.current[step.id] = el}
-                      type="text"
-                      className="action-input"
-                      placeholder="Value"
-                      value={stepValues[step.id] || step.value || ''}
-                      onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
-                      onFocus={(e) => handleInputFocus(step.id, e)}
-                      onClick={(e) => handleInputClick(step.id, e)}
-                      onKeyUp={handleInputKeyUp}
-                    />
-                    <button 
-                      className="env-vars-button"
-                      onClick={toggleEnvVarsDropdown}
-                      title="Insert environment variable"
-                      disabled={!selectedEnvironment}
-                    >
-                      <FontAwesomeIcon icon={faCode} />
-                    </button>
-                    
-                    {showEnvVarsDropdown && activeInputStepId === step.id && selectedEnvironment && (
-                      <div className="env-vars-dropdown" ref={envVarsDropdownRef}>
-                        <div className="env-vars-dropdown-header">
-                          Environment Variables
-                        </div>
-                        <div 
-                          className="env-vars-dropdown-item"
-                          onClick={() => insertEnvVariable('base_url')}
-                        >
-                          <div className="env-var-item-content">
-                            <span className="env-var-name">base_url</span>
-                            <span className="env-var-description">Base URL of the environment</span>
-                          </div>
-                        </div>
-                        <div 
-                          className="env-vars-dropdown-item"
-                          onClick={() => insertEnvVariable('login')}
-                        >
-                          <div className="env-var-item-content">
-                            <span className="env-var-name">login</span>
-                            <span className="env-var-description">Login username</span>
-                          </div>
-                        </div>
-                        <div 
-                          className="env-vars-dropdown-item"
-                          onClick={() => insertEnvVariable('password')}
-                        >
-                          <div className="env-var-item-content">
-                            <span className="env-var-name">password</span>
-                            <span className="env-var-description">Login password</span>
-                          </div>
-                        </div>
-                        {environments.find(env => env.id.toString() === selectedEnvironment)?.custom_variables?.map((customVar, index) => (
-                          <div 
-                            key={index}
-                            className="env-vars-dropdown-item"
-                            onClick={() => insertEnvVariable(customVar.name)}
-                          >
-                            <div className="env-var-item-content">
-                              <span className="env-var-name">{customVar.name}</span>
-                              <span className="env-var-description">Custom variable</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="step-actions-cell">
-                  <button 
-                    className="view-screenshot-button"
-                    onClick={() => handleViewScreenshot(step.id)}
-                    title="View screenshot"
-                    disabled={!stepsWithScreenshots[step.id]}
-                  >
-                    <FontAwesomeIcon icon={faImage} />
-                  </button>
-                  <button 
-                    className="delete-step-button"
-                    onClick={() => handleDeleteStepClick(step)}
-                    title="Delete step"
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
 
       {/* Screenshot Modal */}
       {showScreenshotModal && (
@@ -2162,7 +2491,7 @@ const TestCaseSteps = ({
                   )}
                   <div className="screenshot-image-container">
                     <img 
-                      src={`data:image/png;base64,${currentScreenshot.screenshot}`} 
+                      src={typeof currentScreenshot === 'string' ? currentScreenshot : `data:image/png;base64,${currentScreenshot.screenshot}`} 
                       alt="Test step screenshot" 
                       className={`step-screenshot ${isZoomed ? 'zoomed' : ''}`}
                       onClick={handleImageClick}
@@ -2184,65 +2513,6 @@ const TestCaseSteps = ({
           </div>
         </div>
       )}
-
-      {/* Test Results Table */}
-      <h3>Test Results</h3>
-      <table className="test-results-table">
-        <thead>
-          <tr>
-            <th>Run ID</th>
-            <th>Duration (s)</th>
-            <th>Result</th>
-          </tr>
-        </thead>
-        <tbody>
-          {test_runs.map((run) => (
-            <tr key={run.id}>
-              <td>{run.id}</td>
-              <td>{run.duration !== null ? run.duration.toFixed(2) : 'N/A'}</td>
-              <td className={run.result.toLowerCase()}>{run.result}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <h3>Test Runs</h3>
-      <div className="test-runs-list">
-        {test_runs.map((run) => (
-          <div key={run.id} className={`test-run-item ${run.result.toLowerCase()}`}>
-            <div className="test-run-header" onClick={() => toggleRunDetails(run.id)}>
-              <span className="test-run-id">Run ID: {run.id}</span>
-              <span className={`test-run-result ${run.result.toLowerCase()}`}>
-                {run.result}
-              </span>
-              <button className="toggle-details-btn">
-                {expandedRuns[run.id] ? '▲' : '▼'}
-              </button>
-            </div>
-            {expandedRuns[run.id] && (
-              <div className="test-run-details">
-                <div>
-                  <strong>Date:</strong> {run.run_date}
-                </div>
-                <div>
-                  <strong>Duration:</strong> {run.duration !== null ? run.duration.toFixed(2) : 'N/A'} seconds
-                </div>
-                {run.exception && (
-                  <div>
-                    <strong>Exception:</strong> {run.exception}
-                  </div>
-                )}
-                {run.stdout && (
-                  <div className="test-run-output">
-                    <strong>Output:</strong>
-                    <pre>{run.stdout}</pre>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
     </div>
   );
 };

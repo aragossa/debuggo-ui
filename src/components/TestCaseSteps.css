@@ -1,5 +1,74 @@
 /* TestCaseSteps.css */
 
+/* Tab Navigation Styles */
+.tab-navigation {
+  display: flex;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s ease;
+  border-radius: 8px 8px 0 0;
+}
+
+.tab-button:hover {
+  background-color: #e9ecef;
+  color: #333;
+}
+
+.tab-button.active {
+  background-color: #c1c1c1;
+  color: white;
+  border-bottom: 3px solid #0056b3;
+}
+
+.tab-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Tab Content Styles */
+.tab-content {
+  min-height: 400px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.description-tab,
+.results-tab {
+  width: 100%;
+}
+
+.description-tab h3,
+.results-tab h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.results-tab {
+  padding: 0;
+}
+
+.results-tab h3 {
+  font-size: 24px;
+}
+
 /* Test Step Styles */
 .test-steps-container {
   margin: 1.25rem;
