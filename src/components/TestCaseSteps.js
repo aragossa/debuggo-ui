@@ -180,10 +180,10 @@ const TestCaseSteps = ({
 
   // Function to refresh step execution results for the latest test run during execution
   const refreshLatestStepResults = async () => {
-    if (!testCaseData?.test_runs || testCaseData.test_runs.length === 0) return;
+    if (!test_runs || test_runs.length === 0) return;
     
     // Get the most recent test run
-    const latestRun = testCaseData.test_runs[0];
+    const latestRun = test_runs[0];
     if (latestRun && latestRun.id) {
       await fetchStepExecutionResults(latestRun.id);
     }
@@ -534,11 +534,11 @@ const TestCaseSteps = ({
     
     // Set up a new polling interval for step results
     const interval = setInterval(async () => {
-      if (!testCaseData?.test_runs || testCaseData.test_runs.length === 0) return;
+      if (!test_runs || test_runs.length === 0) return;
       
       try {
         // Get the most recent test run
-        const latestRun = testCaseData.test_runs[0];
+        const latestRun = test_runs[0];
         if (latestRun && latestRun.id && (latestRun.result === 'running' || latestRun.result === 'pending')) {
           await fetchStepExecutionResults(latestRun.id);
         } else {
