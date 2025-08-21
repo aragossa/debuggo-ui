@@ -237,19 +237,39 @@ const TestCaseSteps = ({
         }
       });
       
+      console.log(`Screenshot check for step ${stepId}: status=${response.status}, ok=${response.ok}`);
+      
       if (!response.ok) {
+        console.log(`Screenshot not available for step ${stepId}: ${response.status}`);
         return false;
       }
       
-      const data = await response.json();
+      // If response is OK and content-type is image, screenshot exists
+      const contentType = response.headers.get('content-type');
+      console.log(`Step ${stepId} content-type: ${contentType}`);
       
-      // Check if it's the new format with screenshot_available flag
-      if (data.hasOwnProperty('screenshot_available')) {
-        return data.screenshot_available;
+      if (contentType && contentType.startsWith('image/')) {
+        console.log(`Screenshot available for step ${stepId}`);
+        return true;
       }
       
-      // Check if it's the old format with screenshot data
-      return data.screenshot ? true : false;
+      // Try to parse as JSON for error responses
+      try {
+        const data = await response.json();
+        console.log(`Step ${stepId} JSON response:`, data);
+        
+        // Check if it's the new format with screenshot_available flag
+        if (data.hasOwnProperty('screenshot_available')) {
+          return data.screenshot_available;
+        }
+        
+        // Check if it's the old format with screenshot data
+        return data.screenshot ? true : false;
+      } catch (jsonError) {
+        // If we can't parse JSON but response was OK, assume it's an image
+        console.log(`Step ${stepId} - couldn't parse JSON, assuming image available`);
+        return true;
+      }
     } catch (error) {
       console.error('Error checking screenshot availability:', error);
       return false;
@@ -351,6 +371,8 @@ const TestCaseSteps = ({
     if (test_steps && Array.isArray(test_steps)) {
       // Log the test steps to debug
       console.log("Test steps received:", test_steps);
+      console.log("Step has_screenshot properties:", test_steps.map(s => ({ id: s.id, has_screenshot: s.has_screenshot })));
+      console.log("Current stepsWithScreenshots state:", stepsWithScreenshots);
       
       setSteps(test_steps);
       // Initialize stepValues with values from test_steps
@@ -2000,14 +2022,15 @@ const TestCaseSteps = ({
                         </div>
                       </td>
                       <td className="step-actions-cell">
-                        <button 
-                          className="view-screenshot-button"
-                          onClick={() => handleViewScreenshot(step.id)}
-                          title="View screenshot"
-                          disabled={!stepsWithScreenshots[step.id]}
-                        >
-                          <FontAwesomeIcon icon={faImage} />
-                        </button>
+                        {(step.has_screenshot || stepsWithScreenshots[step.id]) && (
+                          <button 
+                            className="view-screenshot-button"
+                            onClick={() => openStepScreenshot(step.id)}
+                            title="View screenshot"
+                          >
+                            <FontAwesomeIcon icon={faImage} />
+                          </button>
+                        )}
                         <button 
                           className="delete-step-button"
                           onClick={() => handleDeleteStepClick(step)}
