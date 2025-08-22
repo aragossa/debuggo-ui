@@ -208,11 +208,13 @@ const TestCaseSteps = ({
           if (!data.screenshot_available) {
             setScreenshotError(data.message || 'Screenshot not available');
             setCurrentScreenshot(null);
+            return;
           }
         } else {
           const blob = await response.blob();
           const imageUrl = URL.createObjectURL(blob);
           setCurrentScreenshot(imageUrl);
+          setScreenshotError(null);
         }
       } else {
         setScreenshotError('Failed to load screenshot');
@@ -1591,11 +1593,13 @@ const TestCaseSteps = ({
           if (!data.screenshot_available) {
             setScreenshotError(data.message || 'Screenshot not available');
             setCurrentScreenshot(null);
+            return;
           }
         } else {
           const blob = await response.blob();
           const imageUrl = URL.createObjectURL(blob);
           setCurrentScreenshot(imageUrl);
+          setScreenshotError(null);
         }
       } else {
         setScreenshotError('Failed to load screenshot');
