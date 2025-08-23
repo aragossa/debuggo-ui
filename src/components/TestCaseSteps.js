@@ -180,48 +180,78 @@ const TestCaseSteps = ({
 
   // Function to refresh step execution results for the latest test run during execution
   const refreshLatestStepResults = async () => {
-    if (!testCaseData?.test_runs || testCaseData.test_runs.length === 0) return;
+    if (!test_runs || test_runs.length === 0) return;
     
     // Get the most recent test run
-    const latestRun = testCaseData.test_runs[0];
+    const latestRun = test_runs[0];
     if (latestRun && latestRun.id) {
       await fetchStepExecutionResults(latestRun.id);
     }
   };
 
-  // Function to open step screenshot
+  // Function to open step screenshot - unified implementation for both tabs
   const openStepScreenshot = async (stepId) => {
     setScreenshotLoading(true);
     setScreenshotError(null);
     setShowScreenshotModal(true);
+    setCurrentScreenshot(null);
+    setIsZoomed(false);
+    setImageSize({ width: 0, height: 0 });
+    setZoomPosition({ x: 0, y: 0 });
 
     try {
+      console.log('openStepScreenshot - Fetching screenshot for step:', stepId);
       const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
         method: 'GET',
         headers: getAuthHeaders()
       });
 
+      console.log('openStepScreenshot - Response status:', response.status);
+      
       if (response.ok) {
         const contentType = response.headers.get('content-type');
+        console.log('openStepScreenshot - Content-Type:', contentType);
+        
         if (contentType && contentType.includes('application/json')) {
           const data = await response.json();
+          console.log('openStepScreenshot - JSON response:', data);
           if (!data.screenshot_available) {
             setScreenshotError(data.message || 'Screenshot not available');
-            setCurrentScreenshot(null);
+            return;
           }
         } else {
           const blob = await response.blob();
+          console.log('openStepScreenshot - Blob created:', {
+            size: blob.size, 
+            type: blob.type
+          });
+          
+          if (blob.size === 0) {
+            setScreenshotError('Screenshot data is empty');
+            return;
+          }
+          
+          // Create a blob URL directly - simpler and more reliable approach
+          // This is the same approach used in the test results tab that works correctly
           const imageUrl = URL.createObjectURL(blob);
+          console.log('openStepScreenshot - Created blob URL:', imageUrl);
+          
+          // Revoke any previous blob URLs to prevent memory leaks
+          if (typeof currentScreenshot === 'string' && currentScreenshot.startsWith('blob:')) {
+            URL.revokeObjectURL(currentScreenshot);
+          }
+          
           setCurrentScreenshot(imageUrl);
+          setScreenshotError(null);
         }
       } else {
+        const errorText = await response.text();
+        console.error('openStepScreenshot - Error response:', errorText);
         setScreenshotError('Failed to load screenshot');
-        setCurrentScreenshot(null);
       }
     } catch (error) {
       console.error('Error loading screenshot:', error);
       setScreenshotError('Error loading screenshot');
-      setCurrentScreenshot(null);
     } finally {
       setScreenshotLoading(false);
     }
@@ -232,24 +262,42 @@ const TestCaseSteps = ({
     try {
       const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        headers: getAuthHeaders()
       });
       
+      console.log(`Screenshot check for step ${stepId}: status=${response.status}, ok=${response.ok}`);
+      
       if (!response.ok) {
+        console.log(`Screenshot not available for step ${stepId}: ${response.status}`);
         return false;
       }
       
-      const data = await response.json();
+      // If response is OK and content-type is image, screenshot exists
+      const contentType = response.headers.get('content-type');
+      console.log(`Step ${stepId} content-type: ${contentType}`);
       
-      // Check if it's the new format with screenshot_available flag
-      if (data.hasOwnProperty('screenshot_available')) {
-        return data.screenshot_available;
+      if (contentType && contentType.startsWith('image/')) {
+        console.log(`Screenshot available for step ${stepId}`);
+        return true;
       }
       
-      // Check if it's the old format with screenshot data
-      return data.screenshot ? true : false;
+      // Try to parse as JSON for error responses
+      try {
+        const data = await response.json();
+        console.log(`Step ${stepId} JSON response:`, data);
+        
+        // Check if it's the new format with screenshot_available flag
+        if (data.hasOwnProperty('screenshot_available')) {
+          return data.screenshot_available;
+        }
+        
+        // Check if it's the old format with screenshot data
+        return data.screenshot ? true : false;
+      } catch (jsonError) {
+        // If we can't parse JSON but response was OK, assume it's an image
+        console.log(`Step ${stepId} - couldn't parse JSON, assuming image available`);
+        return true;
+      }
     } catch (error) {
       console.error('Error checking screenshot availability:', error);
       return false;
@@ -351,6 +399,8 @@ const TestCaseSteps = ({
     if (test_steps && Array.isArray(test_steps)) {
       // Log the test steps to debug
       console.log("Test steps received:", test_steps);
+      console.log("Step has_screenshot properties:", test_steps.map(s => ({ id: s.id, has_screenshot: s.has_screenshot })));
+      console.log("Current stepsWithScreenshots state:", stepsWithScreenshots);
       
       setSteps(test_steps);
       // Initialize stepValues with values from test_steps
@@ -534,11 +584,11 @@ const TestCaseSteps = ({
     
     // Set up a new polling interval for step results
     const interval = setInterval(async () => {
-      if (!testCaseData?.test_runs || testCaseData.test_runs.length === 0) return;
+      if (!test_runs || test_runs.length === 0) return;
       
       try {
         // Get the most recent test run
-        const latestRun = testCaseData.test_runs[0];
+        const latestRun = test_runs[0];
         if (latestRun && latestRun.id && (latestRun.result === 'running' || latestRun.result === 'pending')) {
           await fetchStepExecutionResults(latestRun.id);
         } else {
@@ -1545,47 +1595,9 @@ const TestCaseSteps = ({
     setIsZoomed(newZoomState);
   };
 
-  const handleViewScreenshot = async (stepId) => {
-    setScreenshotLoading(true);
-    setShowScreenshotModal(true);
-    setCurrentScreenshot(null);
-    setScreenshotError(null);
-    setIsZoomed(false);
-    setImageSize({ width: 0, height: 0 });
-    setZoomPosition({ x: 0, y: 0 });
-    
-    try {
-      const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await response.json();
-          if (!data.screenshot_available) {
-            setScreenshotError(data.message || 'Screenshot not available');
-            setCurrentScreenshot(null);
-          }
-        } else {
-          const blob = await response.blob();
-          const imageUrl = URL.createObjectURL(blob);
-          setCurrentScreenshot(imageUrl);
-        }
-      } else {
-        setScreenshotError('Failed to load screenshot');
-        setCurrentScreenshot(null);
-      }
-    } catch (error) {
-      console.error('Error loading screenshot:', error);
-      setScreenshotError('Error loading screenshot');
-      setCurrentScreenshot(null);
-    } finally {
-      setScreenshotLoading(false);
-    }
+  // This function is now an alias to openStepScreenshot for backward compatibility
+  const handleViewScreenshot = (stepId) => {
+    return openStepScreenshot(stepId);
   };
 
   const formatDuration = (milliseconds) => {
@@ -2000,14 +2012,15 @@ const TestCaseSteps = ({
                         </div>
                       </td>
                       <td className="step-actions-cell">
-                        <button 
-                          className="view-screenshot-button"
-                          onClick={() => handleViewScreenshot(step.id)}
-                          title="View screenshot"
-                          disabled={!stepsWithScreenshots[step.id]}
-                        >
-                          <FontAwesomeIcon icon={faImage} />
-                        </button>
+                        {(step.has_screenshot || stepsWithScreenshots[step.id]) && (
+                          <button 
+                            className="view-screenshot-button"
+                            onClick={() => openStepScreenshot(step.id)}
+                            title="View screenshot"
+                          >
+                            <FontAwesomeIcon icon={faImage} />
+                          </button>
+                        )}
                         <button 
                           className="delete-step-button"
                           onClick={() => handleDeleteStepClick(step)}
@@ -2491,15 +2504,38 @@ const TestCaseSteps = ({
                   )}
                   <div className="screenshot-image-container">
                     <img 
-                      src={typeof currentScreenshot === 'string' ? currentScreenshot : `data:image/png;base64,${currentScreenshot.screenshot}`} 
+                      src={currentScreenshot} 
                       alt="Test step screenshot" 
                       className={`step-screenshot ${isZoomed ? 'zoomed' : ''}`}
                       onClick={handleImageClick}
-                      onLoad={handleImageLoad}
+                      onLoad={(e) => {
+                        console.log('Image loaded successfully:', e.target.src);
+                        handleImageLoad(e);
+                      }}
+                      onError={(e) => {
+                        console.error('Image failed to load:', e.target.src);
+                        console.error('Image error event:', e);
+                        // Try to reload the image once if it fails to load
+                        if (!e.target.dataset.retried) {
+                          console.log('Retrying image load...');
+                          e.target.dataset.retried = 'true';
+                          // Force a re-render of the image by updating the src with a cache-busting parameter
+                          if (e.target.src.startsWith('blob:')) {
+                            // For blob URLs, we need to create a new one
+                            const currentSrc = e.target.src;
+                            setTimeout(() => {
+                              e.target.src = currentSrc;
+                            }, 100);
+                          }
+                        } else {
+                          setScreenshotError('Failed to display screenshot image');
+                        }
+                      }}
                       title={isZoomed ? 'Click to zoom out' : 'Click to zoom in'}
                       style={isZoomed ? {
                         transformOrigin: `${zoomPosition.x * 100}% ${zoomPosition.y * 100}%`
                       } : undefined}
+                      crossOrigin="anonymous"
                     />
                   </div>
                 </>
