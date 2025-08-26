@@ -141,6 +141,7 @@ const TestCaseSteps = ({
   const inputRefs = useRef({});
   const locatorTooltipRef = useRef(null);
   const environmentDropdownRef = React.useRef(null);
+  const currentBlobUrlRef = useRef(null);
 
   // State for tracking steps with screenshots
   const [stepsWithScreenshots, setStepsWithScreenshots] = useState({});
@@ -189,11 +190,35 @@ const TestCaseSteps = ({
     }
   };
 
+  // Function to close screenshot modal
+  const closeScreenshotModal = () => {
+    console.log('closeScreenshotModal - Called');
+    console.log('closeScreenshotModal - currentBlobUrlRef.current before cleanup:', currentBlobUrlRef.current);
+    
+    // Clean up blob URL from ref
+    if (currentBlobUrlRef.current) {
+      console.log('closeScreenshotModal - Revoking blob URL:', currentBlobUrlRef.current);
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+      currentBlobUrlRef.current = null;
+      console.log('closeScreenshotModal - Blob URL revoked and ref set to null');
+    }
+    
+    console.log('closeScreenshotModal - Clearing React state');
+    setShowScreenshotModal(false);
+    setCurrentScreenshot(null);
+    setScreenshotLoading(false);
+    setScreenshotError(null);
+    setIsZoomed(false);
+    setImageSize({ width: 0, height: 0 });
+    setZoomPosition({ x: 0, y: 0 });
+    console.log('closeScreenshotModal - All state cleared');
+  };
+
   // Function to open step screenshot - unified implementation for both tabs
   const openStepScreenshot = async (stepId) => {
+    console.log('=== openStepScreenshot ENTRY - stepId:', stepId);
     setScreenshotLoading(true);
     setScreenshotError(null);
-    setShowScreenshotModal(true);
     setCurrentScreenshot(null);
     setIsZoomed(false);
     setImageSize({ width: 0, height: 0 });
@@ -217,6 +242,7 @@ const TestCaseSteps = ({
           console.log('openStepScreenshot - JSON response:', data);
           if (!data.screenshot_available) {
             setScreenshotError(data.message || 'Screenshot not available');
+            setShowScreenshotModal(true);
             return;
           }
         } else {
@@ -228,30 +254,107 @@ const TestCaseSteps = ({
           
           if (blob.size === 0) {
             setScreenshotError('Screenshot data is empty');
+            setShowScreenshotModal(true);
             return;
           }
           
-          // Create a blob URL directly - simpler and more reliable approach
-          // This is the same approach used in the test results tab that works correctly
-          const imageUrl = URL.createObjectURL(blob);
-          console.log('openStepScreenshot - Created blob URL:', imageUrl);
+          // Check if blob contains base64 data instead of binary PNG
+          const blobSlice = blob.slice(0, 8);
+          const arrayBuffer = await blobSlice.arrayBuffer();
+          const bytes = new Uint8Array(arrayBuffer);
+          const pngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+          const isValidPNG = pngSignature.every((byte, index) => bytes[index] === byte);
           
-          // Revoke any previous blob URLs to prevent memory leaks
-          if (typeof currentScreenshot === 'string' && currentScreenshot.startsWith('blob:')) {
-            URL.revokeObjectURL(currentScreenshot);
+          console.log('openStepScreenshot - Blob first 8 bytes:', Array.from(bytes).map(b => '0x' + b.toString(16).padStart(2, '0')));
+          console.log('openStepScreenshot - Expected PNG signature:', pngSignature.map(b => '0x' + b.toString(16).padStart(2, '0')));
+          console.log('openStepScreenshot - Is valid PNG?', isValidPNG);
+          
+          let finalBlob = blob;
+          
+          if (!isValidPNG) {
+            // Backend sent base64 data instead of binary - decode it
+            console.log('openStepScreenshot - Detected base64 data, converting to binary');
+            try {
+              const base64Text = await blob.text();
+              console.log('openStepScreenshot - Base64 text length:', base64Text.length);
+              console.log('openStepScreenshot - Base64 first 20 chars:', base64Text.substring(0, 20));
+              
+              // Decode base64 to binary
+              const binaryString = atob(base64Text);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              
+              // Create new blob with binary data
+              finalBlob = new Blob([bytes], { type: 'image/png' });
+              console.log('openStepScreenshot - Converted to binary blob:', {
+                size: finalBlob.size,
+                type: finalBlob.type
+              });
+              
+              // Verify PNG signature after conversion
+              const convertedSlice = finalBlob.slice(0, 8);
+              const convertedBuffer = await convertedSlice.arrayBuffer();
+              const convertedBytes = new Uint8Array(convertedBuffer);
+              const isValidAfterConversion = pngSignature.every((byte, index) => convertedBytes[index] === byte);
+              console.log('openStepScreenshot - Valid PNG after conversion?', isValidAfterConversion);
+              
+              if (!isValidAfterConversion) {
+                setScreenshotError('Failed to convert base64 data to valid PNG');
+                setShowScreenshotModal(true);
+                return;
+              }
+            } catch (conversionError) {
+              console.error('openStepScreenshot - Base64 conversion failed:', conversionError);
+              setScreenshotError('Failed to process screenshot data');
+              setShowScreenshotModal(true);
+              return;
+            }
           }
           
+          // Revoke previous blob URL if it exists
+          if (currentBlobUrlRef.current) {
+            console.log('openStepScreenshot - Revoking previous blob URL:', currentBlobUrlRef.current);
+            URL.revokeObjectURL(currentBlobUrlRef.current);
+            console.log('openStepScreenshot - Previous blob URL revoked');
+          }
+          
+          // Create new blob URL and store in ref using the final blob (converted if needed)
+          const imageUrl = URL.createObjectURL(finalBlob);
+          currentBlobUrlRef.current = imageUrl;
+          console.log('openStepScreenshot - Created blob URL:', imageUrl);
+          console.log('openStepScreenshot - Blob URL stored in ref:', currentBlobUrlRef.current);
+          console.log('openStepScreenshot - About to update React state with imageUrl:', imageUrl);
+          
+          // Test if the blob URL is accessible by creating a test image
+          const testImg = new Image();
+          testImg.onload = () => {
+            console.log('openStepScreenshot - Blob URL test load SUCCESS');
+          };
+          testImg.onerror = (e) => {
+            console.error('openStepScreenshot - Blob URL test load FAILED:', e);
+          };
+          testImg.src = imageUrl;
+          console.log('openStepScreenshot - Started blob URL test load');
+          
+          // Only show modal after successful blob URL creation
           setCurrentScreenshot(imageUrl);
+          console.log('openStepScreenshot - React state updated, about to show modal');
           setScreenshotError(null);
+          setShowScreenshotModal(true);
+          console.log('openStepScreenshot - Modal state set to true');
         }
       } else {
         const errorText = await response.text();
         console.error('openStepScreenshot - Error response:', errorText);
         setScreenshotError('Failed to load screenshot');
+        setShowScreenshotModal(true);
       }
     } catch (error) {
       console.error('Error loading screenshot:', error);
       setScreenshotError('Error loading screenshot');
+      setShowScreenshotModal(true);
     } finally {
       setScreenshotLoading(false);
     }
@@ -478,6 +581,10 @@ const TestCaseSteps = ({
       if (stepResultsPollingInterval) {
         clearInterval(stepResultsPollingInterval);
         setStepResultsPollingInterval(null);
+      }
+      // Clean up blob URLs
+      if (typeof currentScreenshot === 'string' && currentScreenshot.startsWith('blob:')) {
+        URL.revokeObjectURL(currentScreenshot);
       }
     };
   }, [testCaseId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -2018,7 +2125,7 @@ const TestCaseSteps = ({
                             onClick={() => openStepScreenshot(step.id)}
                             title="View screenshot"
                           >
-                            <FontAwesomeIcon icon={faImage} />
+                            <FontAwesomeIcon icon={faCamera} />
                           </button>
                         )}
                         <button 
@@ -2504,38 +2611,29 @@ const TestCaseSteps = ({
                   )}
                   <div className="screenshot-image-container">
                     <img 
-                      src={currentScreenshot} 
+                      src={currentScreenshot}
                       alt="Test step screenshot" 
                       className={`step-screenshot ${isZoomed ? 'zoomed' : ''}`}
                       onClick={handleImageClick}
                       onLoad={(e) => {
                         console.log('Image loaded successfully:', e.target.src);
+                        console.log('Image onLoad - currentBlobUrlRef.current:', currentBlobUrlRef.current);
+                        console.log('Image onLoad - currentScreenshot state:', currentScreenshot);
                         handleImageLoad(e);
                       }}
                       onError={(e) => {
                         console.error('Image failed to load:', e.target.src);
+                        console.error('Image onError - currentBlobUrlRef.current:', currentBlobUrlRef.current);
+                        console.error('Image onError - currentScreenshot state:', currentScreenshot);
+                        console.error('Image onError - Blob URL same as ref?', e.target.src === currentBlobUrlRef.current);
+                        console.error('Image onError - Blob URL same as state?', e.target.src === currentScreenshot);
                         console.error('Image error event:', e);
-                        // Try to reload the image once if it fails to load
-                        if (!e.target.dataset.retried) {
-                          console.log('Retrying image load...');
-                          e.target.dataset.retried = 'true';
-                          // Force a re-render of the image by updating the src with a cache-busting parameter
-                          if (e.target.src.startsWith('blob:')) {
-                            // For blob URLs, we need to create a new one
-                            const currentSrc = e.target.src;
-                            setTimeout(() => {
-                              e.target.src = currentSrc;
-                            }, 100);
-                          }
-                        } else {
-                          setScreenshotError('Failed to display screenshot image');
-                        }
+                        setScreenshotError('Failed to display screenshot image');
                       }}
                       title={isZoomed ? 'Click to zoom out' : 'Click to zoom in'}
                       style={isZoomed ? {
                         transformOrigin: `${zoomPosition.x * 100}% ${zoomPosition.y * 100}%`
                       } : undefined}
-                      crossOrigin="anonymous"
                     />
                   </div>
                 </>
@@ -2544,7 +2642,10 @@ const TestCaseSteps = ({
               )}
             </div>
             <div className="modal-actions">
-              <button onClick={() => setShowScreenshotModal(false)} className="modal-button cancel">Close</button>
+              <button onClick={() => {
+                setShowScreenshotModal(false);
+                setCurrentScreenshot(null);
+              }} className="modal-button cancel">Close</button>
             </div>
           </div>
         </div>
