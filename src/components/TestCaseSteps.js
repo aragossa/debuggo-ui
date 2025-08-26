@@ -478,21 +478,40 @@ const TestCaseSteps = ({
   // Calculate generation duration when start and end times are available
   useEffect(() => {
     if (steps_generation_start_time && steps_generation_end_time) {
+      console.log('Duration calculation - start:', steps_generation_start_time, 'end:', steps_generation_end_time);
+      
       const startTime = new Date(steps_generation_start_time);
       const endTime = new Date(steps_generation_end_time);
-      let durationMs = endTime - startTime;
       
-      // Ensure we have a positive duration
-      if (durationMs < 0) {
-        console.warn('Negative duration detected, using absolute value');
-        durationMs = Math.abs(durationMs);
+      // Validate dates
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        console.error('Invalid date format in duration calculation:', {
+          start: steps_generation_start_time,
+          end: steps_generation_end_time,
+          startParsed: startTime,
+          endParsed: endTime
+        });
+        setGenerationDuration("Invalid time");
+        return;
+      }
+      
+      let durationMs = endTime - startTime;
+      console.log('Calculated duration (ms):', durationMs);
+      
+      // Check for unreasonable durations (more than 1 hour = likely data issue)
+      if (durationMs < 0 || durationMs > 3600000) {
+        console.warn('Unreasonable duration detected:', durationMs, 'ms');
+        setGenerationDuration("Invalid duration");
+        return;
       }
       
       // Format duration as mm:ss
       const totalSeconds = Math.floor(durationMs / 1000);
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
-      setGenerationDuration(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+      const formattedDuration = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      console.log('Formatted duration:', formattedDuration);
+      setGenerationDuration(formattedDuration);
     } else {
       setGenerationDuration("");
     }
