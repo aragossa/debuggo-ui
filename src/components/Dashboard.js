@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import TestCaseTree from './TestCaseTree';
 import TestCaseSteps from './TestCaseSteps';
+import TestExecutions from './TestExecutions';
 import UploadPopup from './UploadPopup';
 import TestResultPopup from './TestResultPopup';
 import Environments from './Environments';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faFlask, faCog, faFileImport, faChevronDown, faChevronUp, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faFlask, faCog, faFileImport, faChevronDown, faChevronUp, faFolderOpen, faPlay } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -309,6 +310,12 @@ const Dashboard = () => {
             <FontAwesomeIcon icon={faFlask} /> Test Cases
           </button>
           <button 
+            className={`tab-button ${activeTab === 'testExecutions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('testExecutions')}
+          >
+            <FontAwesomeIcon icon={faPlay} /> Test Executions
+          </button>
+          <button 
             className={`tab-button ${activeTab === 'environments' ? 'active' : ''}`}
             onClick={() => setActiveTab('environments')}
           >
@@ -346,6 +353,14 @@ const Dashboard = () => {
                   steps_generation_start_time={testCase.steps_generation_start_time}
                   steps_generation_end_time={testCase.steps_generation_end_time}
                   onTestResult={setTestResult}
+                  onTestCaseUpdate={(name, description, updated_at) => {
+                    setTestCase(prev => ({
+                      ...prev,
+                      test_name: name,
+                      test_description: description,
+                      updated_at: updated_at
+                    }));
+                  }}
                   projectId={selectedProject}
                 />
               ) : (
@@ -358,6 +373,10 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
+          </div>
+        ) : activeTab === 'testExecutions' ? (
+          <div className="test-executions-tab-container">
+            <TestExecutions selectedProjectId={selectedProject} />
           </div>
         ) : (
           <div className="environments-tab-container">

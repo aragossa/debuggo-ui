@@ -106,6 +106,9 @@ const TestCaseSteps = ({
   const [isTestingLocator, setIsTestingLocator] = useState(false);
   const [showAddStepModal, setShowAddStepModal] = useState(false);
   const [isAddingStep, setIsAddingStep] = useState(false);
+  const [showExecutionDropdown, setShowExecutionDropdown] = useState(false);
+  const [inProgressExecutions, setInProgressExecutions] = useState([]);
+  const [selectedExecution, setSelectedExecution] = useState(null);
   const [newStep, setNewStep] = useState({
     description: '',
     action: '',
@@ -432,6 +435,9 @@ const TestCaseSteps = ({
       }
       if (environmentDropdownRef.current && !environmentDropdownRef.current.contains(event.target)) {
         setShowEnvironmentDropdown(false);
+      }
+      if (!event.target.closest('.run-button-container')) {
+        setShowExecutionDropdown(false);
       }
       
       // Close action dropdown when clicking outside
@@ -799,8 +805,10 @@ const TestCaseSteps = ({
         throw new Error('Failed to stop test step generation');
       }
       
-      // We'll let the polling handle the UI update once the backend confirms the stop
       console.log('Requested to stop test step generation');
+      
+      // Refresh test case to get updated timestamp
+      await refreshTestCase();
     } catch (error) {
       console.error('Error stopping test step generation:', error);
       alert('Failed to stop test step generation. Please try again.');
@@ -861,6 +869,11 @@ const TestCaseSteps = ({
       }
       const data = await response.json();
       setSteps(data.test_steps);
+      
+      // Update parent component with fresh test case data including updated_at
+      if (typeof onTestCaseUpdate === 'function') {
+        onTestCaseUpdate(data.test_name, data.test_description, data.updated_at);
+      }
     } catch (error) {
       console.error('Error refreshing test case:', error);
     }
@@ -1080,16 +1093,67 @@ const TestCaseSteps = ({
     }
   };
 
+  // Fetch in-progress executions for the project
+  const fetchInProgressExecutions = async () => {
+    if (!projectId || projectId === 'all') {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/projects/${projectId}/test-executions/in-progress`, {
+        headers: getAuthHeaders()
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setInProgressExecutions(data.executions || []);
+      }
+    } catch (error) {
+      console.error('Error fetching in-progress executions:', error);
+      setInProgressExecutions([]);
+    }
+  };
+
+  // Handle execution selection
+  const handleExecutionSelect = (execution) => {
+    setSelectedExecution(execution);
+    setShowExecutionDropdown(false);
+  };
+
+  // Run test with execution assignment
+  const runTestWithExecution = async (executionId) => {
+    const runResult = await runTest();
+    
+    // If test run was successful, assign it to the execution
+    if (runResult && runResult.test_run_id) {
+      try {
+        const response = await fetch(`${API_URL}/api/test-runs/assign-to-execution`, {
+          method: 'POST',
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            test_run_id: runResult.test_run_id,
+            execution_id: executionId
+          })
+        });
+
+        if (response.ok) {
+          console.log('Test run assigned to execution successfully');
+        }
+      } catch (error) {
+        console.error('Error assigning test run to execution:', error);
+      }
+    }
+  };
+
   const handleRunClick = async () => {
     if (isRunning || !testCaseId || !hasTestSteps) return;
     
-    // If there are environments available but none is selected, show confirmation modal
-    if (environments.length > 0 && !selectedEnvironment) {
-      setShowRunConfirmModal(true);
-      return;
-    }
-    
-    await runTest();
+    // Always fetch executions and show dropdown for selection
+    await fetchInProgressExecutions();
+    setShowExecutionDropdown(true);
   };
 
   const handleRunConfirm = async () => {
@@ -1131,8 +1195,12 @@ const TestCaseSteps = ({
       // Refresh the test case to show the latest test run
       await refreshTestCase();
       
+      // Return the result so we can get test_run_id for execution assignment
+      return result;
+      
     } catch (error) {
       console.error('Error running test case:', error);
+      return null;
     } finally {
       setIsRunning(false);
     }
@@ -1912,6 +1980,73 @@ const TestCaseSteps = ({
             {showRunTooltip && !hasTestSteps && (
               <div className="tooltip run-tooltip">
                 <FontAwesomeIcon icon={faInfoCircle} /> No test steps to run
+              </div>
+            )}
+            
+            {/* Execution Dropdown */}
+            {showExecutionDropdown && (
+              <div className="execution-dropdown">
+                <div className="execution-dropdown-header">
+                  <strong>Select Execution</strong>
+                  <button 
+                    className="close-dropdown-btn"
+                    onClick={() => setShowExecutionDropdown(false)}
+                  >
+                    <FontAwesomeIcon icon={faTimes} />
+                  </button>
+                </div>
+                
+                {inProgressExecutions.length > 0 ? (
+                  inProgressExecutions.map(execution => (
+                    <div 
+                      key={execution.id}
+                      className="execution-dropdown-option"
+                      onClick={() => {
+                        runTestWithExecution(execution.id);
+                        setShowExecutionDropdown(false);
+                      }}
+                    >
+                      <div className="execution-option-info">
+                        <span className="execution-name">{execution.name}</span>
+                        <div className="execution-details">
+                          <span className={`execution-status ${execution.status.toLowerCase().replace(' ', '-')}`}>
+                            {execution.status}
+                          </span>
+                          <span className="execution-date">
+                            {new Date(execution.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="execution-dropdown-message">
+                    <FontAwesomeIcon icon={faInfoCircle} /> No executions found for this project.
+                  </div>
+                )}
+                
+                <div className="execution-dropdown-separator"></div>
+                
+                <div 
+                  className="execution-dropdown-option create-new"
+                  onClick={() => {
+                    setShowExecutionDropdown(false);
+                    // TODO: Open create execution modal
+                    alert('Create execution functionality coming soon!');
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPlus} /> Create new execution
+                </div>
+                
+                <div 
+                  className="execution-dropdown-option standalone"
+                  onClick={() => {
+                    runTest();
+                    setShowExecutionDropdown(false);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPlay} /> Run without execution
+                </div>
               </div>
             )}
           </div>
