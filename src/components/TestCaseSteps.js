@@ -546,6 +546,37 @@ const TestCaseSteps = ({
     }
   }, [projectId]);
 
+  // Load persisted environment selection when project changes
+  useEffect(() => {
+    if (projectId && projectId !== 'all' && environments.length > 0) {
+      const storageKey = `selectedEnvironment_${projectId}`;
+      const persistedEnvironmentId = localStorage.getItem(storageKey);
+      
+      if (persistedEnvironmentId) {
+        // Check if the persisted environment still exists in the current project
+        const environmentExists = environments.some(env => env.id.toString() === persistedEnvironmentId);
+        if (environmentExists) {
+          setSelectedEnvironment(persistedEnvironmentId);
+        } else {
+          // If persisted environment doesn't exist, clear it and select first available
+          localStorage.removeItem(storageKey);
+          if (environments.length > 0) {
+            const firstEnvId = environments[0].id.toString();
+            setSelectedEnvironment(firstEnvId);
+            localStorage.setItem(storageKey, firstEnvId);
+          }
+        }
+      } else {
+        // No persisted selection, select first environment and persist it
+        if (environments.length > 0) {
+          const firstEnvId = environments[0].id.toString();
+          setSelectedEnvironment(firstEnvId);
+          localStorage.setItem(storageKey, firstEnvId);
+        }
+      }
+    }
+  }, [projectId, environments]);
+
   useEffect(() => {
     setEditedTestCase({
       name: currentTestName,
@@ -811,18 +842,7 @@ const TestCaseSteps = ({
       const data = await response.json();
       setEnvironments(data);
       
-      // If there's at least one environment, select it by default
-      if (data.length > 0) {
-        // If there's a previously selected environment that exists in the current project, keep it
-        const environmentExists = selectedEnvironment && data.some(env => env.id === parseInt(selectedEnvironment));
-        if (!environmentExists) {
-          // Otherwise select the first environment
-          setSelectedEnvironment(data[0].id.toString());
-        }
-      } else {
-        // No environments available
-        setSelectedEnvironment('');
-      }
+      // Environment selection will be handled by the useEffect that depends on environments array
     } catch (error) {
       console.error('Error fetching environments:', error);
     }
@@ -865,6 +885,12 @@ const TestCaseSteps = ({
   const handleEnvironmentChange = (environmentId) => {
     setSelectedEnvironment(environmentId);
     setShowEnvironmentDropdown(false);
+    
+    // Persist selected environment to localStorage with project context
+    if (projectId && projectId !== 'all') {
+      const storageKey = `selectedEnvironment_${projectId}`;
+      localStorage.setItem(storageKey, environmentId);
+    }
   };
 
   const handleAddNewEnvironmentClick = () => {
