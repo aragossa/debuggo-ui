@@ -21,7 +21,7 @@
   align-items: center;
 }
 
-.nav-brand a {
+/* .nav-brand a {
   color: white;
   text-decoration: none;
   font-size: 1.5rem;
@@ -29,11 +29,16 @@
   transition: all var(--transition-fast);
   letter-spacing: 0.5px;
   position: relative;
-}
+} */
 
-.nav-brand a:hover {
+/* .nav-brand a:hover {
   opacity: 0.9;
   transform: translateY(-1px);
+} */
+
+.nav-logo {
+  height: 32px;
+  width: auto;
 }
 
 .nav-menu {

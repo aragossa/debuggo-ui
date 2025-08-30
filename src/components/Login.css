@@ -70,7 +70,7 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #8F41E9;
+  border-color: var(--secondary);
   box-shadow: 0 0 0 4px rgba(143, 65, 233, 0.1);
 }
 
@@ -78,7 +78,7 @@ button[type="submit"] {
   width: 100%;
   padding: 0.875rem;
   margin-top: 1rem;
-  background: linear-gradient(90deg, #E21E9B 0%, #8F41E9 100%);
+  background: var(--secondary);
   color: white;
   border: none;
   border-radius: 0.5rem;

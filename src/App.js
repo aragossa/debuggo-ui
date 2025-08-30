@@ -112,7 +112,9 @@ function App() {
             <Route path="*" element={
               <nav className="top-nav">
                 <div className="nav-brand">
-                  <Link to="/">Debuggo</Link>
+                  <Link to="/">
+                    <img src="/debuggo-logo.svg" alt="Debuggo" className="nav-logo" />
+                  </Link>
                 </div>
                 <div className="nav-menu">
                   <MainMenu />

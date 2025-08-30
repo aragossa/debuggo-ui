@@ -156,7 +156,7 @@ select:focus {
 }
 
 .submit-button {
-  background: linear-gradient(135deg, #00BFA5 0%, #10b981 100%);
+  background: var(--secondary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -169,12 +169,6 @@ select:focus {
   justify-content: center;
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.submit-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
-  background: linear-gradient(135deg, #20bf6b 0%, #0b8a45 100%);
 }
 
 .submit-button:active {
