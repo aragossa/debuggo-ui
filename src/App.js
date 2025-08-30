@@ -112,7 +112,7 @@ function App() {
             <Route path="*" element={
               <nav className="top-nav">
                 <div className="nav-brand">
-                  <Link to="/">AuroQA</Link>
+                  <Link to="/">Debuggo</Link>
                 </div>
                 <div className="nav-menu">
                   <MainMenu />

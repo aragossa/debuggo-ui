@@ -159,7 +159,7 @@ select:focus {
 }
 
 .submit-button {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  background: linear-gradient(135deg, #00BFA5 0%, #10b981 100%);
   color: white;
   border: none;
   border-radius: 6px;

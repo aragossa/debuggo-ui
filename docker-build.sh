@@ -1,3 +1,3 @@
-docker buildx build --platform linux/amd64 -t thelisdeep/auroqa-ui:latest --load .
-rm auroqa-ui.tar
-docker save -o auroqa-ui.tar thelisdeep/auroqa-ui:latest
+docker buildx build --platform linux/amd64 -t thelisdeep/debuggo-ui:latest --load .
+rm debuggo-ui.tar
+docker save -o debuggo-ui.tar thelisdeep/debuggo-ui:latest

@@ -1,6 +1,6 @@
 {
-  "short_name": "AuroQA",
-  "name": "AuroQA Test Automation",
+  "short_name": "Debuggo",
+  "name": "Debuggo Test Automation",
   "icons": [
     {
       "src": "favicon.ico",

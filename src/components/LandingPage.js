@@ -58,7 +58,7 @@ const LandingPage = () => {
             AI-powered no-code platform that generates and executes test cases from screenshots, API schema files, tech docs, or URLs
           </p>
           <p className="hero-description">
-            AuroQA is a database-driven QA automation platform that makes test creation and maintenance simple. All test cases, steps, and locators are stored in a centralized database, making them easily maintainable and reusable across your entire organization. Our no-code automation approach allows anyone to create and run tests without writing a single line of code. Say goodbye to hardcoded tests and hello to a more efficient testing process.
+            Debuggo is a database-driven QA automation platform that makes test creation and maintenance simple. All test cases, steps, and locators are stored in a centralized database, making them easily maintainable and reusable across your entire organization. Our no-code automation approach allows anyone to create and run tests without writing a single line of code. Say goodbye to hardcoded tests and hello to a more efficient testing process.
           </p>
           <div className="hero-actions">
             <button 
@@ -89,14 +89,14 @@ const LandingPage = () => {
       <section id="about" className="about-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">About AuroQA</h2>
+            <h2 className="section-title">About Debuggo</h2>
             <p className="section-subtitle">Revolutionizing Test Automation with AI-Powered Intelligence</p>
           </div>
           <div className="about-content">
             <div className="about-text">
               <h3>What We Do</h3>
               <p>
-                AuroQA solves the critical challenges facing QA teams, developers, and enterprises in today's fast-paced development environment. 
+                Debuggo solves the critical challenges facing QA teams, developers, and enterprises in today's fast-paced development environment. 
                 We generate complete test automation flows that seamlessly combine UI and API testing, eliminating the fragmentation 
                 that plagues traditional testing approaches.
               </p>
@@ -205,7 +205,7 @@ const LandingPage = () => {
               <div className="stage-indicator">
                 <div className="stage-badge">Pre-Launch Testing Phase</div>
                 <p>
-                  AuroQA is currently in an advanced development stage, actively seeking test groups to validate 
+                  Debuggo is currently in an advanced development stage, actively seeking test groups to validate 
                   our platform with real test cases in production environments. We've completed core development 
                   and are preparing for full market launch.
                 </p>
@@ -250,7 +250,7 @@ const LandingPage = () => {
               <h3>Ready to Join Our Testing Program?</h3>
               <p>
                 We're actively seeking forward-thinking teams to participate in our pre-launch testing program. 
-                Get early access to AuroQA and help shape the future of test automation.
+                Get early access to Debuggo and help shape the future of test automation.
               </p>
               <button 
                 onClick={() => setShowLogin(true)}
@@ -270,7 +270,7 @@ const LandingPage = () => {
           <h2 className="section-title">Powerful Features</h2>
           <p className="section-subtitle">Everything you need to automate your QA process</p>
           <p className="section-description">
-            AuroQA combines AI-powered analysis with a database-driven architecture to deliver a complete testing solution. All test cases, steps, and locators are stored in a centralized database, making them reusable and maintainable across your entire organization. Our platform integrates seamlessly with your existing tools and workflows, providing immediate value without disruption.
+            Debuggo combines AI-powered analysis with a database-driven architecture to deliver a complete testing solution. All test cases, steps, and locators are stored in a centralized database, making them reusable and maintainable across your entire organization. Our platform integrates seamlessly with your existing tools and workflows, providing immediate value without disruption.
           </p>
         </div>
         <div className="features-grid">
@@ -326,7 +326,7 @@ const LandingPage = () => {
           <h2 className="section-title">Database-Driven Architecture</h2>
           <p className="section-subtitle">The foundation of maintainable test automation</p>
           <p className="section-description">
-            Unlike traditional test automation frameworks that rely on hardcoded tests, AuroQA stores all test components in a centralized database. This approach eliminates script maintenance headaches and enables true test reusability across your organization.
+            Unlike traditional test automation frameworks that rely on hardcoded tests, Debuggo stores all test components in a centralized database. This approach eliminates script maintenance headaches and enables true test reusability across your organization.
           </p>
         </div>
         <div className="database-benefits-container">
@@ -357,7 +357,7 @@ const LandingPage = () => {
       <section className="screenshots-section">
         <div className="section-header">
           <h2 className="section-title">See It In Action</h2>
-          <p className="section-subtitle">Real examples of AuroQA in use</p>
+          <p className="section-subtitle">Real examples of Debuggo in use</p>
           <p className="section-description">
             Our database-driven platform makes test management simple and efficient. Generate test cases from screenshots, API schema files, or directly from your application's UI. All test steps and locators are stored in the database, making them reusable across your entire organization.
           </p>
@@ -392,7 +392,7 @@ const LandingPage = () => {
           <h2 className="section-title">Use Cases</h2>
           <p className="section-subtitle">Perfect for teams of all sizes</p>
           <p className="section-description">
-            AuroQA adapts to your team's specific needs. Whether you're a QA specialist looking to automate repetitive tasks, a developer wanting to ensure code quality, or a product manager seeking confidence in new releases, our platform provides the tools you need with a database-driven architecture that scales with your organization.
+            Debuggo adapts to your team's specific needs. Whether you're a QA specialist looking to automate repetitive tasks, a developer wanting to ensure code quality, or a product manager seeking confidence in new releases, our platform provides the tools you need with a database-driven architecture that scales with your organization.
           </p>
         </div>
         <div className="use-cases-grid">
@@ -433,7 +433,7 @@ const LandingPage = () => {
           <h2 className="section-title">No-Code Automation</h2>
           <p className="section-subtitle">Test automation for everyone</p>
           <p className="section-description">
-            AuroQA eliminates the need for coding skills in test automation. Our AI-powered platform handles the technical complexity, allowing anyone on your team to create, manage, and execute tests without writing a single line of code.
+            Debuggo eliminates the need for coding skills in test automation. Our AI-powered platform handles the technical complexity, allowing anyone on your team to create, manage, and execute tests without writing a single line of code.
           </p>
         </div>
         <div className="no-code-features-container">
@@ -482,7 +482,7 @@ const LandingPage = () => {
           <h2 className="section-title">Get In Touch</h2>
           <p className="section-subtitle">We'd love to hear from you</p>
           <p className="section-description">
-            Have questions about how AuroQA can help your team? Want to see a personalized demo of our database-driven test automation platform? Our team is ready to assist you in setting up a solution tailored to your organization's specific testing needs. Whether you're looking to integrate with your existing tools or start fresh with a complete testing solution, we're here to help.
+            Have questions about how Debuggo can help your team? Want to see a personalized demo of our database-driven test automation platform? Our team is ready to assist you in setting up a solution tailored to your organization's specific testing needs. Whether you're looking to integrate with your existing tools or start fresh with a complete testing solution, we're here to help.
           </p>
         </div>
         <div className="contact-container">
@@ -494,7 +494,7 @@ const LandingPage = () => {
                 href="mailto:ilya.ploskovitov@auroqa.com" 
                 className="contact-email"
               >
-                ilya.ploskovitov@auroqa.com
+                ilya.ploskovitov@debuggo.com
               </a>
               <p className="contact-phone">+972 53-528-6313</p>
             </div>
@@ -607,7 +607,7 @@ const LandingPage = () => {
           </div>
         </div>
         <div className="footer-bottom">
-          <p className="footer-text">&copy; 2025 AuroQA. All rights reserved.</p>
+          <p className="footer-text">&copy; 2025 Debuggo. All rights reserved.</p>
           <div className="footer-legal">
             <a href="#">Privacy Policy</a>
             <a href="#">Terms of Service</a>
