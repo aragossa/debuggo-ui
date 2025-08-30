@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, CheckCircle, Clock, Database, Code, Zap, Shield, BarChart, Layers, GitBranch, Users, Cpu, RefreshCw, Sliders, Target, Bug, Bot, Linkedin } from 'lucide-react';
+import { ArrowRight, Check, Clock, Database, Code, Zap, Shield, BarChart, Layers, GitBranch, Users, Cpu, RefreshCw, Sliders, Target, Bug, Bot, Linkedin } from 'lucide-react';
 import Login from './Login';
 import './LandingPage.css';
 import axios from 'axios';
@@ -17,10 +17,7 @@ const LandingPage = () => {
       <nav className="nav-container">
         <div className="nav-content">
           <div className="logo-container">
-            <div className="logo-square">
               <Logo width="100%" height="100%" />
-            </div>
-            <span className="logo-text">AuroQA</span>
           </div>
           <div className="nav-links">
             <a href="#about" className="nav-link">About</a>
@@ -89,23 +86,23 @@ const LandingPage = () => {
       <section id="about" className="about-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">About Debuggo</h2>
+            <h2 className="section-title">About <span className="hero-highlight">Debuggo</span></h2>
             <p className="section-subtitle">Revolutionizing Test Automation with AI-Powered Intelligence</p>
           </div>
           <div className="about-content">
             <div className="about-text">
-              <h3>What We Do</h3>
+              <h3><span className="hero-highlight">What We Do</span></h3>
               <p>
                 Debuggo solves the critical challenges facing QA teams, developers, and enterprises in today's fast-paced development environment. 
                 We generate complete test automation flows that seamlessly combine UI and API testing, eliminating the fragmentation 
                 that plagues traditional testing approaches.
               </p>
-              <h3>The Problems We Solve</h3>
+              <h3><span className="hero-highlight">The Problems We Solve</span></h3>
               <div className="problem-solutions">
                 <div className="solution-item">
                   <Target className="solution-icon" />
                   <div>
-                    <h4>Fragmented Testing Workflows</h4>
+                    <h4 >Fragmented Testing Workflows</h4>
                     <p>Traditional tools force teams to manage UI and API tests separately, creating gaps in coverage and inefficient processes.</p>
                   </div>
                 </div>
@@ -124,7 +121,7 @@ const LandingPage = () => {
                   </div>
                 </div>
               </div>
-              <h3>Our Target Audience</h3>
+              <h3><span className="hero-highlight">Our Target Audience</span></h3>
               <p>
                 We serve QA teams looking to modernize their testing approach, developers seeking integrated testing solutions, 
                 and enterprises requiring scalable, maintainable test automation across their entire technology stack.
@@ -138,7 +135,7 @@ const LandingPage = () => {
       <section id="team" className="team-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Meet Our Team</h2>
+            <h2 className="section-title">Meet Our <span className="hero-highlight">Team</span></h2>
           </div>
           <div className="team-grid">
             <div className="team-member">
@@ -146,7 +143,7 @@ const LandingPage = () => {
                 <img src="/images/photo.jpg" alt="Ilya Ploskovitov" className="member-image" />
               </div>
               <div className="member-info">
-                <h3>Ilya Ploskovitov</h3>
+                <h3><span className="h3-title-primary">Ilya Ploskovitov</span></h3>
                 <p className="member-role">Founder & CEO</p>
                 <p className="member-bio">
                 Leading QA efforts at startup LUCY Awareness, driving quality assurance strategies. Experienced QA Engineer skilled in automation for high-loaded systems. Specializes in building test automation frameworks and QA processes using DevOps practices and AI-powered testing solutions to ensure robust, scalable systems.
@@ -170,7 +167,7 @@ const LandingPage = () => {
                 <img src="/images/1656436650919.jpeg" alt="Sasha Zelenin" className="member-image" />
               </div>
               <div className="member-info">
-                <h3>Sasha Zelenin</h3>
+                <h3><span className="h3-title-primary">Sasha Zelenin</span></h3>
                 <p className="member-role">Mentor</p>
                 <p className="member-bio">
                 Entrepreneur since 2001, psychologist, and inventor. Founded seven profitable companies, sold five. Mentors startup founders, sharing insights to navigate challenges and scale ventures. Key lessons: passion drives sales, open communication unites teams, leadership starts with self-management, and transparency builds trust through constructive feedback.
@@ -196,14 +193,13 @@ const LandingPage = () => {
       <section id="product" className="product-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Our Product</h2>
+            <h2 className="section-title">Our <span className="hero-highlight">Product</span></h2>
             <p className="section-subtitle">Comprehensive test automation platform ready for real-world deployment</p>
           </div>
           <div className="product-content">
             <div className="product-overview">
               <h3>Current Development Stage</h3>
               <div className="stage-indicator">
-                <div className="stage-badge">Pre-Launch Testing Phase</div>
                 <p>
                   Debuggo is currently in an advanced development stage, actively seeking test groups to validate 
                   our platform with real test cases in production environments. We've completed core development 
@@ -216,28 +212,28 @@ const LandingPage = () => {
               <h3>What Users Can Expect</h3>
               <div className="feature-highlights">
                 <div className="highlight-item">
-                  <CheckCircle className="highlight-icon" />
+                  <Check className="highlight-icon" />
                   <div>
                     <h4>AI-Powered Test Generation</h4>
                     <p>Upload screenshots, API schemas, or documentation and watch AI create comprehensive test suites</p>
                   </div>
                 </div>
                 <div className="highlight-item">
-                  <CheckCircle className="highlight-icon" />
+                  <Check className="highlight-icon" />
                   <div>
                     <h4>Unified UI & API Testing</h4>
                     <p>Single platform for complete test automation workflows covering both frontend and backend</p>
                   </div>
                 </div>
                 <div className="highlight-item">
-                  <CheckCircle className="highlight-icon" />
+                  <Check className="highlight-icon" />
                   <div>
                     <h4>Intelligent Bug Detection</h4>
                     <p>AI actively analyzes pages during test execution to identify potential issues and anomalies</p>
                   </div>
                 </div>
                 <div className="highlight-item">
-                  <CheckCircle className="highlight-icon" />
+                  <Check className="highlight-icon" />
                   <div>
                     <h4>Database-Driven Architecture</h4>
                     <p>All test cases, steps, and locators stored centrally for maximum reusability and maintenance</p>
@@ -275,7 +271,7 @@ const LandingPage = () => {
         </div>
         <div className="features-grid">
           <div className="feature-card">
-            <CheckCircle className="feature-icon pink" />
+            <Check className="feature-icon pink" />
             <h3 className="feature-title">AI Test Generation</h3>
             <p className="feature-description">
               Automated creation of test cases for websites at any stage of development. Our AI analyzes your application's UI, identifies key elements, and generates optimal test steps that are stored in the database for reuse.
@@ -486,19 +482,6 @@ const LandingPage = () => {
           </p>
         </div>
         <div className="contact-container">
-          <div className="contact-info">
-            <div className="contact-card">
-              <h3 className="contact-title">Founder</h3>
-              <p className="contact-name">Ilya Ploskovitov</p>
-              <a 
-                href="mailto:ilya.ploskovitov@auroqa.com" 
-                className="contact-email"
-              >
-                ilya.ploskovitov@debuggo.com
-              </a>
-              <p className="contact-phone">+972 53-528-6313</p>
-            </div>
-          </div>
           <div className="contact-form-container">
             {formStatus.submitted ? (
               <div className={`form-message ${formStatus.error ? 'error' : 'success'}`}>
@@ -586,12 +569,15 @@ const LandingPage = () => {
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-logo">
-            <div className="logo-square">
               <Logo width="100%" height="100%" />
-            </div>
-            <span className="logo-text">AuroQA</span>
           </div>
           <div className="footer-links">
+          <div className="footer-column">
+              <h4>Founder</h4>
+              <span>Ilya Ploskovitov</span>
+              <a href="mailto:ilya.ploskovitov@auroqa.com">ilya.ploskovitov@auroqa.com</a>
+              <span >+972 53-528-6313</span>
+            </div>
             <div className="footer-column">
               <h4>Company</h4>
               <a href="#">About Us</a>
