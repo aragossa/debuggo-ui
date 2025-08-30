@@ -31,7 +31,7 @@
 }
 
 .new-user-btn {
-  background: linear-gradient(135deg, #4a6cf7 0%, #3b5fe2 100%);
+  background: var(--secondary-dark);
   color: white;
   padding: 0.75rem 1.5rem;
   border: none;
@@ -46,11 +46,6 @@
   box-shadow: 0 2px 10px rgba(74, 108, 247, 0.2);
 }
 
-.new-user-btn:hover {
-  background: linear-gradient(135deg, #3b5fe2 0%, #2a4cd0 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(74, 108, 247, 0.3);
-}
 
 .new-user-btn:active {
   transform: translateY(0);

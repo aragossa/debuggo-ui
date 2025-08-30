@@ -31,7 +31,7 @@
 }
 
 .create-project-button {
-  background: linear-gradient(135deg, #00BFA5 0%, #4f46e5 100%);
+  background: var(--secondary-dark);
   color: white;
   padding: 0.75rem 1.5rem;
   border: none;
@@ -46,11 +46,6 @@
   box-shadow: 0 2px 10px rgba(99, 102, 241, 0.2);
 }
 
-.create-project-button:hover {
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-}
 
 .create-project-button:active {
   transform: translateY(0);

@@ -21,7 +21,7 @@
 }
 
 .add-environment-button {
-  background-color: #28a745;
+  background-color: var(--secondary-dark);
   color: white;
   border: none;
   border-radius: 4px;
@@ -34,9 +34,7 @@
   transition: background-color 0.2s;
 }
 
-.add-environment-button:hover {
-  background-color: #218838;
-}
+
 
 .add-environment-button:disabled {
   background-color: #6c757d;
@@ -135,7 +133,7 @@
 }
 
 .edit-button {
-  background-color: #007bff;
+  background-color: var(--primary-dark);
   color: white;
   border: none;
   border-radius: 4px;

@@ -9,7 +9,7 @@
 
 .test-executions-header {
     display: flex;
-    justify-content: between;
+    justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 15px;
@@ -24,7 +24,7 @@
 }
 
 .create-execution-btn {
-    background: #007bff;
+    background: var(--secondary-dark);
     color: white;
     border: none;
     padding: 10px 20px;
@@ -38,10 +38,7 @@
     gap: 8px;
 }
 
-.create-execution-btn:hover {
-    background: #0056b3;
-    transform: translateY(-1px);
-}
+
 
 .test-executions-loading,
 .test-executions-error,

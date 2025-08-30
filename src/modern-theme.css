@@ -3,9 +3,9 @@
   --primary: #0A2540;
   --primary-light: #0A2540;
   --primary-dark: #0A2540;
-  --secondary: #64DFDF;
-  --secondary-light: #80FFDB;
-  --secondary-dark: #56C9C9;
+  --secondary: #00BFA5;
+  --secondary-light: #00BFA5;
+  --secondary-dark: #00BFA5;
   --warning: #FFC107;
   --danger: #FF5A5F;
   --success: #00B074;
@@ -223,9 +223,7 @@ body {
   font-weight: 500;
 }
 
-.generate-from-file-button:hover:not(.disabled) {
-  background-color: var(--primary-dark);
-}
+/* Hover effects disabled */
 
 .generate-from-file-button.disabled {
   background-color: var(--gray-400);

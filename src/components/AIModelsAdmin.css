@@ -12,7 +12,7 @@
 }
 
 .add-model-btn {
-  background-color: #4caf50;
+  background-color: var(--secondary-dark);
   color: white;
   border: none;
   padding: 8px 16px;
@@ -21,10 +21,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.add-model-btn:hover {
-  background-color: #45a049;
 }
 
 .ai-models-list {

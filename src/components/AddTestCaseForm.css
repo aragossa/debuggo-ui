@@ -128,9 +128,6 @@ select:focus {
   transition: background-color 0.2s;
 }
 
-.add-step-button:hover {
-  background-color: rgba(74, 144, 226, 0.1);
-}
 
 .form-actions {
   display: flex;

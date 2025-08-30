@@ -99,7 +99,7 @@
 }
 
 .generate-from-file-button {
-  background: linear-gradient(135deg, #0A2540 0%, #00BFA5 100%);
+  background: var(--secondary-dark);
   color: white;
   border: none;
   border-radius: 8px;
@@ -131,14 +131,7 @@
   transition: opacity 0.3s ease;
 }
 
-.generate-from-file-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3), 0 3px 6px rgba(0, 0, 0, 0.1);
-}
-
-.generate-from-file-button:hover:before {
-  opacity: 1;
-}
+/* Hover effects disabled */
 
 .generate-from-file-button:active {
   transform: translateY(1px);

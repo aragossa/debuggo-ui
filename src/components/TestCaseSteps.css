@@ -317,10 +317,6 @@
   position: relative;
 }
 
-/* Make buttons more flexible in the layout */
-.add-step-button {
-  margin-bottom: 0;
-}
 
 .run-button svg {
   margin-right: 8px;
@@ -1624,10 +1620,6 @@
   padding: 0 8px;
 }
 
-/* Modern Add Step Button */
-.add-step-button {
-  margin-bottom: 0;
-}
 
 /* Common button styles for action buttons */
 .action-button,
@@ -1693,10 +1685,6 @@
   transform: translateY(-1px);
 }
 
-/* Remove any margin-bottom from add-step-button */
-.add-step-button {
-  margin-bottom: 0;
-}
 
 /* Specific styles for generate button when generating */
 .generate-button.generating {
