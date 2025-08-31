@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash, faChevronDown, faChevronUp, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash, faChevronDown, faChevronUp, faEye, faCamera } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './TestExecutions.css';
 
@@ -18,6 +18,8 @@ const TestExecutions = ({ selectedProjectId }) => {
         name: '',
         description: ''
     });
+    const [showScreenshotModal, setShowScreenshotModal] = useState(false);
+    const [currentScreenshotUrl, setCurrentScreenshotUrl] = useState(null);
 
     // Get auth headers
     const getAuthHeaders = () => {
@@ -261,42 +263,71 @@ const TestExecutions = ({ selectedProjectId }) => {
     // Handle screenshot view
     const viewScreenshot = async (stepId) => {
         try {
-            const response = await fetch(`/api/test_step_screenshot/${stepId}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            console.log(`Requesting screenshot for step ID: ${stepId}`);
+            
+            // Use full API URL to avoid routing issues
+            const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
+                headers: getAuthHeaders()
             });
-
+            
+            console.log(`Screenshot response status: ${response.status}`);
+            console.log(`Screenshot response content-type: ${response.headers.get('content-type')}`);
+            console.log(`Screenshot response headers:`, [...response.headers.entries()]);
+            
+            // Check if response is JSON (error response)
             if (response.headers.get('content-type')?.includes('application/json')) {
                 const data = await response.json();
+                console.log('Screenshot JSON response:', data);
                 if (!data.screenshot_available) {
-                    alert('Screenshot not available for this step');
+                    alert(`Screenshot not available: ${data.message || 'Unknown reason'}`);
                     return;
                 }
             }
 
             if (response.ok && !response.headers.get('content-type')?.includes('application/json')) {
                 const blob = await response.blob();
-                const imageUrl = URL.createObjectURL(blob);
+                console.log(`Screenshot blob size: ${blob.size} bytes, type: ${blob.type}`);
                 
-                // Open in new window
-                const newWindow = window.open('', '_blank');
-                if (newWindow) {
-                    newWindow.document.write(`
-                        <html>
-                            <head><title>Test Step Screenshot</title></head>
-                            <body style="margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0;">
-                                <img src="${imageUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
-                            </body>
-                        </html>
-                    `);
-                    newWindow.document.close();
+                if (blob.size === 0) {
+                    alert('Screenshot is empty - no image data received');
+                    return;
                 }
+                
+                // Check if blob is actually an image
+                if (!blob.type.startsWith('image/')) {
+                    console.error('Invalid blob type received:', blob.type);
+                    // Try to read as text to see what we got
+                    const text = await blob.text();
+                    console.error('Blob content:', text.substring(0, 500));
+                    alert('Invalid image data received from server');
+                    return;
+                }
+                
+                const imageUrl = URL.createObjectURL(blob);
+                console.log(`Created object URL: ${imageUrl}`);
+                
+                // Show in modal instead of new window
+                setCurrentScreenshotUrl(imageUrl);
+                setShowScreenshotModal(true);
             } else {
+                console.error('Screenshot request failed:', response.status, response.statusText);
+                const errorText = await response.text();
+                console.error('Error response body:', errorText);
                 alert('Screenshot not available for this step');
             }
         } catch (err) {
             console.error('Error viewing screenshot:', err);
             alert('Error loading screenshot');
         }
+    };
+
+    // Close screenshot modal and cleanup URL
+    const closeScreenshotModal = () => {
+        if (currentScreenshotUrl) {
+            URL.revokeObjectURL(currentScreenshotUrl);
+        }
+        setCurrentScreenshotUrl(null);
+        setShowScreenshotModal(false);
     };
 
     useEffect(() => {
@@ -453,13 +484,18 @@ const TestExecutions = ({ selectedProjectId }) => {
                                                                                         </span>
                                                                                     </div>
                                                                                     <div className="test-step-actions">
-                                                                                        <button
-                                                                                            className="view-screenshot-btn"
-                                                                                            onClick={() => viewScreenshot(step.id)}
-                                                                                            title="View screenshot"
-                                                                                        >
-                                                                                            <i className="fas fa-image"></i>
-                                                                                        </button>
+                                                                                        {(step.screenshot_path || step.screenshot_base64) && (
+                                                                                            <button
+                                                                                                className="view-screenshot-button"
+                                                                                                onClick={() => {
+                                                                                                    console.log(`Viewing screenshot for step:`, step);
+                                                                                                    viewScreenshot(step.test_step_id || step.id);
+                                                                                                }}
+                                                                                                title="View screenshot"
+                                                                                            >
+                                                                                                <FontAwesomeIcon icon={faCamera} />
+                                                                                            </button>
+                                                                                        )}
                                                                                     </div>
                                                                                 </div>
                                                                             ))}
@@ -519,6 +555,34 @@ const TestExecutions = ({ selectedProjectId }) => {
                             <button className="btn-create" onClick={createExecution}>
                                 Create Execution
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Screenshot Modal */}
+            {showScreenshotModal && currentScreenshotUrl && (
+                <div className="modal-overlay screenshot-modal-overlay" onClick={closeScreenshotModal}>
+                    <div className="modal screenshot-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Test Step Screenshot</h3>
+                            <button className="modal-close" onClick={closeScreenshotModal}>
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div className="modal-body screenshot-modal-body">
+                            <img 
+                                src={currentScreenshotUrl} 
+                                alt="Test step screenshot" 
+                                className="screenshot-image"
+                                onError={(e) => {
+                                    console.error('Error loading screenshot image');
+                                    console.error('Image src:', e.target.src);
+                                    console.error('Current screenshot URL:', currentScreenshotUrl);
+                                    alert('Error loading screenshot image. Check console for details.');
+                                }}
+                                onLoad={() => console.log('Screenshot image loaded successfully')}
+                            />
                         </div>
                     </div>
                 </div>
