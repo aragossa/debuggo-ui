@@ -195,12 +195,21 @@ const TestExecutionsTree = ({ selectedProjectId }) => {
 
     const viewScreenshot = async (stepId) => {
         try {
+            console.log(`Requesting screenshot for step ID: ${stepId}`);
+            
+            // Use full API URL to avoid routing issues
             const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
                 headers: getAuthHeaders()
             });
             
+            console.log(`Screenshot response status: ${response.status}`);
+            console.log(`Screenshot response content-type: ${response.headers.get('content-type')}`);
+            console.log(`Screenshot response headers:`, [...response.headers.entries()]);
+            
+            // Check if response is JSON (error response)
             if (response.headers.get('content-type')?.includes('application/json')) {
                 const data = await response.json();
+                console.log('Screenshot JSON response:', data);
                 if (!data.screenshot_available) {
                     alert(`Screenshot not available: ${data.message || 'Unknown reason'}`);
                     return;
@@ -209,20 +218,33 @@ const TestExecutionsTree = ({ selectedProjectId }) => {
 
             if (response.ok && !response.headers.get('content-type')?.includes('application/json')) {
                 const blob = await response.blob();
+                console.log(`Screenshot blob size: ${blob.size} bytes, type: ${blob.type}`);
+                
                 if (blob.size === 0) {
                     alert('Screenshot is empty - no image data received');
                     return;
                 }
                 
+                // Check if blob is actually an image
                 if (!blob.type.startsWith('image/')) {
+                    console.error('Invalid blob type received:', blob.type);
+                    // Try to read as text to see what we got
+                    const text = await blob.text();
+                    console.error('Blob content:', text.substring(0, 500));
                     alert('Invalid image data received from server');
                     return;
                 }
                 
                 const imageUrl = URL.createObjectURL(blob);
+                console.log(`Created object URL: ${imageUrl}`);
+                
+                // Show in modal instead of new window
                 setCurrentScreenshotUrl(imageUrl);
                 setShowScreenshotModal(true);
             } else {
+                console.error('Screenshot request failed:', response.status, response.statusText);
+                const errorText = await response.text();
+                console.error('Error response body:', errorText);
                 alert('Screenshot not available for this step');
             }
         } catch (err) {
@@ -492,7 +514,20 @@ const TestExecutionsTree = ({ selectedProjectId }) => {
                                 src={currentScreenshotUrl} 
                                 alt="Test step screenshot" 
                                 className="screenshot-image"
-                                onError={() => alert('Error loading screenshot image')}
+                                onError={(e) => {
+                                    console.error('Error loading screenshot image');
+                                    console.error('Image src:', e.target.src);
+                                    console.error('Current screenshot URL:', currentScreenshotUrl);
+                                    alert('Error loading screenshot image. Check console for details.');
+                                }}
+                                onLoad={() => console.log('Screenshot image loaded successfully')}
+                                style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '80vh',
+                                    width: 'auto',
+                                    height: 'auto',
+                                    display: 'block'
+                                }}
                             />
                         </div>
                     </div>
