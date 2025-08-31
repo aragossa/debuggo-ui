@@ -13,6 +13,7 @@ import Projects from './components/Projects';
 import ProjectDetail from './components/ProjectDetail';
 import AIModelsAdmin from './components/AIModelsAdmin';
 import ContactRequests from './components/ContactRequests';
+import StatusBar from './components/StatusBar';
 import './App.css';
 
 const AdminMenu = () => {
@@ -192,6 +193,7 @@ function App() {
               }
             />
           </Routes>
+          <StatusBar />
         </div>
       </Router>
     </AuthProvider>

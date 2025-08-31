@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash, faChevronDown, faChevronUp, faEye, faCamera } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
+import RunningTestIndicator from './RunningTestIndicator';
 import './TestExecutions.css';
 
 const TestExecutions = ({ selectedProjectId }) => {
@@ -357,6 +358,9 @@ const TestExecutions = ({ selectedProjectId }) => {
                     <i className="fas fa-plus"></i> Create Execution
                 </button>
             </div>
+
+            {/* Running Test Indicator */}
+            <RunningTestIndicator />
 
             {executions.length === 0 ? (
                 <div className="no-executions">

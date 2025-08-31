@@ -1,0 +1,185 @@
+.status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-top: 2px solid #dee2e6;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
+
+.status-bar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 50px;
+}
+
+.running-tests-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.running-tests-info .spinning {
+  animation: spin 1s linear infinite;
+  color: #2196f3;
+  font-size: 14px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.running-count {
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.running-tests-details {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  flex: 1;
+  max-width: calc(100vw - 300px);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.running-tests-details::-webkit-scrollbar {
+  display: none;
+}
+
+.running-test-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-size: 13px;
+  color: #6c757d;
+  min-width: 0;
+}
+
+.test-name {
+  font-weight: 500;
+  color: #343a40;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.execution-name {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.test-timing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #17a2b8;
+}
+
+.test-timing svg {
+  font-size: 12px;
+}
+
+.stop-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+  min-width: 120px;
+  justify-content: center;
+}
+
+.stop-all-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c82333, #a71e2a);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.stop-all-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.stop-all-btn .spinning {
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .status-bar-content {
+    padding: 8px 15px;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 60px;
+  }
+  
+  .running-tests-info {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .running-tests-details {
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .running-test-summary {
+    font-size: 12px;
+  }
+  
+  .test-name {
+    max-width: 150px;
+  }
+  
+  .stop-all-btn {
+    font-size: 12px;
+    padding: 6px 12px;
+    min-width: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .running-tests-details {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+  
+  .running-test-summary {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Add padding to body to prevent content from being hidden behind status bar */
+body.status-bar-active {
+  padding-bottom: 70px;
+}
+
+@media (max-width: 768px) {
+  body.status-bar-active {
+    padding-bottom: 80px;
+  }
+}

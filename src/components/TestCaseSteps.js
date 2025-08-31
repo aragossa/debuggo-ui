@@ -33,6 +33,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import AIModelSelector from './AIModelSelector';
+import RunningTestIndicator from './RunningTestIndicator';
 import './TestCaseSteps.css';
 
 const STEP_ACTIONS = [
@@ -87,6 +88,8 @@ const TestCaseSteps = ({
   const [showRunningTooltip, setShowRunningTooltip] = useState(false);
   const [environments, setEnvironments] = useState([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState('');
+  const [runningTests, setRunningTests] = useState([]);
+  const [runningTestsPollingInterval, setRunningTestsPollingInterval] = useState(null);
   const [showRunConfirmModal, setShowRunConfirmModal] = useState(false);
   const [showAddEnvironmentModal, setShowAddEnvironmentModal] = useState(false);
   const [showEditEnvironmentModal, setShowEditEnvironmentModal] = useState(false);
@@ -132,7 +135,31 @@ const TestCaseSteps = ({
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const API_URL = process.env.REACT_APP_API_URL;
-  const { getAuthHeaders } = useAuth();
+  const { user, getAuthHeaders } = useAuth();
+
+  // Fetch running tests
+  const fetchRunningTests = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/running-tests`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRunningTests(data.running_tests || []);
+        
+        // Update local running state if current test case is running
+        const currentTestRunning = data.running_tests.some(test => test.test_case_id == testCaseId);
+        setIsRunning(currentTestRunning);
+      }
+    } catch (error) {
+      console.error('Error fetching running tests:', error);
+    }
+  }, [API_URL, testCaseId]);
+
   const [showEnvVarsDropdown, setShowEnvVarsDropdown] = useState(false);
   const [activeInputStepId, setActiveInputStepId] = useState(null);
   const [activeInputPosition, setActiveInputPosition] = useState({ top: 0, left: 0 });
@@ -624,149 +651,228 @@ const TestCaseSteps = ({
       const isGenerating = generatingTestCases[testCaseId];
       
       if (isGenerating) {
-        setIsGeneratingSteps(true);
-        startPollingForUpdates();
-      }
     }
-    
-    // Cleanup polling when component unmounts or testCaseId changes
-    return () => {
+  }
+}, [projectId, environments]);
+
+useEffect(() => {
+  setEditedTestCase({
+    name: currentTestName,
+    description: currentTestDescription
+  });
+}, [currentTestName, currentTestDescription]);
+  
+// Update the current test name and description when props change
+useEffect(() => {
+  setCurrentTestName(test_name || '');
+  setCurrentTestDescription(test_description || '');
+}, [test_name, test_description]);
+
+useEffect(() => {
+  // This effect runs when the component mounts or when testCaseId changes
+  console.log("Test case ID changed to:", testCaseId);
+  
+  // Reset relevant state when test case changes
+  setShowAddStepModal(false);
+  setShowDeleteStepModal(false);
+  setShowConfirmModal(false);
+  setShowRunConfirmModal(false);
+  setShowEditTestCaseModal(false);
+  setShowScreenshotModal(false);
+  setLocatorTooltipStep(null);
+  setIsTestingLocator(false);
+  
+  if (testCaseId) {
+    // Reset steps when test case changes
+    if (!generatingTestCases[testCaseId]) {
+      setIsGeneratingSteps(false);
       if (pollingInterval) {
         clearInterval(pollingInterval);
         setPollingInterval(null);
       }
-      if (stepResultsPollingInterval) {
+    }
+    
+    // Check if this test case is in the list of generating test cases
+    const isGenerating = generatingTestCases[testCaseId];
+    
+    if (isGenerating) {
+      setIsGeneratingSteps(true);
+      startPollingForUpdates();
+    }
+  }
+  
+  // Cleanup polling when component unmounts or testCaseId changes
+  return () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    if (stepResultsPollingInterval) {
+      clearInterval(stepResultsPollingInterval);
+      setStepResultsPollingInterval(null);
+    }
+    // Clean up blob URLs
+    if (typeof currentScreenshot === 'string' && currentScreenshot.startsWith('blob:')) {
+      URL.revokeObjectURL(currentScreenshot);
+    }
+  };
+}, [testCaseId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+useEffect(() => {
+  localStorage.setItem('generatingTestCases', JSON.stringify(generatingTestCases));
+}, [generatingTestCases]);
+
+const startPollingForUpdates = () => {
+  // Clear any existing interval
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+  }
+  
+  // Set up a new polling interval
+  const interval = setInterval(async () => {
+    if (!testCaseId) return;
+    
+    try {
+      // First, check the generation status
+      const statusResponse = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
+        headers: getAuthHeaders()
+      });
+      
+      if (!statusResponse.ok) {
+        throw new Error('Failed to fetch test case generation status');
+      }
+      
+      const statusData = await statusResponse.json();
+      
+      // Update current and next step information if available
+      if (statusData.current_step) {
+        setCurrentGeneratingStep(statusData.current_step);
+      }
+      
+      if (statusData.next_step) {
+        setNextGeneratingStep(statusData.next_step);
+      }
+      
+      // Then, get the latest test case data to ensure we have the most up-to-date steps
+      const testCaseResponse = await fetch(`${API_URL}/api/get_test_cases/${testCaseId}`, {
+        headers: getAuthHeaders()
+      });
+      
+      if (!testCaseResponse.ok) {
+        throw new Error('Failed to fetch test case data');
+      }
+      
+      const testCaseData = await testCaseResponse.json();
+      
+      // Update steps with the latest from the server
+      if (testCaseData.test_steps && Array.isArray(testCaseData.test_steps)) {
+        console.log('Received updated steps during polling:', testCaseData.test_steps.length);
+        setSteps(testCaseData.test_steps);
+        
+        // Initialize stepValues for any new type steps
+        setStepValues(prevValues => {
+          const newValues = { ...prevValues };
+          testCaseData.test_steps.forEach(step => {
+            if (step.action === 'type' && step.value && !newValues[step.id]) {
+              newValues[step.id] = step.value;
+            }
+          });
+          return newValues;
+        });
+        
+        // Check for screenshots for new steps
+        checkNewStepsForScreenshots(testCaseData.test_steps);
+      }
+      
+      // Check if generation is complete
+      if (!statusData.is_generating) {
+        setIsGeneratingSteps(false);
+        
+        // Remove this test case from the generating list
+        setGeneratingTestCases(prev => {
+          const updated = { ...prev };
+          delete updated[testCaseId];
+          return updated;
+        });
+        
+        // Reset current and next step information
+        setCurrentGeneratingStep("");
+        setNextGeneratingStep("");
+        
+        // Stop polling
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
+    } catch (error) {
+      console.error('Error checking test case generation status:', error);
+    }
+  }, 2000); // Poll every 2 seconds for more responsive updates
+  
+  setPollingInterval(interval);
+};
+
+// Function to start polling for step execution results during test execution
+const startStepResultsPolling = () => {
+  // Clear any existing interval
+  if (stepResultsPollingInterval) {
+    clearInterval(stepResultsPollingInterval);
+  }
+  
+  // Set up a new polling interval for step results
+  const interval = setInterval(async () => {
+    if (!test_runs || test_runs.length === 0) return;
+    
+    try {
+      // Get the most recent test run
+      const latestRun = test_runs[0];
+      if (latestRun && latestRun.id && (latestRun.result === 'running' || latestRun.result === 'pending')) {
+        await fetchStepExecutionResults(latestRun.id);
+      } else {
+        // Test is complete, stop polling
         clearInterval(stepResultsPollingInterval);
         setStepResultsPollingInterval(null);
       }
-      // Clean up blob URLs
-      if (typeof currentScreenshot === 'string' && currentScreenshot.startsWith('blob:')) {
-        URL.revokeObjectURL(currentScreenshot);
+    } catch (error) {
+      console.error('Error in step results polling:', error);
+    }
+  }, 3000);
+  
+  setStepResultsPollingInterval(interval);
+};
+
+  // Start polling for running tests
+  useEffect(() => {
+    fetchRunningTests();
+    
+    // Start polling every 3 seconds
+    const interval = setInterval(fetchRunningTests, 3000);
+    setRunningTestsPollingInterval(interval);
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
       }
     };
-  }, [testCaseId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchRunningTests]);
+
+  // Cleanup intervals on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+      if (stepResultsPollingInterval) {
+        clearInterval(stepResultsPollingInterval);
+      }
+      if (runningTestsPollingInterval) {
+        clearInterval(runningTestsPollingInterval);
+      }
+    };
+  }, [pollingInterval, stepResultsPollingInterval, runningTestsPollingInterval]);
 
   useEffect(() => {
     localStorage.setItem('generatingTestCases', JSON.stringify(generatingTestCases));
   }, [generatingTestCases]);
-
-  const startPollingForUpdates = () => {
-    // Clear any existing interval
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-    }
-    
-    // Set up a new polling interval
-    const interval = setInterval(async () => {
-      if (!testCaseId) return;
-      
-      try {
-        // First, check the generation status
-        const statusResponse = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
-          headers: getAuthHeaders()
-        });
-        
-        if (!statusResponse.ok) {
-          throw new Error('Failed to fetch test case generation status');
-        }
-        
-        const statusData = await statusResponse.json();
-        
-        // Update current and next step information if available
-        if (statusData.current_step) {
-          setCurrentGeneratingStep(statusData.current_step);
-        }
-        
-        if (statusData.next_step) {
-          setNextGeneratingStep(statusData.next_step);
-        }
-        
-        // Then, get the latest test case data to ensure we have the most up-to-date steps
-        const testCaseResponse = await fetch(`${API_URL}/api/get_test_cases/${testCaseId}`, {
-          headers: getAuthHeaders()
-        });
-        
-        if (!testCaseResponse.ok) {
-          throw new Error('Failed to fetch test case data');
-        }
-        
-        const testCaseData = await testCaseResponse.json();
-        
-        // Update steps with the latest from the server
-        if (testCaseData.test_steps && Array.isArray(testCaseData.test_steps)) {
-          console.log('Received updated steps during polling:', testCaseData.test_steps.length);
-          setSteps(testCaseData.test_steps);
-          
-          // Initialize stepValues for any new type steps
-          setStepValues(prevValues => {
-            const newValues = { ...prevValues };
-            testCaseData.test_steps.forEach(step => {
-              if (step.action === 'type' && step.value && !newValues[step.id]) {
-                newValues[step.id] = step.value;
-              }
-            });
-            return newValues;
-          });
-          
-          // Check for screenshots for new steps
-          checkNewStepsForScreenshots(testCaseData.test_steps);
-        }
-        
-        // Check if generation is complete
-        if (!statusData.is_generating) {
-          setIsGeneratingSteps(false);
-          
-          // Remove this test case from the generating list
-          setGeneratingTestCases(prev => {
-            const updated = { ...prev };
-            delete updated[testCaseId];
-            return updated;
-          });
-          
-          // Reset current and next step information
-          setCurrentGeneratingStep("");
-          setNextGeneratingStep("");
-          
-          // Stop polling
-          clearInterval(pollingInterval);
-          setPollingInterval(null);
-        }
-      } catch (error) {
-        console.error('Error checking test case generation status:', error);
-      }
-    }, 2000); // Poll every 2 seconds for more responsive updates
-    
-    setPollingInterval(interval);
-  };
-
-  // Function to start polling for step execution results during test execution
-  const startStepResultsPolling = () => {
-    // Clear any existing interval
-    if (stepResultsPollingInterval) {
-      clearInterval(stepResultsPollingInterval);
-    }
-    
-    // Set up a new polling interval for step results
-    const interval = setInterval(async () => {
-      if (!test_runs || test_runs.length === 0) return;
-      
-      try {
-        // Get the most recent test run
-        const latestRun = test_runs[0];
-        if (latestRun && latestRun.id && (latestRun.result === 'running' || latestRun.result === 'pending')) {
-          await fetchStepExecutionResults(latestRun.id);
-        } else {
-          // Test is complete, stop polling
-          clearInterval(stepResultsPollingInterval);
-          setStepResultsPollingInterval(null);
-        }
-      } catch (error) {
-        console.error('Error polling step execution results:', error);
-      }
-    }, 3000); // Poll every 3 seconds for step results
-    
-    setStepResultsPollingInterval(interval);
-  };
 
   // Function to stop step results polling
   const stopStepResultsPolling = () => {
@@ -834,6 +940,7 @@ const TestCaseSteps = ({
       alert('Failed to stop test execution. Please try again.');
     }
   };
+
 
   const fetchEnvironments = async () => {
     if (!projectId || projectId === 'all') return;
@@ -1909,6 +2016,12 @@ const TestCaseSteps = ({
           )}
         </div>
         
+        {/* Running Test Indicator */}
+        <RunningTestIndicator 
+          testCaseId={testCaseId}
+          onRunningStateChange={(isRunning) => setIsRunning(isRunning)}
+        />
+        
         <div className={`test-steps-actions ${isRunning ? 'running' : ''}`}>
 
           
@@ -1959,24 +2072,28 @@ const TestCaseSteps = ({
             )}
           </div>
           
+          
           <div className="run-button-container">
-            <button 
-              className={`run-button action-button ${(isRunning || !hasTestSteps || isGeneratingSteps) ? 'disabled' : ''}`}
-              onClick={handleRunClick}
-              disabled={isRunning || !hasTestSteps || isGeneratingSteps}
-              onMouseEnter={() => setShowRunTooltip(true)}
-              onMouseLeave={() => setShowRunTooltip(false)}
-            >
-              {isRunning ? (
-                <>
-                  <div className="spinner"></div> Running...
-                </>
-              ) : (
-                <>
-                  <FontAwesomeIcon icon={faPlay} /> Run Test
-                </>
-              )}
-            </button>
+            {!isRunning ? (
+              <button 
+                className={`run-button action-button ${(!hasTestSteps || isGeneratingSteps) ? 'disabled' : ''}`}
+                onClick={handleRunClick}
+                disabled={!hasTestSteps || isGeneratingSteps}
+                onMouseEnter={() => setShowRunTooltip(true)}
+                onMouseLeave={() => setShowRunTooltip(false)}
+              >
+                <FontAwesomeIcon icon={faPlay} /> Run Test
+              </button>
+            ) : (
+              <button 
+                className="stop-button action-button"
+                onClick={handleStopExecution}
+                title="Stop test execution"
+              >
+                <FontAwesomeIcon icon={faStop} /> Stop Test
+              </button>
+            )}
+            
             {showRunTooltip && !hasTestSteps && (
               <div className="tooltip run-tooltip">
                 <FontAwesomeIcon icon={faInfoCircle} /> No test steps to run
@@ -2049,15 +2166,6 @@ const TestCaseSteps = ({
                 </div>
               </div>
             )}
-          </div>
-          <div className="stop-button-container">
-            <button 
-              className={`stop-button action-button ${(!isRunning) ? 'disabled' : ''}`}
-              onClick={handleStopExecution}
-              disabled={!isRunning}
-            >
-              <FontAwesomeIcon icon={faTimesCircle} /> Stop Test
-            </button>
           </div>
         </div>
       </div>

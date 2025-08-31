@@ -6,6 +6,17 @@
   font-family: var(--font-family);
 }
 
+/* Add padding to body when status bar is active */
+body.status-bar-active {
+  padding-bottom: 70px;
+}
+
+@media (max-width: 768px) {
+  body.status-bar-active {
+    padding-bottom: 80px;
+  }
+}
+
 .top-nav {
   display: flex;
   align-items: center;
