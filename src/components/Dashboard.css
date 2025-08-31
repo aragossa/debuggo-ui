@@ -254,15 +254,32 @@
   padding: 20px;
 }
 
-.environments-tab-container {
-  flex: 1;
-  padding: 1.5rem;
+.test-executions-tab-container {
+  flex: 1 !important;
+  padding: 0 !important;
   overflow-y: auto;
   animation: fadeIn 0.3s ease-in-out;
+  background-color: transparent !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: calc(100vh - 180px) !important;
+}
+
+.environments-tab-container {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+  animation: fadeIn 0.3s ease-in-out;
+  background-color: transparent;
+  margin: 0;
+}
+
+.environments-tab-container {
   background-color: white;
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-sm);
   margin: 1rem;
+  padding: 1.5rem;
 }
 
 .loading-message, 

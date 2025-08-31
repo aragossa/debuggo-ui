@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import TestCaseTree from './TestCaseTree';
 import TestCaseSteps from './TestCaseSteps';
-import TestExecutions from './TestExecutions';
+import TestExecutionsTree from './TestExecutionsTree';
 import UploadPopup from './UploadPopup';
 import TestResultPopup from './TestResultPopup';
 import Environments from './Environments';
@@ -376,7 +376,7 @@ const Dashboard = () => {
           </div>
         ) : activeTab === 'testExecutions' ? (
           <div className="test-executions-tab-container">
-            <TestExecutions selectedProjectId={selectedProject} />
+            <TestExecutionsTree selectedProjectId={selectedProject} />
           </div>
         ) : (
           <div className="environments-tab-container">
