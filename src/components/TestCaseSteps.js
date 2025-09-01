@@ -2016,11 +2016,7 @@ const startStepResultsPolling = () => {
           )}
         </div>
         
-        {/* Running Test Indicator */}
-        <RunningTestIndicator 
-          testCaseId={testCaseId}
-          onRunningStateChange={(isRunning) => setIsRunning(isRunning)}
-        />
+
         
         <div className={`test-steps-actions ${isRunning ? 'running' : ''}`}>
 
@@ -2168,6 +2164,11 @@ const startStepResultsPolling = () => {
             )}
           </div>
         </div>
+                {/* Running Test Indicator */}
+                <RunningTestIndicator 
+          testCaseId={testCaseId}
+          onRunningStateChange={(isRunning) => setIsRunning(isRunning)}
+        />
       </div>
 
       {/* Tab Navigation */}
