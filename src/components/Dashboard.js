@@ -5,8 +5,9 @@ import TestExecutionsTree from './TestExecutionsTree';
 import UploadPopup from './UploadPopup';
 import TestResultPopup from './TestResultPopup';
 import Environments from './Environments';
+import Checklists from './Checklists';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faFlask, faCog, faFileImport, faChevronDown, faChevronUp, faFolderOpen, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faFlask, faCog, faFileImport, faChevronDown, faChevronUp, faFolderOpen, faPlay, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -321,6 +322,12 @@ const Dashboard = () => {
           >
             <FontAwesomeIcon icon={faCog} /> Environments
           </button>
+          <button 
+            className={`tab-button ${activeTab === 'checklists' ? 'active' : ''}`}
+            onClick={() => setActiveTab('checklists')}
+          >
+            <FontAwesomeIcon icon={faCheckSquare} /> Checklists
+          </button>
         </div>
         
         {activeTab === 'testCases' ? (
@@ -378,9 +385,13 @@ const Dashboard = () => {
           <div className="test-executions-tab-container">
             <TestExecutionsTree selectedProjectId={selectedProject} />
           </div>
-        ) : (
+        ) : activeTab === 'environments' ? (
           <div className="environments-tab-container">
             <Environments projectId={selectedProject} />
+          </div>
+        ) : (
+          <div className="checklists-tab-container">
+            <Checklists />
           </div>
         )}
       </div>
