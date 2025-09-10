@@ -74,7 +74,7 @@ const Login = () => {
 
   return (
     <div className="login-form">
-      <h2>Welcome Back</h2>
+      <h2>Welcome To Debuggo.app</h2>
       {error && <div className="error-message">{error}</div>}
       <GoogleLoginButton />
     </div>
