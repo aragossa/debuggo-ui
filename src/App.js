@@ -101,6 +101,18 @@ const TokenHandler = () => {
   return null; // This component doesn't render anything
 };
 
+const ConditionalStatusBar = () => {
+  const { isAuthenticated } = useAuth();
+  const location = useLocation();
+  
+  // Only render StatusBar if user is authenticated and not on landing page or login page
+  if (isAuthenticated && location.pathname !== '/' && location.pathname !== '/login') {
+    return <StatusBar />;
+  }
+  
+  return null;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -193,7 +205,7 @@ function App() {
               }
             />
           </Routes>
-          <StatusBar />
+          <ConditionalStatusBar />
         </div>
       </Router>
     </AuthProvider>

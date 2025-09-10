@@ -17,7 +17,7 @@ const LandingPage = () => {
       <nav className="nav-container">
         <div className="nav-content">
           <div className="logo-container">
-              <Logo width="100%" height="100%" />
+            <Logo width="100%" height="100%" />
           </div>
           <div className="nav-links">
             <a href="#about" className="nav-link">About</a>
@@ -34,7 +34,7 @@ const LandingPage = () => {
       {showLogin && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <button 
+            <button
               onClick={() => setShowLogin(false)}
               className="modal-close"
             >
@@ -45,29 +45,60 @@ const LandingPage = () => {
         </div>
       )}
 
-      {/* Hero Section */}
-      <section className="hero-section">
+      {/* Join Beta Section */}
+      <section id="join-beta" className="about-section">
         <div className="container">
-          <h1 className="hero-title">
-            <span className="hero-highlight">Database-Driven</span> Test Automation
-          </h1>
-          <p className="hero-subtitle">
-            AI-powered no-code platform that generates and executes test cases from screenshots, API schema files, tech docs, or URLs
-          </p>
-          <p className="hero-description">
-            Debuggo is a database-driven QA automation platform that makes test creation and maintenance simple. All test cases, steps, and locators are stored in a centralized database, making them easily maintainable and reusable across your entire organization. Our no-code automation approach allows anyone to create and run tests without writing a single line of code. Say goodbye to hardcoded tests and hello to a more efficient testing process.
-          </p>
-          <div className="hero-actions">
-            <button 
-              onClick={() => setShowLogin(true)}
-              className="cta-button"
-            >
-              Get Started
-              <ArrowRight size={20} />
-            </button>
-            <a href="#how-it-works" className="secondary-button">
-              Learn More
-            </a>
+          <div className="about-content">
+            <div className="about-text">
+              <div className="section-header">
+                <h2 className="section-title"><span className="hero-highlight">Revolutionize</span> Your QA with AI-Powered Test Automation</h2>
+                <h1 className="section-subtitle">Join the Debuggo Beta: Get Free Early Access Today!</h1>
+                <h1 className="section-description">AI-Powered No-Code Platform for Seamless Test Automation</h1>
+                <p className="section-description">Debuggo is a database-driven QA automation tool that generates and executes tests from screenshots, API schemas, tech docs, or URLs. Say goodbye to fragmented workflows and hardcoded scripts—empower your team to create maintainable, reusable tests without coding.</p>
+              </div>
+              <div className="section-header">
+                <h2 className="section-subtitle">Join Beta for Free</h2>
+              </div>
+              <div className="hero-actions">
+                <button onClick={() => setShowLogin(true)} className="cta-button">Get Started<ArrowRight size={20} /></button>
+                <a href="#how-it-works" className="secondary-button">Learn More</a>
+              </div>
+              <div className="product-features">
+                <h3>Why Join Beta Now?</h3>
+                <div className="feature-highlights">
+                  <div className="highlight-item">
+                    <Check className="highlight-icon" />
+                    <div>
+                      <h4>Free Access:</h4>
+                      <p>Test Debuggo in your real-world environment at no cost.</p>
+                    </div>
+                  </div>
+                  <div className="highlight-item">
+                    <Check className="highlight-icon" />
+                    <div>
+                      <h4>Shape the Product:</h4>
+                      <p>Provide feedback to influence features and get priority support.</p>
+                    </div>
+                  </div>
+                  <div className="highlight-item">
+                    <Check className="highlight-icon" />
+                    <div>
+                      <h4>Future Perks:</h4>
+                      <p>Beta participants get exclusive discounts on launch subscriptions.</p>
+                    </div>
+                  </div>
+                  <div className="highlight-item">
+                    <Check className="highlight-icon" />
+                    <div>
+                      <h4>Limited Spots:</h4>
+                      <p>Be among the first to experience up to 80% time savings in test creation.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
+            </div>
           </div>
           <div className="hero-stats">
             <div className="stat-item">
@@ -86,104 +117,40 @@ const LandingPage = () => {
       <section id="about" className="about-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">About <span className="hero-highlight">Debuggo</span></h2>
-            <p className="section-subtitle">Revolutionizing Test Automation with AI-Powered Intelligence</p>
+            <h2 className="section-title"><span className="hero-highlight">About Debuggo</span>: Solving Real QA Challenges</h2>
+            <p className="section-description">In today's fast-paced dev cycles, QA teams struggle with fragmented tools, time-consuming test creation, and maintenance nightmares. <span className="hero-highlight">Debuggo</span> integrates UI and API testing into one AI-driven platform, cutting inefficiencies and boosting coverage.</p>
           </div>
           <div className="about-content">
             <div className="about-text">
-              <h3><span className="hero-highlight">What We Do</span></h3>
-              <p>
-                Debuggo solves the critical challenges facing QA teams, developers, and enterprises in today's fast-paced development environment. 
-                We generate complete test automation flows that seamlessly combine UI and API testing, eliminating the fragmentation 
-                that plagues traditional testing approaches.
-              </p>
-              <h3><span className="hero-highlight">The Problems We Solve</span></h3>
-              <div className="problem-solutions">
-                <div className="solution-item">
-                  <Target className="solution-icon" />
-                  <div>
-                    <h4 >Fragmented Testing Workflows</h4>
-                    <p>Traditional tools force teams to manage UI and API tests separately, creating gaps in coverage and inefficient processes.</p>
-                  </div>
-                </div>
-                <div className="solution-item">
-                  <Bug className="solution-icon" />
-                  <div>
-                    <h4>AI Bug Detection</h4>
-                    <p>Our AI actively searches for bugs on pages during test execution, catching issues that manual testing often misses.</p>
-                  </div>
-                </div>
-                <div className="solution-item">
-                  <Bot className="solution-icon" />
-                  <div>
-                    <h4>Time-Intensive Test Creation</h4>
-                    <p>AI-powered test generation from screenshots, API schemas, and documentation reduces test creation time by 80%.</p>
-                  </div>
-                </div>
-              </div>
-              <h3><span className="hero-highlight">Our Target Audience</span></h3>
-              <p>
-                We serve QA teams looking to modernize their testing approach, developers seeking integrated testing solutions, 
-                and enterprises requiring scalable, maintainable test automation across their entire technology stack.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Team Section */}
-      <section id="team" className="team-section">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">Meet Our <span className="hero-highlight">Team</span></h2>
-          </div>
-          <div className="team-grid">
-            <div className="team-member">
-              <div className="member-photo">
-                <img src="/images/photo.jpg" alt="Ilya Ploskovitov" className="member-image" />
-              </div>
-              <div className="member-info">
-                <h3><span className="h3-title-primary">Ilya Ploskovitov</span></h3>
-                <p className="member-role">Founder & CEO</p>
-                <p className="member-bio">
-                Leading QA efforts at startup LUCY Awareness, driving quality assurance strategies. Experienced QA Engineer skilled in automation for high-loaded systems. Specializes in building test automation frameworks and QA processes using DevOps practices and AI-powered testing solutions to ensure robust, scalable systems.
-                </p>
-                <div className="member-links">
-                  <a 
-                    href="https://www.linkedin.com/in/aragossa/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="linkedin-link"
-                  >
-                    <Linkedin size={20} />
-                    LinkedIn Profile
-                  </a>
+              <div className="product-features">
+                <h3>Key Problems We Solve</h3>
+                <div className="feature-highlights">
+                  <div className="highlight-item">
+                    <Check className="highlight-icon" />
+                    <div>
+                      <h4>Fragmented Workflows:</h4>
+                      <p>No more separate UI/API tools—unified testing for complete coverage.</p>
+                    </div>
+                  </div>
+                  <div className="highlight-item">
+                    <Check className="highlight-icon" />
+                    <div>
+                      <h4>AI Bug Detection:</h4>
+                      <p>AI proactively finds issues during execution that manual tests miss.</p>
+                    </div>
+                  </div>
+                  <div className="highlight-item">
+                    <Check className="highlight-icon" />
+                    <div>
+                      <h4>Slow Test Creation:</h4>
+                      <p>Generate tests 80% faster from everyday inputs like screenshots.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="team-member">
-              <div className="member-photo">
-                <img src="/images/1656436650919.jpeg" alt="Sasha Zelenin" className="member-image" />
-              </div>
-              <div className="member-info">
-                <h3><span className="h3-title-primary">Sasha Zelenin</span></h3>
-                <p className="member-role">Mentor</p>
-                <p className="member-bio">
-                Entrepreneur since 2001, psychologist, and inventor. Founded seven profitable companies, sold five. Mentors startup founders, sharing insights to navigate challenges and scale ventures. Key lessons: passion drives sales, open communication unites teams, leadership starts with self-management, and transparency builds trust through constructive feedback.
-                </p>
-                <div className="member-links">
-                  <a 
-                    href="https://www.linkedin.com/in/aleksandr-zelenin/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="linkedin-link"
-                  >
-                    <Linkedin size={20} />
-                    LinkedIn Profile
-                  </a>
-                </div>
-              </div>
+
+              <h3><span className="hero-highlight">Our target:</span> QA teams, developers, and enterprises ready for scalable, no-code automation.</h3>
             </div>
           </div>
         </div>
@@ -193,36 +160,25 @@ const LandingPage = () => {
       <section id="product" className="product-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Our <span className="hero-highlight">Product</span></h2>
-            <p className="section-subtitle">Comprehensive test automation platform ready for real-world deployment</p>
+            <h2 className="section-title">Our Product:<span className="hero-highlight"> Ready for Your Input</span></h2>
+            <p className="section-subtitle"><span className="hero-highlight">Debuggo</span> is in advanced beta stage—core features built, now validating with real users like you.</p>
           </div>
           <div className="product-content">
-            <div className="product-overview">
-              <h3>Current Development Stage</h3>
-              <div className="stage-indicator">
-                <p>
-                  Debuggo is currently in an advanced development stage, actively seeking test groups to validate 
-                  our platform with real test cases in production environments. We've completed core development 
-                  and are preparing for full market launch.
-                </p>
-              </div>
-            </div>
-            
             <div className="product-features">
-              <h3>What Users Can Expect</h3>
+              <h3>What You'll Get in Beta:</h3>
               <div className="feature-highlights">
                 <div className="highlight-item">
                   <Check className="highlight-icon" />
                   <div>
-                    <h4>AI-Powered Test Generation</h4>
-                    <p>Upload screenshots, API schemas, or documentation and watch AI create comprehensive test suites</p>
+                    <h4>AI Test Generation:</h4>
+                    <p>Upload assets to auto-create suites</p>
                   </div>
                 </div>
                 <div className="highlight-item">
                   <Check className="highlight-icon" />
                   <div>
-                    <h4>Unified UI & API Testing</h4>
-                    <p>Single platform for complete test automation workflows covering both frontend and backend</p>
+                    <h4>Unified UI/API Testing:</h4>
+                    <p>End-to-end flows with enhanced stability (up to 40% faster automation).</p>
                   </div>
                 </div>
                 <div className="highlight-item">
@@ -235,26 +191,43 @@ const LandingPage = () => {
                 <div className="highlight-item">
                   <Check className="highlight-icon" />
                   <div>
-                    <h4>Database-Driven Architecture</h4>
-                    <p>All test cases, steps, and locators stored centrally for maximum reusability and maintenance</p>
+                    <h4>Intelligent Bug Detection:</h4>
+                    <p>Real-time anomaly spotting.</p>
+                  </div>
+                </div>
+                <div className="highlight-item">
+                  <Check className="highlight-icon" />
+                  <div>
+                    <h4>Database-Driven Design:</h4>
+                    <p>Centralized, reusable tests for easy maintenance.</p>
+                  </div>
+                </div>
+                <div className="highlight-item">
+                  <Check className="highlight-icon" />
+                  <div>
+                    <h4>Automation Boost:</h4>
+                    <p>Accelerate processes up to 20x with smart workflows.</p>
+                  </div>
+                </div>
+                <div className="highlight-item">
+                  <Check className="highlight-icon" />
+                  <div>
+                    <h4>Self-Healing Tests:</h4>
+                    <p>Adapt to changes automatically, improving productivity significantly (up to 10x).</p>
+                  </div>
+                </div>
+                <div className="highlight-item">
+                  <Check className="highlight-icon" />
+                  <div>
+                    <h4>Natural Language Tests:</h4>
+                    <p>80% of end-to-end tests via plain English—no code needed.</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="product-cta">
-              <h3>Ready to Join Our Testing Program?</h3>
-              <p>
-                We're actively seeking forward-thinking teams to participate in our pre-launch testing program. 
-                Get early access to Debuggo and help shape the future of test automation.
-              </p>
-              <button 
-                onClick={() => setShowLogin(true)}
-                className="cta-button"
-              >
-                Join Testing Program
-                <ArrowRight size={20} />
-              </button>
+            <div className="hero-actions">
+              <button onClick={() => setShowLogin(true)} className="cta-button">Join beta<ArrowRight size={20} /></button>
             </div>
           </div>
         </div>
@@ -263,88 +236,86 @@ const LandingPage = () => {
       {/* Features Section */}
       <section id="features" className="features-section">
         <div className="section-header">
-          <h2 className="section-title">Powerful Features</h2>
-          <p className="section-subtitle">Everything you need to automate your QA process</p>
-          <p className="section-description">
-            Debuggo combines AI-powered analysis with a database-driven architecture to deliver a complete testing solution. All test cases, steps, and locators are stored in a centralized database, making them reusable and maintainable across your entire organization. Our platform integrates seamlessly with your existing tools and workflows, providing immediate value without disruption.
-          </p>
+          <h2 className="section-title">Powerful Features Tailored for You</h2>
         </div>
-        <div className="features-grid">
-          <div className="feature-card">
-            <Check className="feature-icon pink" />
-            <h3 className="feature-title">AI Test Generation</h3>
-            <p className="feature-description">
-              Automated creation of test cases for websites at any stage of development. Our AI analyzes your application's UI, identifies key elements, and generates optimal test steps that are stored in the database for reuse.
-            </p>
-          </div>
-          <div className="feature-card">
-            <Database className="feature-icon blue" />
-            <h3 className="feature-title">Bug Tracking</h3>
-            <p className="feature-description">
-              Seamless integration with JIRA, GitHub Issues, and other tracking systems. When tests fail, detailed reports with screenshots and error logs are automatically created and linked to your existing bug tracking workflow.
-            </p>
-          </div>
-          <div className="feature-card">
-            <Clock className="feature-icon purple" />
-            <h3 className="feature-title">Time Saving</h3>
-            <p className="feature-description">
-              Reduce QA time by up to 80% with automated test generation and execution. Our asynchronous task processing system allows multiple tests to run concurrently without blocking your UI, maximizing efficiency and productivity.
-            </p>
-          </div>
-          <div className="feature-card">
-            <Code className="feature-icon green" />
-            <h3 className="feature-title">No-Code Solution</h3>
-            <p className="feature-description">
-              Generate and run tests without writing a single line of code. Our database-driven approach stores all test components centrally, allowing non-technical team members to create, modify, and execute tests through an intuitive interface.
-            </p>
-          </div>
-          <div className="feature-card">
-            <Zap className="feature-icon orange" />
-            <h3 className="feature-title">Parallel Execution</h3>
-            <p className="feature-description">
-              With 16 concurrent browser slots available, you can execute entire test suites in a fraction of the time, with real-time progress tracking and detailed reporting.
-            </p>
-          </div>
-          <div className="feature-card">
-            <Shield className="feature-icon teal" />
-            <h3 className="feature-title">Secure Testing</h3>
-            <p className="feature-description">
-              Test both public and private applications with complete security. Environment variables for credentials are stored securely and substituted at runtime, ensuring sensitive information never appears in test scripts or logs.
-            </p>
-          </div>
-        </div>
-      </section>
 
 
-      {/* Database-Driven Approach Section */}
-      <section className="database-driven-section">
-        <div className="section-header">
-          <h2 className="section-title">Database-Driven Architecture</h2>
-          <p className="section-subtitle">The foundation of maintainable test automation</p>
-          <p className="section-description">
-            Unlike traditional test automation frameworks that rely on hardcoded tests, Debuggo stores all test components in a centralized database. This approach eliminates script maintenance headaches and enables true test reusability across your organization.
-          </p>
+        <div className="product-content">
+          <div className="product-features">
+            <h3><span className="hero-highlight">Debuggo</span> combines AI with a robust architecture for efficient QA.</h3>
+            <div className="feature-highlights">
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <h4>AI Test Generation:</h4>
+                  <p>Optimal steps from UI elements, stored for reuse.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <h4>Bug Tracking Integration:</h4>
+                  <p>Auto-reports to JIRA, GitHub, with logs and screenshots.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <h4>Time Savings:</h4>
+                  <p>Asynchronous runs cut QA time by up to 80%.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <h4>No-Code Interface:</h4>
+                  <p>Intuitive for non-tech users.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <h4>Parallel Execution:</h4>
+                  <p>16 slots for fast testing.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <h4>Secure Handling:</h4>
+                  <p>Runtime credential substitution for safety.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="database-benefits-container">
-          <div className="database-benefit-card">
-            <Database className="benefit-icon" />
-            <h3>Centralized Storage</h3>
-            <p>All test cases, steps, locators, and actions are stored in a structured database, not in code files, making them easy to manage and update.</p>
-          </div>
-          <div className="database-benefit-card">
-            <RefreshCw className="benefit-icon" />
-            <h3>Reusable Components</h3>
-            <p>Test steps and locators can be reused across multiple test cases, eliminating duplication and reducing maintenance effort.</p>
-          </div>
-          <div className="database-benefit-card">
-            <Users className="benefit-icon" />
-            <h3>Team Collaboration</h3>
-            <p>Multiple team members can work on different test cases simultaneously without code conflicts, with changes immediately available to everyone.</p>
-          </div>
-          <div className="database-benefit-card">
-            <Sliders className="benefit-icon" />
-            <h3>Environment Variables</h3>
-            <p>Credentials and environment-specific values are stored securely and substituted at runtime, keeping sensitive information out of test scripts.</p>
+
+
+
+
+        <div className="product-content">
+          <div className="product-features">
+            <h3>Database Benefits:</h3>
+            <div className="feature-highlights">
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <p>Centralized storage for no-duplication updates.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <p>Reusable components across teams.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <p>Collaborative editing without conflicts.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -379,107 +350,178 @@ const LandingPage = () => {
               <p>Easily manage different testing environments with secure credential storage. Environment variables are substituted at runtime, ensuring sensitive information never appears in test scripts.</p>
             </div>
           </div>
+
+
+          <div className="screenshot-item">
+            <div className="screenshot-image test-case-image">
+              {/* Test Execution Screenshot */}
+              <img src="/images/test-case-execution.png" alt="Test Case Execution" />
+            </div>
+            <div className="screenshot-description">
+              <h3>Test Case Execution</h3>
+              <p>The test case execution results, complete with screenshots for each step, are available below.</p>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Use Cases Section */}
       <section className="use-cases-section">
         <div className="section-header">
-          <h2 className="section-title">Use Cases</h2>
-          <p className="section-subtitle">Perfect for teams of all sizes</p>
-          <p className="section-description">
-            Debuggo adapts to your team's specific needs. Whether you're a QA specialist looking to automate repetitive tasks, a developer wanting to ensure code quality, or a product manager seeking confidence in new releases, our platform provides the tools you need with a database-driven architecture that scales with your organization.
-          </p>
+          <h2 className="section-title">Example Use Cases:</h2>
         </div>
-        <div className="use-cases-grid">
-          <div className="use-case-card">
-            <BarChart className="use-case-icon" />
-            <h3 className="use-case-title">QA Teams</h3>
-            <p className="use-case-description">
-              Automate repetitive testing tasks with our database-driven approach. Generate test cases from screenshots and API schema files without writing code, allowing you to focus on more complex scenarios.
-            </p>
-          </div>
-          <div className="use-case-card">
-            <Layers className="use-case-icon" />
-            <h3 className="use-case-title">Developers</h3>
-            <p className="use-case-description">
-              Quickly test new features without writing extensive test scripts. Our AI automatically identifies UI elements and generates optimal test steps that are stored in the database for reuse across your team.
-            </p>
-          </div>
-          <div className="use-case-card">
-            <GitBranch className="use-case-icon" />
-            <h3 className="use-case-title">DevOps</h3>
-            <p className="use-case-description">
-              Integrate automated testing into your CI/CD pipeline with our API-first approach. Run tests in parallel using our Selenium Grid integration for faster feedback and more reliable deployments.
-            </p>
-          </div>
-          <div className="use-case-card">
-            <Users className="use-case-icon" />
-            <h3 className="use-case-title">Product Managers</h3>
-            <p className="use-case-description">
-              Ensure product quality before each release without technical knowledge. Our no-code approach lets you create and run tests from screenshots or URLs, with all test steps stored in the database for easy maintenance.
-            </p>
+
+
+
+
+
+        <div className="product-content">
+          <div className="product-features">
+            <div className="feature-highlights">
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <h4>QA Teams:</h4>
+                  <p>Automate routines, focus on strategy.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <h4>Developers:</h4>
+                  <p>Quick feature tests without scripts.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <h4>DevOps:</h4>
+                  <p>CI/CD integration for reliable deploys.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <h4>Product Managers:</h4>
+                  <p>Code-free quality checks.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* No-Code Automation Section */}
-      <section className="no-code-section">
-        <div className="section-header">
-          <h2 className="section-title">No-Code Automation</h2>
-          <p className="section-subtitle">Test automation for everyone</p>
-          <p className="section-description">
-            Debuggo eliminates the need for coding skills in test automation. Our AI-powered platform handles the technical complexity, allowing anyone on your team to create, manage, and execute tests without writing a single line of code.
-          </p>
-        </div>
-        <div className="no-code-features-container">
-          <div className="no-code-feature">
-            <div className="no-code-feature-icon-container">
-              <Cpu className="no-code-feature-icon" />
-            </div>
-            <div className="no-code-feature-content">
-              <h3>AI-Generated Test Steps</h3>
-              <p>Upload screenshots or provide URLs, and our AI will automatically identify UI elements and generate optimal test steps with proper locators and actions.</p>
-            </div>
+
+      {/* Team Section */}
+      <section id="team" className="team-section">
+        <div className="container">
+          <div className="section-header">
+            <h2 className="section-title">Meet the <span className="hero-highlight">Team Driving Innovation</span></h2>
           </div>
-          <div className="no-code-feature">
-            <div className="no-code-feature-icon-container">
-              <Code className="no-code-feature-icon" />
+          <div className="team-grid">
+            <div className="team-member">
+              <div className="member-photo">
+                <img src="/images/photo.jpg" alt="Ilya Ploskovitov" className="member-image" />
+              </div>
+              <div className="member-info">
+                <h3><span className="h3-title-primary">Ilya Ploskovitov</span></h3>
+                <p className="member-role">Founder & CEO</p>
+                <p className="member-bio">
+                  QA leader at LUCY Awareness, expert in high-load automation, DevOps, and AI testing.
+                </p>
+                <div className="member-links">
+                  <a
+                    href="https://www.linkedin.com/in/aragossa/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="linkedin-link"
+                  >
+                    <Linkedin size={20} />
+                    LinkedIn Profile
+                  </a>
+                </div>
+              </div>
             </div>
-            <div className="no-code-feature-content">
-              <h3>API Schema Testing</h3>
-              <p>Generate comprehensive API tests from schema files without writing code. Our system automatically creates test cases for different endpoints and response validations.</p>
-            </div>
-          </div>
-          <div className="no-code-feature">
-            <div className="no-code-feature-icon-container">
-              <Sliders className="no-code-feature-icon" />
-            </div>
-            <div className="no-code-feature-content">
-              <h3>Visual Test Management</h3>
-              <p>Manage all your test cases through an intuitive visual interface. Organize tests by project, view execution results, and troubleshoot failures—all without touching code.</p>
-            </div>
-          </div>
-          <div className="no-code-feature">
-            <div className="no-code-feature-icon-container">
-              <Shield className="no-code-feature-icon" />
-            </div>
-            <div className="no-code-feature-content">
-              <h3>Self-Healing Tests</h3>
-              <p>Tests automatically adapt to UI changes without manual intervention. When elements change, our AI identifies alternative locators and updates the database, ensuring tests remain stable even as your application evolves.</p>
+
+            <div className="team-member">
+              <div className="member-photo">
+                <img src="/images/1656436650919.jpeg" alt="Sasha Zelenin" className="member-image" />
+              </div>
+              <div className="member-info">
+                <h3><span className="h3-title-primary">Sasha Zelenin</span></h3>
+                <p className="member-role">Mentor</p>
+                <p className="member-bio">
+                  Serial entrepreneur with 7 companies founded (5 sold), focusing on scaling and team building.
+                </p>
+                <div className="member-links">
+                  <a
+                    href="https://www.linkedin.com/in/aleksandr-zelenin/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="linkedin-link"
+                  >
+                    <Linkedin size={20} />
+                    LinkedIn Profile
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
+
+
+
+
+
+      {/* Features Section */}
+      <section id="features" className="features-section">
+        <div className="section-header">
+          <h2 className="section-title">Join Our Free Beta Program</h2>
+        </div>
+        <div className="product-content">
+          <div className="product-features">
+            <h3>Ready to streamline your QA? Sign up for beta testing:</h3>
+            <div className="feature-highlights">
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <p>Provide real test cases.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <p>Get guided onboarding and direct feedback channels.</p>
+                </div>
+              </div>
+              <div className="highlight-item">
+                <Check className="highlight-icon" />
+                <div>
+                  <p>Influence roadmap and earn launch perks.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="hero-actions">
+          <button onClick={() => setShowLogin(true)} className="cta-button">Apply Now<ArrowRight size={20} /></button>
+        </div>
+      </section>
+
+
+
+
+
+
+
+
 
       {/* Contact Section */}
       <section id="contact" className="contact-section">
         <div className="section-header">
           <h2 className="section-title">Get In Touch</h2>
-          <p className="section-subtitle">We'd love to hear from you</p>
-          <p className="section-description">
-            Have questions about how Debuggo can help your team? Want to see a personalized demo of our database-driven test automation platform? Our team is ready to assist you in setting up a solution tailored to your organization's specific testing needs. Whether you're looking to integrate with your existing tools or start fresh with a complete testing solution, we're here to help.
-          </p>
+          <p className="section-subtitle">Questions? Schedule a demo or chat with us.</p>
         </div>
         <div className="contact-container">
           <div className="contact-form-container">
@@ -489,7 +531,7 @@ const LandingPage = () => {
                 <p>{formStatus.message}</p>
                 {formStatus.error && (
                   <div className="form-actions">
-                    <button 
+                    <button
                       onClick={() => setFormStatus({ submitted: false, error: false, message: '' })}
                       className="retry-button"
                     >
@@ -499,11 +541,11 @@ const LandingPage = () => {
                 )}
               </div>
             ) : (
-              <form 
-                className="contact-form" 
+              <form
+                className="contact-form"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  
+
                   // Validate form
                   if (!formData.name || !formData.message) {
                     setFormStatus({
@@ -513,7 +555,7 @@ const LandingPage = () => {
                     });
                     return;
                   }
-                  
+
                   // Submit form data
                   axios.post(`${API_URL}/api/contact`, formData)
                     .then(response => {
@@ -536,25 +578,25 @@ const LandingPage = () => {
               >
                 <div className="form-group">
                   <label htmlFor="name">Name</label>
-                  <input 
-                    type="text" 
-                    id="name" 
-                    name="name" 
-                    placeholder="Your name" 
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder="Your name"
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
                 </div>
                 <div className="form-group">
                   <label htmlFor="message">Message</label>
-                  <textarea 
-                    id="message" 
-                    name="message" 
-                    placeholder="Your message" 
+                  <textarea
+                    id="message"
+                    name="message"
+                    placeholder="Your message"
                     rows="4"
                     value={formData.message}
-                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     required
                   ></textarea>
                 </div>
@@ -569,10 +611,10 @@ const LandingPage = () => {
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-logo">
-              <Logo width="100%" height="100%" />
+            <Logo width="100%" height="100%" />
           </div>
           <div className="footer-links">
-          <div className="footer-column">
+            <div className="footer-column">
               <h4>Founder</h4>
               <span>Ilya Ploskovitov</span>
               <a href="mailto:ilya.ploskovitov@auroqa.com">ilya.ploskovitov@auroqa.com</a>
