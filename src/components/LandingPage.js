@@ -52,12 +52,12 @@ const LandingPage = () => {
             <div className="about-text">
               <div className="section-header">
                 <h2 className="section-title"><span className="hero-highlight">Revolutionize</span> Your QA with AI-Powered Test Automation</h2>
-                <h1 className="section-subtitle">Join the Debuggo Beta: Get Free Early Access Today!</h1>
+                <h1 className="section-subtitle">Join the <span className="hero-highlight">Debuggo</span> Beta: Get Free Early Access Today!</h1>
                 <h1 className="section-description">AI-Powered No-Code Platform for Seamless Test Automation</h1>
-                <p className="section-description">Debuggo is a database-driven QA automation tool that generates and executes tests from screenshots, API schemas, tech docs, or URLs. Say goodbye to fragmented workflows and hardcoded scripts—empower your team to create maintainable, reusable tests without coding.</p>
+                <p className="section-description"><span className="hero-highlight">Debuggo</span> is a database-driven QA automation tool that generates and executes tests from screenshots, API schemas, tech docs, or URLs. Say goodbye to fragmented workflows and hardcoded scripts—empower your team to create maintainable, reusable tests without coding.</p>
               </div>
               <div className="section-header">
-                <h2 className="section-subtitle">Join Beta for Free</h2>
+                <h2 className="section-subtitle"><span className="hero-highlight">Join Beta for Free</span></h2>
               </div>
               <div className="hero-actions">
                 <button onClick={() => setShowLogin(true)} className="cta-button">Get Started<ArrowRight size={20} /></button>
@@ -70,7 +70,7 @@ const LandingPage = () => {
                     <Check className="highlight-icon" />
                     <div>
                       <h4>Free Access:</h4>
-                      <p>Test Debuggo in your real-world environment at no cost.</p>
+                      <p>Test <span className="hero-highlight">Debuggo</span> in your real-world environment at no cost.</p>
                     </div>
                   </div>
                   <div className="highlight-item">
@@ -96,8 +96,6 @@ const LandingPage = () => {
                   </div>
                 </div>
               </div>
-
-
             </div>
           </div>
           <div className="hero-stats">
@@ -117,7 +115,7 @@ const LandingPage = () => {
       <section id="about" className="about-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title"><span className="hero-highlight">About Debuggo</span>: Solving Real QA Challenges</h2>
+            <h2 className="section-title">About <span className="hero-highlight">Debuggo</span>: Solving Real QA Challenges</h2>
             <p className="section-description">In today's fast-paced dev cycles, QA teams struggle with fragmented tools, time-consuming test creation, and maintenance nightmares. <span className="hero-highlight">Debuggo</span> integrates UI and API testing into one AI-driven platform, cutting inefficiencies and boosting coverage.</p>
           </div>
           <div className="about-content">
@@ -225,7 +223,6 @@ const LandingPage = () => {
                 </div>
               </div>
             </div>
-
             <div className="hero-actions">
               <button onClick={() => setShowLogin(true)} className="cta-button">Join beta<ArrowRight size={20} /></button>
             </div>
@@ -236,10 +233,8 @@ const LandingPage = () => {
       {/* Features Section */}
       <section id="features" className="features-section">
         <div className="section-header">
-          <h2 className="section-title">Powerful Features Tailored for You</h2>
+          <h2 className="section-title"><span className="hero-highlight">Powerful Features</span> Tailored for You</h2>
         </div>
-
-
         <div className="product-content">
           <div className="product-features">
             <h3><span className="hero-highlight">Debuggo</span> combines AI with a robust architecture for efficient QA.</h3>
@@ -289,10 +284,6 @@ const LandingPage = () => {
             </div>
           </div>
         </div>
-
-
-
-
         <div className="product-content">
           <div className="product-features">
             <h3>Database Benefits:</h3>
@@ -323,8 +314,8 @@ const LandingPage = () => {
       {/* Screenshots Showcase Section */}
       <section className="screenshots-section">
         <div className="section-header">
-          <h2 className="section-title">See It In Action</h2>
-          <p className="section-subtitle">Real examples of Debuggo in use</p>
+          <h2 className="section-title">See It <span className="hero-highlight">In Action</span></h2>
+          <p className="section-subtitle">Real examples of <span className="hero-highlight">Debuggo</span> in use</p>
           <p className="section-description">
             Our database-driven platform makes test management simple and efficient. Generate test cases from screenshots, API schema files, or directly from your application's UI. All test steps and locators are stored in the database, making them reusable across your entire organization.
           </p>
@@ -368,13 +359,8 @@ const LandingPage = () => {
       {/* Use Cases Section */}
       <section className="use-cases-section">
         <div className="section-header">
-          <h2 className="section-title">Example Use Cases:</h2>
+          <h2 className="section-title">Example <span className="hero-highlight">Use Cases</span>:</h2>
         </div>
-
-
-
-
-
         <div className="product-content">
           <div className="product-features">
             <div className="feature-highlights">
@@ -470,14 +456,10 @@ const LandingPage = () => {
         </div>
       </section>
 
-
-
-
-
       {/* Features Section */}
       <section id="features" className="features-section">
         <div className="section-header">
-          <h2 className="section-title">Join Our Free Beta Program</h2>
+          <h2 className="section-title">Join Our <span className="hero-highlight">Free Beta</span> Program</h2>
         </div>
         <div className="product-content">
           <div className="product-features">
@@ -509,18 +491,10 @@ const LandingPage = () => {
         </div>
       </section>
 
-
-
-
-
-
-
-
-
       {/* Contact Section */}
       <section id="contact" className="contact-section">
         <div className="section-header">
-          <h2 className="section-title">Get In Touch</h2>
+          <h2 className="section-title">Get <span className="hero-highlight">In Touch</span></h2>
           <p className="section-subtitle">Questions? Schedule a demo or chat with us.</p>
         </div>
         <div className="contact-container">
@@ -635,7 +609,7 @@ const LandingPage = () => {
           </div>
         </div>
         <div className="footer-bottom">
-          <p className="footer-text">&copy; 2025 Debuggo. All rights reserved.</p>
+          <p className="footer-text">&copy; 2025 <span className="hero-highlight">Debuggo</span>. All rights reserved.</p>
           <div className="footer-legal">
             <a href="#">Privacy Policy</a>
             <a href="#">Terms of Service</a>
