@@ -25,7 +25,7 @@ const Dashboard = () => {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(() => {
     // Try to get the selected project ID from localStorage
-    return localStorage.getItem('selectedProjectId') || 'all';
+    return localStorage.getItem('selectedProjectId') || null;
   });
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -34,12 +34,7 @@ const Dashboard = () => {
   const projectDropdownRef = useRef(null);
 
   useEffect(() => {
-    fetchProjects();
-    if (selectedProject && selectedProject !== 'all') {
-      fetchTreeDataForProject(selectedProject);
-    } else {
-      fetchTreeData();
-    }
+    fetchProjects(); // This will handle project selection and tree data loading
     // If we have a selected test ID in state, fetch its details
     if (selectedTestId) {
       fetchTestCase(selectedTestId);
@@ -59,14 +54,15 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    // When selected project changes, fetch test cases for that project
-    if (selectedProject && selectedProject !== 'all') {
-      fetchTreeDataForProject(selectedProject);
-    } else {
-      // If 'all' is selected, fetch all test cases
-      fetchTreeData();
+    // Only fetch tree data when selectedProject changes from user interaction
+    // Don't fetch during initial load (handled by fetchProjects)
+    if (selectedProject && projects.length > 0) {
+      const projectExists = projects.find(p => p.id === selectedProject);
+      if (projectExists) {
+        fetchTreeDataForProject(selectedProject);
+      }
     }
-  }, [selectedProject]);
+  }, [selectedProject, projects]);
 
   const fetchProjects = async () => {
     try {
@@ -77,6 +73,37 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setProjects(data);
+        
+        // Always auto-select the first available project if we have projects
+        if (data.length > 0) {
+          let projectToSelect = null;
+          let shouldUpdateState = false;
+          
+          // Check if current selected project exists in the fetched list
+          if (selectedProject && data.find(p => p.id === selectedProject)) {
+            projectToSelect = selectedProject; // Keep current selection if valid
+          } else {
+            // Select first project if no valid selection
+            projectToSelect = data[0].id;
+            shouldUpdateState = true;
+          }
+          
+          // Update state and localStorage if needed
+          if (shouldUpdateState) {
+            setSelectedProject(projectToSelect);
+            localStorage.setItem('selectedProjectId', projectToSelect);
+          }
+          
+          // Load test tree for the selected project
+          if (projectToSelect) {
+            fetchTreeDataForProject(projectToSelect);
+          }
+        } else {
+          // No projects available, clear selection
+          setSelectedProject(null);
+          localStorage.removeItem('selectedProjectId');
+          setTreeData([]);
+        }
       } else {
         console.error('Failed to fetch projects');
       }
@@ -96,6 +123,12 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setTreeData(data);
+      } else if (response.status === 404) {
+        // Project not found, clear invalid selection and reload projects
+        setSelectedProject(null);
+        localStorage.removeItem('selectedProjectId');
+        fetchProjects(); // Reload projects and auto-select first one
+        return;
       } else {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to fetch project test tree');
@@ -107,25 +140,6 @@ const Dashboard = () => {
     }
   };
 
-  const fetchTreeData = async () => {
-    try {
-      setTreeError(null);
-      const response = await fetch(`${API_URL}/api/tests/tree`, {
-        headers: getAuthHeaders()
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setTreeData(data);
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to fetch tree data');
-      }
-    } catch (error) {
-      console.error('Error fetching tree data:', error);
-      setTreeError(error.message || 'Failed to load test cases. Please try again later.');
-      setTreeData([]);
-    }
-  };
 
   const handleProjectChange = (e) => {
     const projectId = e.target.value;
@@ -168,8 +182,8 @@ const Dashboard = () => {
       const formData = new FormData();
       formData.append('file', file);
       
-      // Add the project_id to the form data if a project is selected
-      if (selectedProject && selectedProject !== 'all') {
+      // Add the project_id to the form data (project is always selected now)
+      if (selectedProject) {
         formData.append('project_id', selectedProject);
       }
 
@@ -193,10 +207,8 @@ const Dashboard = () => {
       setShowUploadPopup(false);
       
       // Refresh the tree data based on the selected project
-      if (selectedProject && selectedProject !== 'all') {
+      if (selectedProject) {
         fetchTreeDataForProject(selectedProject);
-      } else {
-        fetchTreeData();
       }
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -216,18 +228,13 @@ const Dashboard = () => {
     }
     
     // Refresh the tree data based on the selected project
-    if (selectedProject && selectedProject !== 'all') {
+    if (selectedProject) {
       fetchTreeDataForProject(selectedProject);
-    } else {
-      fetchTreeData();
     }
   };
 
-  const handleCloseTestResultPopup = () => {
-    setTestResult(null);
-  };
 
-  const isProjectSelected = selectedProject && selectedProject !== 'all';
+  const isProjectSelected = selectedProject;
 
   const noProjects = !projects || projects.length === 0;
 
@@ -242,9 +249,8 @@ const Dashboard = () => {
           >
             <FontAwesomeIcon icon={faFolderOpen} className="project-icon" />
             <span>
-              {selectedProject === 'all' ? 'All Projects' : 
-                (isLoadingProjects ? 'Loading...' : 
-                  projects.find(p => p.id === selectedProject)?.name || 'Select Project')}
+              {isLoadingProjects ? 'Loading...' : 
+                projects.find(p => p.id === selectedProject)?.name || 'Select Project'}
             </span>
             <FontAwesomeIcon 
               icon={showProjectDropdown ? faChevronUp : faChevronDown} 
@@ -254,15 +260,6 @@ const Dashboard = () => {
           
           {showProjectDropdown && (
             <div className="project-dropdown">
-              <div 
-                className={`project-option ${selectedProject === 'all' ? 'selected' : ''}`}
-                onClick={() => {
-                  handleProjectChange({ target: { value: 'all' } });
-                  setShowProjectDropdown(false);
-                }}
-              >
-                <span>All Projects</span>
-              </div>
               {projects.map((project) => (
                 <div 
                   key={project.id} 
