@@ -2301,15 +2301,6 @@ const startStepResultsPolling = () => {
                             value={step.element_path || ''}
                             onChange={(e) => handleElementPathChange(step.id, e.target.value)}
                           />
-                          <button 
-                            className="test-locator-button"
-                            onClick={() => handleTestLocator(step.id, step.element_path)}
-                            title="Test locator"
-                            disabled={!step.element_path || !selectedEnvironment || isTestingLocator}
-                          >
-                            <FontAwesomeIcon icon={faSearch} spin={isTestingLocator} />
-                            {isTestingLocator ? ' Testing...' : ' Test'}
-                          </button>
                           <FontAwesomeIcon 
                             icon={faQuestionCircle} 
                             className="locator-help-icon" 
@@ -2351,15 +2342,6 @@ const startStepResultsPolling = () => {
                             onClick={(e) => handleInputClick(step.id, e)}
                             onKeyUp={handleInputKeyUp}
                           />
-                          <button 
-                            className="env-vars-button"
-                            onClick={toggleEnvVarsDropdown}
-                            title="Insert environment variable"
-                            disabled={!selectedEnvironment}
-                          >
-                            <FontAwesomeIcon icon={faCode} />
-                          </button>
-                          
                           {showEnvVarsDropdown && activeInputStepId === step.id && selectedEnvironment && (
                             <div className="env-vars-dropdown" ref={envVarsDropdownRef}>
                               <div className="env-vars-dropdown-header">
