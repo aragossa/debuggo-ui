@@ -162,8 +162,35 @@
   justify-content: center;
 }
 
-.node-name {
+.node-content-text {
   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.test-type-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: white;
+  background-color: #666;
+  max-width: fit-content;
+}
+
+.test-type-badge.ui {
+  background-color: #4caf50; /* Green for UI tests */
+}
+
+.test-type-badge.api {
+  background-color: #2196f3; /* Blue for API tests */
+}
+
+.node-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

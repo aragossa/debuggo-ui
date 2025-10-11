@@ -512,6 +512,27 @@
   font-size: var(--font-size-xl);
 }
 
+.test-type-badge-detail {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: white;
+  background-color: #666;
+  margin-bottom: 8px;
+  margin-top: 4px;
+}
+
+.test-type-badge-detail.ui {
+  background-color: #4caf50; /* Green for UI tests */
+}
+
+.test-type-badge-detail.api {
+  background-color: #2196f3; /* Blue for API tests */
+}
+
 .generation-duration {
   font-size: var(--font-size-sm);
   color: var(--gray-600);
@@ -1651,6 +1672,50 @@
   outline: none;
   border-color: #4a90e2;
   box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
+}
+
+/* API Step Editor Modal */
+.api-step-editor-modal {
+  max-width: 600px;
+}
+
+.api-step-editor-modal .form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  resize: vertical;
+}
+
+.api-step-editor-modal .form-group textarea:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
+}
+
+/* Edit API Step Button */
+.edit-api-step-button {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+
+.edit-api-step-button:hover {
+  background: #357abd;
+}
+
+.edit-api-step-button svg {
+  font-size: 12px;
 }
 
 /* Media query for responsiveness */

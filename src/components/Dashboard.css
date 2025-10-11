@@ -270,11 +270,6 @@
   padding: 0;
   overflow-y: auto;
   animation: fadeIn 0.3s ease-in-out;
-  background-color: transparent;
-  margin: 0;
-}
-
-.environments-tab-container {
   background-color: white;
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-sm);
@@ -282,10 +277,19 @@
   padding: 1.5rem;
 }
 
+.api-schemas-tab-container {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background-color: white;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  margin: 1rem;
+}
+
 .loading-message, 
 .no-environments-message {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 2.5rem;
