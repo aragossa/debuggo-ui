@@ -1762,14 +1762,36 @@ const startStepResultsPolling = () => {
         }
       }
 
+      // Parse headers if it's a string
+      let headersData = apiStepData.headers;
+      if (typeof headersData === 'string') {
+        try {
+          headersData = JSON.parse(headersData);
+        } catch (e) {
+          alert('Invalid JSON in headers');
+          return;
+        }
+      }
+
+      // Parse extract_variables if it's a string
+      let extractVarsData = apiStepData.extract_variables;
+      if (typeof extractVarsData === 'string') {
+        try {
+          extractVarsData = JSON.parse(extractVarsData);
+        } catch (e) {
+          alert('Invalid JSON in extract variables');
+          return;
+        }
+      }
+
       // Create the step description JSON - preserve all existing fields
       const descriptionData = {
         method: apiStepData.method,
         endpoint: apiStepData.endpoint,
-        headers: apiStepData.headers || { "Content-Type": "application/json" }, // Preserve existing headers including Authorization
+        headers: headersData || { "Content-Type": "application/json" }, // Preserve existing headers including Authorization
         body: bodyData,
         expected_status: parseInt(apiStepData.expected_status),
-        extract_variables: apiStepData.extract_variables || {} // Preserve variable extraction
+        extract_variables: extractVarsData || {} // Preserve variable extraction
       };
 
       // Update the step
@@ -2869,6 +2891,24 @@ const startStepResultsPolling = () => {
               />
             </div>
             <div className="form-group">
+              <label>Headers (JSON):</label>
+              <textarea 
+                value={typeof apiStepData.headers === 'object' ? JSON.stringify(apiStepData.headers, null, 2) : apiStepData.headers} 
+                onChange={(e) => {
+                  try {
+                    const parsed = JSON.parse(e.target.value);
+                    setApiStepData({...apiStepData, headers: parsed});
+                  } catch (err) {
+                    // Allow invalid JSON while typing
+                    setApiStepData({...apiStepData, headers: e.target.value});
+                  }
+                }}
+                placeholder='{"Content-Type": "application/json", "Authorization": "Bearer {{access_token}}"}'
+                rows="4"
+              />
+              <small className="form-help-text">Include Authorization, Content-Type, and other headers as JSON</small>
+            </div>
+            <div className="form-group">
               <label>Request Body (JSON):</label>
               <textarea 
                 value={apiStepData.body} 
@@ -2885,6 +2925,24 @@ const startStepResultsPolling = () => {
                 onChange={(e) => setApiStepData({...apiStepData, expected_status: e.target.value})}
                 placeholder="200"
               />
+            </div>
+            <div className="form-group">
+              <label>Extract Variables (JSON):</label>
+              <textarea 
+                value={typeof apiStepData.extract_variables === 'object' ? JSON.stringify(apiStepData.extract_variables, null, 2) : apiStepData.extract_variables} 
+                onChange={(e) => {
+                  try {
+                    const parsed = JSON.parse(e.target.value);
+                    setApiStepData({...apiStepData, extract_variables: parsed});
+                  } catch (err) {
+                    // Allow invalid JSON while typing
+                    setApiStepData({...apiStepData, extract_variables: e.target.value});
+                  }
+                }}
+                placeholder='{"access_token": "$.token", "user_id": "$.user.id"}'
+                rows="4"
+              />
+              <small className="form-help-text">Use JSONPath notation to extract values from response (e.g., $.token, $.user.id)</small>
             </div>
             <div className="modal-actions">
               <button onClick={() => setShowApiStepEditor(false)} className="modal-button cancel">Cancel</button>
