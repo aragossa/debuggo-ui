@@ -1070,7 +1070,7 @@ const startStepResultsPolling = () => {
     });
   };
 
-  const handleEnvironmentChange = (environmentId) => {
+  const handleEnvironmentChange = async (environmentId) => {
     setSelectedEnvironment(environmentId);
     setShowEnvironmentDropdown(false);
     
@@ -1078,6 +1078,17 @@ const startStepResultsPolling = () => {
     if (projectId && projectId !== 'all') {
       const storageKey = `selectedEnvironment_${projectId}`;
       localStorage.setItem(storageKey, environmentId);
+    }
+    
+    // Notify backend about environment selection (optional - for analytics/logging)
+    try {
+      await fetch(`${API_URL}/api/environments/${environmentId}/select`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+    } catch (error) {
+      // Silent fail - this is just for tracking, not critical
+      console.log('Environment selection tracking failed:', error);
     }
   };
 
@@ -1425,7 +1436,8 @@ const startStepResultsPolling = () => {
       if (test_type === 'api' || test_type === 'api_test') {
         // Use API-specific endpoint (no confirm needed for API tests)
         endpoint = `${API_URL}/api/test-cases/${testCaseId}/generate-api-steps`;
-        // API tests don't need environment_id in request body (handled by backend)
+        // Send environment_id so backend uses the selected environment
+        requestBody.environment_id = parseInt(selectedEnvironment);
       } else {
         // Use UI test endpoint
         endpoint = confirm 
@@ -1464,33 +1476,35 @@ const startStepResultsPolling = () => {
       // For API tests, steps are generated asynchronously via Kafka, so poll for real-time updates
       if (test_type === 'api' || test_type === 'api_test') {
         let previousStepCount = 0;
-        let noChangeCount = 0;
         
-        // Start polling to check for new steps in real-time
+        // Start polling to check for new steps in real-time using generation status endpoint
         const pollInterval = setInterval(async () => {
           try {
-            const checkResponse = await fetch(`${API_URL}/api/get_test_cases/${testCaseId}`, {
+            // Use the generation status endpoint to check if still generating
+            const statusResponse = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
               headers: getAuthHeaders()
             });
             
-            if (checkResponse.ok) {
-              const testCaseData = await checkResponse.json();
-              const currentStepCount = testCaseData.test_steps ? testCaseData.test_steps.length : 0;
+            if (statusResponse.ok) {
+              const statusData = await statusResponse.json();
+              const currentStepCount = statusData.test_steps ? statusData.test_steps.length : 0;
+              const isStillGenerating = statusData.is_generating;
+              
+              console.log(`Generation status: ${isStillGenerating ? 'ACTIVE' : 'COMPLETE'}, Steps: ${currentStepCount}`);
               
               // If new steps appeared, refresh the UI to show them
               if (currentStepCount > previousStepCount) {
                 console.log(`New steps detected: ${currentStepCount} (was ${previousStepCount})`);
                 previousStepCount = currentStepCount;
-                noChangeCount = 0;
                 
                 // Update steps immediately in local state
-                if (testCaseData.test_steps && Array.isArray(testCaseData.test_steps)) {
-                  setSteps(testCaseData.test_steps);
+                if (statusData.test_steps && Array.isArray(statusData.test_steps)) {
+                  setSteps(statusData.test_steps);
                   
                   // Initialize stepValues for any new type steps
                   setStepValues(prevValues => {
                     const newValues = { ...prevValues };
-                    testCaseData.test_steps.forEach(step => {
+                    statusData.test_steps.forEach(step => {
                       if (step.action === 'type' && step.value && !newValues[step.id]) {
                         newValues[step.id] = step.value;
                       }
@@ -1503,22 +1517,23 @@ const startStepResultsPolling = () => {
                 if (onTestCaseUpdate) {
                   onTestCaseUpdate();
                 }
-              } else if (currentStepCount > 0) {
-                // Steps exist but no new ones added - check if generation is complete
-                noChangeCount++;
+              }
+              
+              // Check if generation is complete based on backend status
+              if (!isStillGenerating) {
+                console.log(`✅ API test generation COMPLETE: ${currentStepCount} steps generated`);
+                clearInterval(pollInterval);
                 
-                // If no changes for 3 consecutive polls (9 seconds), assume generation is complete
-                if (noChangeCount >= 3) {
-                  clearInterval(pollInterval);
-                  
-                  setIsGeneratingSteps(false);
-                  setGeneratingTestCases(prev => {
-                    const updated = { ...prev };
-                    delete updated[testCaseId];
-                    return updated;
-                  });
-                  
-                  console.log(`API test steps generation complete: ${currentStepCount} steps`);
+                setIsGeneratingSteps(false);
+                setGeneratingTestCases(prev => {
+                  const updated = { ...prev };
+                  delete updated[testCaseId];
+                  return updated;
+                });
+                
+                // Final refresh to ensure we have all steps
+                if (onTestCaseUpdate) {
+                  onTestCaseUpdate();
                 }
               }
             }
@@ -1527,7 +1542,7 @@ const startStepResultsPolling = () => {
           }
         }, 2000); // Poll every 2 seconds for real-time updates
         
-        // Set a timeout to stop polling after 2 minutes
+        // Set a timeout to stop polling after 5 minutes (increased from 2 minutes)
         setTimeout(() => {
           clearInterval(pollInterval);
           setIsGeneratingSteps(false);
@@ -1536,8 +1551,8 @@ const startStepResultsPolling = () => {
             delete updated[testCaseId];
             return updated;
           });
-          console.log('API test steps generation timeout reached');
-        }, 120000); // 2 minutes timeout
+          console.log('⏱️ API test steps generation timeout reached (5 minutes)');
+        }, 300000); // 5 minutes timeout
       } else {
         // For UI tests, start polling for updates
         startPollingForUpdates();
@@ -2769,6 +2784,11 @@ const startStepResultsPolling = () => {
                                       <td className="step-description">
                                         <div className="step-action-info">
                                           <strong>{stepResult.action}</strong>
+                                          {stepResult.actual_url && (
+                                            <div className="step-actual-url">
+                                              <strong>URL:</strong> {stepResult.method} {stepResult.actual_url}
+                                            </div>
+                                          )}
                                           {stepResult.element_path && (
                                             <div className="step-element-path">{stepResult.element_path}</div>
                                           )}
@@ -2776,7 +2796,22 @@ const startStepResultsPolling = () => {
                                             <div className="step-value">Value: {stepResult.value}</div>
                                           )}
                                         </div>
-                                        <div className="step-description-text">{stepResult.description}</div>
+                                        <div className="step-description-text">
+                                          {(() => {
+                                            try {
+                                              // Try to parse as JSON
+                                              const jsonData = JSON.parse(stepResult.description);
+                                              return (
+                                                <pre className="step-json-description">
+                                                  {JSON.stringify(jsonData, null, 2)}
+                                                </pre>
+                                              );
+                                            } catch (e) {
+                                              // If not JSON, display as regular text
+                                              return stepResult.description;
+                                            }
+                                          })()}
+                                        </div>
                                       </td>
                                       <td className="step-status">
                                         <span className={`status-indicator ${stepResult.status}`}>
@@ -2789,7 +2824,34 @@ const startStepResultsPolling = () => {
                                         {stepResult.error_message && (
                                           <div className="error-message">
                                             <FontAwesomeIcon icon={faExclamationTriangle} />
-                                            {stepResult.error_message}
+                                            {(() => {
+                                              const message = stepResult.error_message;
+                                              // Check if message contains "Response:" and try to format JSON
+                                              if (message.includes('Response:')) {
+                                                const parts = message.split('Response:');
+                                                const beforeResponse = parts[0];
+                                                const responseText = parts[1];
+                                                
+                                                try {
+                                                  const jsonMatch = responseText.match(/\{.*\}/s);
+                                                  if (jsonMatch) {
+                                                    const jsonData = JSON.parse(jsonMatch[0]);
+                                                    return (
+                                                      <div>
+                                                        <div>{beforeResponse}</div>
+                                                        <div><strong>Response:</strong></div>
+                                                        <pre className="response-json">
+                                                          {JSON.stringify(jsonData, null, 2)}
+                                                        </pre>
+                                                      </div>
+                                                    );
+                                                  }
+                                                } catch (e) {
+                                                  // If JSON parsing fails, display as-is
+                                                }
+                                              }
+                                              return message;
+                                            })()}
                                           </div>
                                         )}
                                       </td>

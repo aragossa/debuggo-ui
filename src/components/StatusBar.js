@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpinner, faPlay, faClock, faStop } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner, faPlay, faClock, faStop, faCog } from '@fortawesome/free-solid-svg-icons';
 import './StatusBar.css';
 
 const StatusBar = () => {
@@ -77,6 +77,7 @@ const StatusBar = () => {
         clearInterval(interval);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Manage body class for status bar padding
@@ -97,18 +98,25 @@ const StatusBar = () => {
     return null;
   }
 
+  // Separate running tests and generating tests
+  const executingTests = runningTests.filter(t => t.status === 'running');
+  const generatingTests = runningTests.filter(t => t.status === 'generating');
+
   return (
     <div className="status-bar">
       <div className="status-bar-content">
         <div className="running-tests-info">
           <FontAwesomeIcon icon={faSpinner} className="spinning" />
           <span className="running-count">
-            {runningTests.length} test{runningTests.length > 1 ? 's' : ''} running
+            {executingTests.length > 0 && `${executingTests.length} test${executingTests.length > 1 ? 's' : ''} running`}
+            {executingTests.length > 0 && generatingTests.length > 0 && ' • '}
+            {generatingTests.length > 0 && `${generatingTests.length} generating`}
           </span>
           
           <div className="running-tests-details">
-            {runningTests.map((test, index) => (
+            {executingTests.map((test, index) => (
               <div key={test.test_run_id || index} className="running-test-summary">
+                <FontAwesomeIcon icon={faPlay} className="activity-icon" />
                 <span className="test-name">{test.test_case_name}</span>
                 {test.execution_name && (
                   <span className="execution-name">({test.execution_name})</span>
@@ -120,6 +128,13 @@ const StatusBar = () => {
                     'Starting...'
                   }
                 </span>
+              </div>
+            ))}
+            {generatingTests.map((test, index) => (
+              <div key={`gen-${test.test_case_id || index}`} className="running-test-summary generating">
+                <FontAwesomeIcon icon={faCog} className="activity-icon spinning" />
+                <span className="test-name">{test.test_case_name}</span>
+                <span className="generation-label">Generating API tests...</span>
               </div>
             ))}
           </div>
