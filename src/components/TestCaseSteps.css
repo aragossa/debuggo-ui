@@ -1020,6 +1020,14 @@
   line-height: 1.4;
 }
 
+.test-case-details .test-case-id {
+  color: #007bff;
+  font-size: 0.95em;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
 .test-case-details .updated-at {
   color: #888;
   font-size: 0.9em;

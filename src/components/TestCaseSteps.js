@@ -2290,6 +2290,7 @@ const startStepResultsPolling = () => {
               {test_type.toUpperCase()} Test
             </div>
           )}
+          <p className="test-case-id">Test Case ID: {testCaseId}</p>
           <p className="test-description">{currentTestDescription}</p>
           <p className="updated-at">Last updated: {formatDate(updated_at)}</p>
           {generationDuration && (
