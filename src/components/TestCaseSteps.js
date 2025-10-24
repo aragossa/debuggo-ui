@@ -56,6 +56,7 @@ const TestCaseSteps = ({
   testCaseId, 
   test_name, 
   test_description, 
+  test_type,
   updated_at, 
   projectId,
   onTestCaseUpdate,
@@ -179,6 +180,21 @@ const TestCaseSteps = ({
 
   // State for step execution results
   const [stepExecutionResults, setStepExecutionResults] = useState({});
+  
+  // State for API step editor
+  const [showApiStepEditor, setShowApiStepEditor] = useState(false);
+  const [editingApiStep, setEditingApiStep] = useState(null);
+  const [apiStepData, setApiStepData] = useState({
+    method: 'GET',
+    endpoint: '',
+    body: '',
+    expected_status: 200,
+    headers: { "Content-Type": "application/json" },
+    extract_variables: {}
+  });
+  
+  // Local state for test runs (to allow refreshing)
+  const [localTestRuns, setLocalTestRuns] = useState(test_runs || []);
 
   // Function to fetch step execution results for a test run
   const fetchStepExecutionResults = async (runId) => {
@@ -212,10 +228,10 @@ const TestCaseSteps = ({
 
   // Function to refresh step execution results for the latest test run during execution
   const refreshLatestStepResults = async () => {
-    if (!test_runs || test_runs.length === 0) return;
+    if (!localTestRuns || localTestRuns.length === 0) return;
     
     // Get the most recent test run
-    const latestRun = test_runs[0];
+    const latestRun = localTestRuns[0];
     if (latestRun && latestRun.id) {
       await fetchStepExecutionResults(latestRun.id);
     }
@@ -661,6 +677,58 @@ useEffect(() => {
     description: currentTestDescription
   });
 }, [currentTestName, currentTestDescription]);
+
+// Fetch test runs separately when switching to results tab
+useEffect(() => {
+  console.log('🔄 Tab changed to:', activeTab, 'Test Case ID:', testCaseId);
+  
+  if (activeTab === 'results' && testCaseId) {
+    console.log('🔄 Switching to results tab - fetching fresh test runs');
+    
+    const fetchTestRuns = async () => {
+      try {
+        console.log('📡 Fetching test runs from:', `${API_URL}/api/get_test_runs/${testCaseId}`);
+        const response = await fetch(`${API_URL}/api/get_test_runs/${testCaseId}`, {
+          headers: getAuthHeaders()
+        });
+        console.log('📡 Response status:', response.status);
+        
+        if (response.ok) {
+          const runs = await response.json();
+          console.log('✅ Received test runs:', runs.length, 'runs');
+          console.log('📊 Test runs data:', runs);
+          setLocalTestRuns(runs);
+          console.log('✅ Updated localTestRuns state');
+          
+          // Fetch step results for all runs (or just the latest few)
+          if (runs.length > 0) {
+            // Fetch step results for the first 3 runs
+            const runsToFetch = runs.slice(0, 3);
+            for (const run of runsToFetch) {
+              if (run.id) {
+                console.log('📡 Fetching step results for run:', run.id);
+                await fetchStepExecutionResults(run.id);
+              }
+            }
+            console.log('✅ Fetched step execution results');
+          }
+        } else {
+          console.error('❌ Failed to fetch test runs, status:', response.status);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching test runs:', error);
+      }
+    };
+    
+    fetchTestRuns();
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [activeTab, testCaseId, API_URL]);
+
+// Update local test runs when prop changes
+useEffect(() => {
+  setLocalTestRuns(test_runs || []);
+}, [test_runs]);
   
 // Update the current test name and description when props change
 useEffect(() => {
@@ -820,11 +888,11 @@ const startStepResultsPolling = () => {
   
   // Set up a new polling interval for step results
   const interval = setInterval(async () => {
-    if (!test_runs || test_runs.length === 0) return;
+    if (!localTestRuns || localTestRuns.length === 0) return;
     
     try {
       // Get the most recent test run
-      const latestRun = test_runs[0];
+      const latestRun = localTestRuns[0];
       if (latestRun && latestRun.id && (latestRun.result === 'running' || latestRun.result === 'pending')) {
         await fetchStepExecutionResults(latestRun.id);
       } else {
@@ -1002,7 +1070,7 @@ const startStepResultsPolling = () => {
     });
   };
 
-  const handleEnvironmentChange = (environmentId) => {
+  const handleEnvironmentChange = async (environmentId) => {
     setSelectedEnvironment(environmentId);
     setShowEnvironmentDropdown(false);
     
@@ -1010,6 +1078,17 @@ const startStepResultsPolling = () => {
     if (projectId && projectId !== 'all') {
       const storageKey = `selectedEnvironment_${projectId}`;
       localStorage.setItem(storageKey, environmentId);
+    }
+    
+    // Notify backend about environment selection (optional - for analytics/logging)
+    try {
+      await fetch(`${API_URL}/api/environments/${environmentId}/select`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+    } catch (error) {
+      // Silent fail - this is just for tracking, not critical
+      console.log('Environment selection tracking failed:', error);
     }
   };
 
@@ -1350,22 +1429,32 @@ const startStepResultsPolling = () => {
     }));
     
     try {
-      const endpoint = confirm 
-        ? `${API_URL}/api/confirm_generate_steps/${testCaseId}` 
-        : `${API_URL}/api/generate_steps/${testCaseId}`;
+      let endpoint;
+      let requestBody = {};
       
-      const requestBody = {
-        environment_id: parseInt(selectedEnvironment)
-      };
-      
-      // If projectId exists and is not 'all', add it to the request body
-      if (projectId && projectId !== 'all') {
-        requestBody.project_id = projectId;
-      }
-      
-      // If AI model is selected, add it to the request body
-      if (selectedAIModel) {
-        requestBody.ai_model_id = selectedAIModel;
+      // Check if this is an API test case
+      if (test_type === 'api' || test_type === 'api_test') {
+        // Use API-specific endpoint (no confirm needed for API tests)
+        endpoint = `${API_URL}/api/test-cases/${testCaseId}/generate-api-steps`;
+        // Send environment_id so backend uses the selected environment
+        requestBody.environment_id = parseInt(selectedEnvironment);
+      } else {
+        // Use UI test endpoint
+        endpoint = confirm 
+          ? `${API_URL}/api/confirm_generate_steps/${testCaseId}` 
+          : `${API_URL}/api/generate_steps/${testCaseId}`;
+        
+        requestBody.environment_id = parseInt(selectedEnvironment);
+        
+        // If projectId exists and is not 'all', add it to the request body
+        if (projectId && projectId !== 'all') {
+          requestBody.project_id = projectId;
+        }
+        
+        // If AI model is selected, add it to the request body
+        if (selectedAIModel) {
+          requestBody.ai_model_id = selectedAIModel;
+        }
       }
       
       const response = await fetch(endpoint, {
@@ -1374,19 +1463,104 @@ const startStepResultsPolling = () => {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(requestBody)
+        body: Object.keys(requestBody).length > 0 ? JSON.stringify(requestBody) : undefined
       });
       
       if (!response.ok) {
-        throw new Error('Failed to generate steps');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to generate steps');
       }
       
-      // Start polling for updates
-      startPollingForUpdates();
+      const result = await response.json();
+      
+      // For API tests, steps are generated asynchronously via Kafka, so poll for real-time updates
+      if (test_type === 'api' || test_type === 'api_test') {
+        let previousStepCount = 0;
+        
+        // Start polling to check for new steps in real-time using generation status endpoint
+        const pollInterval = setInterval(async () => {
+          try {
+            // Use the generation status endpoint to check if still generating
+            const statusResponse = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
+              headers: getAuthHeaders()
+            });
+            
+            if (statusResponse.ok) {
+              const statusData = await statusResponse.json();
+              const currentStepCount = statusData.test_steps ? statusData.test_steps.length : 0;
+              const isStillGenerating = statusData.is_generating;
+              
+              console.log(`Generation status: ${isStillGenerating ? 'ACTIVE' : 'COMPLETE'}, Steps: ${currentStepCount}`);
+              
+              // If new steps appeared, refresh the UI to show them
+              if (currentStepCount > previousStepCount) {
+                console.log(`New steps detected: ${currentStepCount} (was ${previousStepCount})`);
+                previousStepCount = currentStepCount;
+                
+                // Update steps immediately in local state
+                if (statusData.test_steps && Array.isArray(statusData.test_steps)) {
+                  setSteps(statusData.test_steps);
+                  
+                  // Initialize stepValues for any new type steps
+                  setStepValues(prevValues => {
+                    const newValues = { ...prevValues };
+                    statusData.test_steps.forEach(step => {
+                      if (step.action === 'type' && step.value && !newValues[step.id]) {
+                        newValues[step.id] = step.value;
+                      }
+                    });
+                    return newValues;
+                  });
+                }
+                
+                // Also trigger parent component to refresh test case data
+                if (onTestCaseUpdate) {
+                  onTestCaseUpdate();
+                }
+              }
+              
+              // Check if generation is complete based on backend status
+              if (!isStillGenerating) {
+                console.log(`✅ API test generation COMPLETE: ${currentStepCount} steps generated`);
+                clearInterval(pollInterval);
+                
+                setIsGeneratingSteps(false);
+                setGeneratingTestCases(prev => {
+                  const updated = { ...prev };
+                  delete updated[testCaseId];
+                  return updated;
+                });
+                
+                // Final refresh to ensure we have all steps
+                if (onTestCaseUpdate) {
+                  onTestCaseUpdate();
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error polling for API test steps:', error);
+          }
+        }, 2000); // Poll every 2 seconds for real-time updates
+        
+        // Set a timeout to stop polling after 5 minutes (increased from 2 minutes)
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          setIsGeneratingSteps(false);
+          setGeneratingTestCases(prev => {
+            const updated = { ...prev };
+            delete updated[testCaseId];
+            return updated;
+          });
+          console.log('⏱️ API test steps generation timeout reached (5 minutes)');
+        }, 300000); // 5 minutes timeout
+      } else {
+        // For UI tests, start polling for updates
+        startPollingForUpdates();
+      }
       
     } catch (error) {
       console.error('Error generating steps:', error);
-      alert('Failed to generate steps. Please try again.');
+      alert(`Failed to generate steps: ${error.message}`);
       setIsGeneratingSteps(false);
       
       // Remove this test case from the generating list
@@ -1566,6 +1740,108 @@ const startStepResultsPolling = () => {
   const handleDeleteStepClick = (step) => {
     setStepToDelete(step);
     setShowDeleteStepModal(true);
+  };
+
+  const handleEditApiStep = (step) => {
+    // Parse the description field which contains JSON for API steps
+    try {
+      const stepData = JSON.parse(step.description || '{}');
+      setApiStepData({
+        method: stepData.method || 'GET',
+        endpoint: stepData.endpoint || '',
+        body: stepData.body ? JSON.stringify(stepData.body, null, 2) : '',
+        expected_status: stepData.expected_status || 200,
+        headers: stepData.headers || { "Content-Type": "application/json" }, // Preserve existing headers
+        extract_variables: stepData.extract_variables || {}
+      });
+      setEditingApiStep(step);
+      setShowApiStepEditor(true);
+    } catch (e) {
+      console.error('Error parsing API step data:', e);
+      alert('Error loading API step data');
+    }
+  };
+
+  const handleSaveApiStep = async () => {
+    if (!editingApiStep) return;
+
+    try {
+      // Parse body as JSON if it's not empty
+      let bodyData = null;
+      if (apiStepData.body.trim()) {
+        try {
+          bodyData = JSON.parse(apiStepData.body);
+        } catch (e) {
+          alert('Invalid JSON in request body');
+          return;
+        }
+      }
+
+      // Parse headers if it's a string
+      let headersData = apiStepData.headers;
+      if (typeof headersData === 'string') {
+        try {
+          headersData = JSON.parse(headersData);
+        } catch (e) {
+          alert('Invalid JSON in headers');
+          return;
+        }
+      }
+
+      // Parse extract_variables if it's a string
+      let extractVarsData = apiStepData.extract_variables;
+      if (typeof extractVarsData === 'string') {
+        try {
+          extractVarsData = JSON.parse(extractVarsData);
+        } catch (e) {
+          alert('Invalid JSON in extract variables');
+          return;
+        }
+      }
+
+      // Create the step description JSON - preserve all existing fields
+      const descriptionData = {
+        method: apiStepData.method,
+        endpoint: apiStepData.endpoint,
+        headers: headersData || { "Content-Type": "application/json" }, // Preserve existing headers including Authorization
+        body: bodyData,
+        expected_status: parseInt(apiStepData.expected_status),
+        extract_variables: extractVarsData || {} // Preserve variable extraction
+      };
+
+      // Update the step
+      const response = await fetch(`${API_URL}/api/update_test_step/${editingApiStep.id}`, {
+        method: 'PATCH',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          description: JSON.stringify(descriptionData)
+        })
+      });
+
+      if (response.ok) {
+        // Close modal first
+        setShowApiStepEditor(false);
+        setEditingApiStep(null);
+        
+        // Refresh test case to get updated steps
+        try {
+          await refreshTestCase();
+        } catch (refreshError) {
+          console.error('Error refreshing steps:', refreshError);
+          // Don't show alert for refresh errors since the update succeeded
+        }
+      } else {
+        const errorText = await response.text();
+        console.error('Update failed:', errorText);
+        alert('Failed to update API step: ' + errorText);
+      }
+    } catch (error) {
+      console.error('Error saving API step:', error);
+      alert('Error saving API step: ' + error.message);
+    }
   };
 
   const handleConfirmDeleteStep = async () => {
@@ -2009,6 +2285,12 @@ const startStepResultsPolling = () => {
       <div className="test-case-header">
         <div className="test-case-title">
           <h2>{currentTestName}</h2>
+          {test_type && (
+            <div className={`test-type-badge-detail ${test_type}`}>
+              {test_type.toUpperCase()} Test
+            </div>
+          )}
+          <p className="test-case-id">Test Case ID: {testCaseId}</p>
           <p className="test-description">{currentTestDescription}</p>
           <p className="updated-at">Last updated: {formatDate(updated_at)}</p>
           {generationDuration && (
@@ -2330,18 +2612,26 @@ const startStepResultsPolling = () => {
                         </div>
                       </td>
                       <td className="step-value-cell">
-                        <div className="action-input-container">
-                          <input
-                            ref={el => inputRefs.current[step.id] = el}
-                            type="text"
-                            className="action-input"
-                            placeholder="Value"
-                            value={stepValues[step.id] || step.value || ''}
-                            onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
-                            onFocus={(e) => handleInputFocus(step.id, e)}
-                            onClick={(e) => handleInputClick(step.id, e)}
-                            onKeyUp={handleInputKeyUp}
-                          />
+                        {step.action === 'api_request' ? (
+                          <button 
+                            className="edit-api-step-button"
+                            onClick={() => handleEditApiStep(step)}
+                          >
+                            <FontAwesomeIcon icon={faEdit} /> Edit API Details
+                          </button>
+                        ) : (
+                          <div className="action-input-container">
+                            <input
+                              ref={el => inputRefs.current[step.id] = el}
+                              type="text"
+                              className="action-input"
+                              placeholder="Value"
+                              value={stepValues[step.id] || step.value || ''}
+                              onChange={(e) => handleValueChange(step.id, e.target.value, step.action)}
+                              onFocus={(e) => handleInputFocus(step.id, e)}
+                              onClick={(e) => handleInputClick(step.id, e)}
+                              onKeyUp={handleInputKeyUp}
+                            />
                           {showEnvVarsDropdown && activeInputStepId === step.id && selectedEnvironment && (
                             <div className="env-vars-dropdown" ref={envVarsDropdownRef}>
                               <div className="env-vars-dropdown-header">
@@ -2388,7 +2678,8 @@ const startStepResultsPolling = () => {
                               ))}
                             </div>
                           )}
-                        </div>
+                          </div>
+                        )}
                       </td>
                       <td className="step-actions-cell">
                         {(step.has_screenshot || stepsWithScreenshots[step.id]) && (
@@ -2428,7 +2719,7 @@ const startStepResultsPolling = () => {
                 </tr>
               </thead>
               <tbody>
-                {test_runs.map((run) => (
+                {localTestRuns.map((run) => (
                   <tr key={run.id}>
                     <td>{run.id}</td>
                     <td>{run.duration !== null ? run.duration.toFixed(2) : 'N/A'}</td>
@@ -2440,7 +2731,7 @@ const startStepResultsPolling = () => {
 
             <h3>Test Runs</h3>
             <div className="test-runs-list">
-              {test_runs.map((run) => (
+              {localTestRuns.map((run) => (
                 <div key={run.id} className={`test-run-item ${run.result.toLowerCase()}`}>
                   <div className="test-run-header" onClick={() => toggleRunDetails(run.id)}>
                     <span className="test-run-id">Run ID: {run.id}</span>
@@ -2494,6 +2785,11 @@ const startStepResultsPolling = () => {
                                       <td className="step-description">
                                         <div className="step-action-info">
                                           <strong>{stepResult.action}</strong>
+                                          {stepResult.actual_url && (
+                                            <div className="step-actual-url">
+                                              <strong>URL:</strong> {stepResult.method} {stepResult.actual_url}
+                                            </div>
+                                          )}
                                           {stepResult.element_path && (
                                             <div className="step-element-path">{stepResult.element_path}</div>
                                           )}
@@ -2501,7 +2797,22 @@ const startStepResultsPolling = () => {
                                             <div className="step-value">Value: {stepResult.value}</div>
                                           )}
                                         </div>
-                                        <div className="step-description-text">{stepResult.description}</div>
+                                        <div className="step-description-text">
+                                          {(() => {
+                                            try {
+                                              // Try to parse as JSON
+                                              const jsonData = JSON.parse(stepResult.description);
+                                              return (
+                                                <pre className="step-json-description">
+                                                  {JSON.stringify(jsonData, null, 2)}
+                                                </pre>
+                                              );
+                                            } catch (e) {
+                                              // If not JSON, display as regular text
+                                              return stepResult.description;
+                                            }
+                                          })()}
+                                        </div>
                                       </td>
                                       <td className="step-status">
                                         <span className={`status-indicator ${stepResult.status}`}>
@@ -2514,7 +2825,34 @@ const startStepResultsPolling = () => {
                                         {stepResult.error_message && (
                                           <div className="error-message">
                                             <FontAwesomeIcon icon={faExclamationTriangle} />
-                                            {stepResult.error_message}
+                                            {(() => {
+                                              const message = stepResult.error_message;
+                                              // Check if message contains "Response:" and try to format JSON
+                                              if (message.includes('Response:')) {
+                                                const parts = message.split('Response:');
+                                                const beforeResponse = parts[0];
+                                                const responseText = parts[1];
+                                                
+                                                try {
+                                                  const jsonMatch = responseText.match(/\{.*\}/s);
+                                                  if (jsonMatch) {
+                                                    const jsonData = JSON.parse(jsonMatch[0]);
+                                                    return (
+                                                      <div>
+                                                        <div>{beforeResponse}</div>
+                                                        <div><strong>Response:</strong></div>
+                                                        <pre className="response-json">
+                                                          {JSON.stringify(jsonData, null, 2)}
+                                                        </pre>
+                                                      </div>
+                                                    );
+                                                  }
+                                                } catch (e) {
+                                                  // If JSON parsing fails, display as-is
+                                                }
+                                              }
+                                              return message;
+                                            })()}
                                           </div>
                                         )}
                                       </td>
@@ -2583,6 +2921,95 @@ const startStepResultsPolling = () => {
             <div className="modal-actions">
               <button onClick={() => setShowRunConfirmModal(false)} className="modal-button cancel">Cancel</button>
               <button onClick={handleRunConfirm} className="modal-button confirm">Run Without Environment</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* API Step Editor Modal */}
+      {showApiStepEditor && (
+        <div className="modal-overlay">
+          <div className="modal-content api-step-editor-modal">
+            <h3>Edit API Request Step</h3>
+            <div className="form-group">
+              <label>HTTP Method:</label>
+              <select 
+                value={apiStepData.method} 
+                onChange={(e) => setApiStepData({...apiStepData, method: e.target.value})}
+              >
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="PATCH">PATCH</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Endpoint:</label>
+              <input 
+                type="text" 
+                value={apiStepData.endpoint} 
+                onChange={(e) => setApiStepData({...apiStepData, endpoint: e.target.value})}
+                placeholder="e.g., {{base_url}}/api/auth"
+              />
+            </div>
+            <div className="form-group">
+              <label>Headers (JSON):</label>
+              <textarea 
+                value={typeof apiStepData.headers === 'object' ? JSON.stringify(apiStepData.headers, null, 2) : apiStepData.headers} 
+                onChange={(e) => {
+                  try {
+                    const parsed = JSON.parse(e.target.value);
+                    setApiStepData({...apiStepData, headers: parsed});
+                  } catch (err) {
+                    // Allow invalid JSON while typing
+                    setApiStepData({...apiStepData, headers: e.target.value});
+                  }
+                }}
+                placeholder='{"Content-Type": "application/json", "Authorization": "Bearer {{access_token}}"}'
+                rows="4"
+              />
+              <small className="form-help-text">Include Authorization, Content-Type, and other headers as JSON</small>
+            </div>
+            <div className="form-group">
+              <label>Request Body (JSON):</label>
+              <textarea 
+                value={apiStepData.body} 
+                onChange={(e) => setApiStepData({...apiStepData, body: e.target.value})}
+                placeholder='{"key": "value"}'
+                rows="8"
+              />
+            </div>
+            <div className="form-group">
+              <label>Expected Status Code:</label>
+              <input 
+                type="number" 
+                value={apiStepData.expected_status} 
+                onChange={(e) => setApiStepData({...apiStepData, expected_status: e.target.value})}
+                placeholder="200"
+              />
+            </div>
+            <div className="form-group">
+              <label>Extract Variables (JSON):</label>
+              <textarea 
+                value={typeof apiStepData.extract_variables === 'object' ? JSON.stringify(apiStepData.extract_variables, null, 2) : apiStepData.extract_variables} 
+                onChange={(e) => {
+                  try {
+                    const parsed = JSON.parse(e.target.value);
+                    setApiStepData({...apiStepData, extract_variables: parsed});
+                  } catch (err) {
+                    // Allow invalid JSON while typing
+                    setApiStepData({...apiStepData, extract_variables: e.target.value});
+                  }
+                }}
+                placeholder='{"access_token": "$.token", "user_id": "$.user.id"}'
+                rows="4"
+              />
+              <small className="form-help-text">Use JSONPath notation to extract values from response (e.g., $.token, $.user.id)</small>
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => setShowApiStepEditor(false)} className="modal-button cancel">Cancel</button>
+              <button onClick={handleSaveApiStep} className="modal-button confirm">Save</button>
             </div>
           </div>
         </div>

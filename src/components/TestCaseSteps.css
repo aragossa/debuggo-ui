@@ -512,6 +512,27 @@
   font-size: var(--font-size-xl);
 }
 
+.test-type-badge-detail {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: white;
+  background-color: #666;
+  margin-bottom: 8px;
+  margin-top: 4px;
+}
+
+.test-type-badge-detail.ui {
+  background-color: #4caf50; /* Green for UI tests */
+}
+
+.test-type-badge-detail.api {
+  background-color: #2196f3; /* Blue for API tests */
+}
+
 .generation-duration {
   font-size: var(--font-size-sm);
   color: var(--gray-600);
@@ -997,6 +1018,14 @@
   color: #666;
   margin: 0 0 10px 0;
   line-height: 1.4;
+}
+
+.test-case-details .test-case-id {
+  color: #007bff;
+  font-size: 0.95em;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
 }
 
 .test-case-details .updated-at {
@@ -1653,6 +1682,82 @@
   box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
 }
 
+/* API Step Editor Modal */
+.api-step-editor-modal {
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.api-step-editor-modal h3 {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 1;
+  margin: -30px -30px 20px -30px;
+  padding: 30px 30px 20px 30px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.api-step-editor-modal .modal-actions {
+  position: sticky;
+  bottom: 0;
+  background-color: white;
+  z-index: 1;
+  margin: 20px -30px -30px -30px;
+  padding: 20px 30px 30px 30px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.api-step-editor-modal .form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  resize: vertical;
+}
+
+.api-step-editor-modal .form-group textarea:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
+}
+
+.api-step-editor-modal .form-help-text {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Edit API Step Button */
+.edit-api-step-button {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+
+.edit-api-step-button:hover {
+  background: #357abd;
+}
+
+.edit-api-step-button svg {
+  font-size: 12px;
+}
+
 /* Media query for responsiveness */
 @media (max-width: 768px) {
   .test-steps-flow {
@@ -2160,4 +2265,125 @@
 .execution-status.done {
   background-color: #d4edda;
   color: #155724;
+}
+
+/* Actual URL display in test results */
+.step-actual-url {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #f0f7ff;
+  border-left: 3px solid #0066cc;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #0066cc;
+  word-break: break-all;
+}
+
+.step-actual-url strong {
+  color: #004080;
+  margin-right: 8px;
+}
+
+.step-element-path {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #666;
+  font-family: 'Courier New', monospace;
+}
+
+.step-value {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #666;
+}
+
+.step-description-text {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.step-json-description {
+  margin: 8px 0 0 0;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 12px;
+  color: #212529;
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.6;
+}
+
+/* Step status table cell */
+.step-status {
+  max-width: 400px;
+  overflow: hidden;
+}
+
+/* Error message in test results table */
+.step-status .error-message {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #fff3cd;
+  border-left: 3px solid #ffc107;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #856404;
+  text-align: left;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow: hidden;
+}
+
+/* Passed step - light green background */
+.step-result-row.passed .error-message {
+  background-color: #d4edda;
+  border-left-color: #28a745;
+  color: #155724;
+}
+
+.step-result-row.passed .error-message svg {
+  color: #28a745;
+}
+
+/* Failed step - light red background */
+.step-result-row.failed .error-message {
+  background-color: #f8d7da;
+  border-left-color: #dc3545;
+  color: #721c24;
+}
+
+.step-result-row.failed .error-message svg {
+  color: #dc3545;
+}
+
+.step-status .error-message svg {
+  margin-right: 6px;
+  color: #ff9800;
+}
+
+/* Response JSON in error messages */
+.response-json {
+  margin: 8px 0 0 0;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 11px;
+  color: #212529;
+  overflow-x: auto;
+  overflow-y: auto;
+  white-space: pre;
+  line-height: 1.5;
+  max-height: 300px;
+  max-width: 100%;
+  box-sizing: border-box;
 }

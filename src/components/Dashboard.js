@@ -5,8 +5,11 @@ import TestExecutionsTree from './TestExecutionsTree';
 import UploadPopup from './UploadPopup';
 import TestResultPopup from './TestResultPopup';
 import Environments from './Environments';
+import ApiSchemaUpload from './ApiSchemaUpload';
+import ConflictNotifications from './ConflictNotifications';
+import ConflictPopup from './ConflictPopup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faFlask, faCog, faFileImport, faChevronDown, faChevronUp, faFolderOpen, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faFlask, faCog, faFileImport, faChevronDown, faChevronUp, faFolderOpen, faPlay, faFileCode, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -318,6 +321,18 @@ const Dashboard = () => {
           >
             <FontAwesomeIcon icon={faCog} /> Environments
           </button>
+          <button 
+            className={`tab-button ${activeTab === 'apiSchemas' ? 'active' : ''}`}
+            onClick={() => setActiveTab('apiSchemas')}
+          >
+            <FontAwesomeIcon icon={faFileCode} /> API Schemas
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'conflicts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('conflicts')}
+          >
+            <FontAwesomeIcon icon={faExclamationTriangle} /> Conflicts
+          </button>
         </div>
         
         {activeTab === 'testCases' ? (
@@ -346,6 +361,7 @@ const Dashboard = () => {
                   testCaseId={selectedTestId}
                   test_name={testCase.test_name}
                   test_description={testCase.test_description}
+                  test_type={testCase.test_type}
                   updated_at={testCase.updated_at}
                   steps_generation_start_time={testCase.steps_generation_start_time}
                   steps_generation_end_time={testCase.steps_generation_end_time}
@@ -375,11 +391,19 @@ const Dashboard = () => {
           <div className="test-executions-tab-container">
             <TestExecutionsTree selectedProjectId={selectedProject} />
           </div>
-        ) : (
+        ) : activeTab === 'environments' ? (
           <div className="environments-tab-container">
             <Environments projectId={selectedProject} />
           </div>
-        )}
+        ) : activeTab === 'apiSchemas' ? (
+          <div className="api-schemas-tab-container">
+            <ApiSchemaUpload projectId={selectedProject} />
+          </div>
+        ) : activeTab === 'conflicts' ? (
+          <div className="conflicts-tab-container">
+            <ConflictNotifications />
+          </div>
+        ) : null}
       </div>
       
       {showUploadPopup && (
@@ -395,6 +419,9 @@ const Dashboard = () => {
           onClose={() => setTestResult(null)}
         />
       )}
+      
+      {/* Conflict notification popup - appears automatically when conflicts are detected */}
+      <ConflictPopup />
     </div>
   );
 };

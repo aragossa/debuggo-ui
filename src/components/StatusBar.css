@@ -6,7 +6,7 @@
   background: linear-gradient(135deg, #f8f9fa, #e9ecef);
   border-top: 2px solid #dee2e6;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  z-index: 10001;
   backdrop-filter: blur(10px);
 }
 
@@ -66,6 +66,28 @@
   font-size: 13px;
   color: #6c757d;
   min-width: 0;
+}
+
+.running-test-summary.generating {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid #ffc107;
+}
+
+.activity-icon {
+  font-size: 12px;
+  color: #2196f3;
+}
+
+.running-test-summary.generating .activity-icon {
+  color: #ff9800;
+}
+
+.generation-label {
+  color: #856404;
+  font-size: 12px;
+  font-style: italic;
 }
 
 .test-name {

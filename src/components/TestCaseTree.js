@@ -4,7 +4,16 @@ import { faTrash, faEdit, faFolderPlus, faPlus, faExchangeAlt, faMinus } from '@
 import './TestCaseTree.css';
 
 const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCaseDeleted, projectId }) => {
-  const [expandedNodes, setExpandedNodes] = useState({});
+  // Load expanded state from localStorage on mount
+  const [expandedNodes, setExpandedNodes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('testTreeExpandedNodes');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      console.error('Error loading expanded nodes from localStorage:', e);
+      return {};
+    }
+  });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [testCaseToDelete, setTestCaseToDelete] = useState(null);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
@@ -25,17 +34,35 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     name: '',
     description: '',
     parent_id: null,
-    project_id: projectId !== 'all' ? projectId : null
+    project_id: projectId !== 'all' ? projectId : null,
+    test_type: 'ui'  // Default to 'ui' type
   });
   const API_URL = process.env.REACT_APP_API_URL;
 
-  // By default, all nodes are collapsed when treeData changes
+  // Save expanded state to localStorage whenever it changes
   React.useEffect(() => {
-    if (treeData && treeData.length > 0) {
-      // Default is to have all nodes collapsed
-      setExpandedNodes({});
+    try {
+      localStorage.setItem('testTreeExpandedNodes', JSON.stringify(expandedNodes));
+    } catch (e) {
+      console.error('Error saving expanded nodes to localStorage:', e);
     }
-  }, [treeData]);
+  }, [expandedNodes]);
+
+  // Preserve expanded state when treeData changes
+  // Only reset on initial load (when expandedNodes is empty and treeData exists)
+  React.useEffect(() => {
+    if (treeData && treeData.length > 0 && Object.keys(expandedNodes).length === 0) {
+      // On initial load, expand type_group nodes by default
+      const initialExpanded = {};
+      treeData.forEach(node => {
+        if (node.type === 'type_group') {
+          initialExpanded[node.id] = true;
+        }
+      });
+      setExpandedNodes(initialExpanded);
+    }
+    // Don't reset expandedNodes when treeData changes - preserve user's expanded state
+  }, [treeData]); // Removed expandedNodes from dependencies to avoid infinite loop
 
   const toggleNode = (nodeId) => {
     setExpandedNodes(prev => ({
@@ -51,7 +78,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     const expandNodes = (nodes) => {
       if (!Array.isArray(nodes)) return;
       nodes.forEach(node => {
-        if (node.type === 'root' || node.type === 'group') {
+        if (node.type === 'root' || node.type === 'group' || node.type === 'type_group') {
           allExpanded[node.id] = true;
         }
         if (node.children && node.children.length > 0) {
@@ -411,7 +438,8 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       name: '',
       description: '',
       parent_id: parentId,
-      project_id: projectId !== 'all' ? projectId : null
+      project_id: projectId !== 'all' ? projectId : null,
+      test_type: 'ui'  // Default to 'ui' when creating new test case
     });
     
     // Fetch available groups for the dropdown
@@ -523,7 +551,8 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
         name: newTestCase.name.trim(),
         description: newTestCase.description.trim(),
         parent_id: newTestCase.parent_id ? parseInt(newTestCase.parent_id) : null,
-        project_id: newTestCase.project_id
+        project_id: newTestCase.project_id,
+        test_type: newTestCase.test_type || 'ui'  // Include test_type, default to 'ui'
       };
       
       const response = await fetch(`${API_URL}/api/test_cases`, {
@@ -567,8 +596,8 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
             if (hasChildren) {
               toggleNode(node.id);
             }
-            // Only trigger click handler for test nodes
-            if (node.type === 'test') {
+            // Only trigger click handler for test nodes (including API tests)
+            if (node.type === 'test' || node.type === 'api_test') {
               onNodeClick(node.id);
             }
           }}
@@ -578,11 +607,19 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
               {isExpanded ? '▼' : '▶'}
             </span>
           )}
-          <span className="node-name">{node.name}</span>
+          <div className="node-content-text">
+            {/* Show test type for test cases */}
+            {(node.type === 'test' || node.type === 'api_test') && node.test_type && (
+              <div className={`test-type-badge ${node.test_type}`}>
+                {node.test_type.toUpperCase()}
+              </div>
+            )}
+            <span className="node-name">{node.name}</span>
+          </div>
           
           <div className="node-actions">
             {/* Group actions */}
-            {node.type === 'group' && (
+            {(node.type === 'group' || node.type === 'api_group') && (
               <>
                 <button 
                   className="tree-action-button"
@@ -611,8 +648,39 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
               </>
             )}
             
+            {/* Type group actions */}
+            {node.type === 'type_group' && (
+              <>
+                <button 
+                  className="tree-action-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setNewTestCase(prev => ({ 
+                      ...prev, 
+                      parent_id: null, 
+                      test_type: node.test_type 
+                    }));
+                    handleCreateTestCaseClick();
+                  }}
+                  title={`Add ${node.test_type.toUpperCase()} test case`}
+                >
+                  <FontAwesomeIcon icon={faPlus} />
+                </button>
+                <button 
+                  className="tree-action-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCreateGroupClick(null, node.test_type);
+                  }}
+                  title={`Add ${node.test_type.toUpperCase()} test group`}
+                >
+                  <FontAwesomeIcon icon={faFolderPlus} />
+                </button>
+              </>
+            )}
+            
             {/* Test case actions */}
-            {node.type === 'test' && (
+            {(node.type === 'test' || node.type === 'api_test') && (
               <>
                 <button 
                   className="tree-action-button"
@@ -859,6 +927,16 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                 ))}
               </select>
             </div>
+            <div className="form-group">
+              <label>Test Type:</label>
+              <select 
+                value={testCaseToEdit.test_type || 'ui'}
+                onChange={(e) => setTestCaseToEdit({...testCaseToEdit, test_type: e.target.value})}
+              >
+                <option value="ui">UI Test</option>
+                <option value="api">API Test</option>
+              </select>
+            </div>
             <div className="modal-actions">
               <button onClick={() => setShowEditTestCaseModal(false)} className="modal-button cancel">Cancel</button>
               <button onClick={handleConfirmEditTestCase} className="modal-button update">Update</button>
@@ -922,8 +1000,29 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                 <div className="no-projects-warning">No projects available. Please create a project first.</div>
               )}
             </div>
+            <div className="form-group">
+              <label>Test Type: <span className="required">*</span></label>
+              <select
+                value={newTestCase.test_type}
+                onChange={(e) => setNewTestCase(prev => ({ ...prev, test_type: e.target.value }))}
+                required
+              >
+                <option value="ui">UI Test</option>
+                <option value="api">API Test</option>
+              </select>
+            </div>
             <div className="modal-actions">
-              <button onClick={() => setShowCreateTestCaseModal(false)} className="modal-button cancel">Cancel</button>
+              <button onClick={() => {
+                setShowCreateTestCaseModal(false);
+                // Reset form when canceled
+                setNewTestCase({
+                  name: '',
+                  description: '',
+                  parent_id: null,
+                  project_id: projectId !== 'all' ? projectId : null,
+                  test_type: 'ui'
+                });
+              }} className="modal-button cancel">Cancel</button>
               <button 
                 onClick={handleConfirmCreateTestCase} 
                 className="modal-button create"
