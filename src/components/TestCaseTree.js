@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faEdit, faFolderPlus, faPlus, faExchangeAlt, faMinus } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faEdit, faFolderPlus, faPlus, faExchangeAlt, faMinus, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 import './TestCaseTree.css';
 
-const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCaseDeleted, projectId }) => {
+const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCaseDeleted, projectId, onToggleVisibility }) => {
   // Load expanded state from localStorage on mount
   const [expandedNodes, setExpandedNodes] = useState(() => {
     try {
@@ -767,7 +767,18 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     <div className="test-case-tree-container">
       <div className="test-case-tree-header">
         <div className="header-title-section">
-          <h3>Test Cases</h3>
+          <div className="title-with-hide">
+            <h3>Test Cases</h3>
+            {onToggleVisibility && (
+              <button 
+                className="tree-hide-btn"
+                onClick={() => onToggleVisibility(false)}
+                title="Hide Test Cases Tree"
+              >
+                <FontAwesomeIcon icon={faChevronLeft} />
+              </button>
+            )}
+          </div>
           <div className="title-buttons">
             <button 
               className="create-group-button"

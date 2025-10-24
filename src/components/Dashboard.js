@@ -34,6 +34,7 @@ const Dashboard = () => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [activeTab, setActiveTab] = useState('testCases');
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+  const [isTreeVisible, setIsTreeVisible] = useState(true);
   const projectDropdownRef = useRef(null);
 
   useEffect(() => {
@@ -337,23 +338,31 @@ const Dashboard = () => {
         
         {activeTab === 'testCases' ? (
           <div className="dashboard-main">
-            <div className="tree-container">
-              {treeError && treeError !== 'Project not found' ? (
-                <div className="error-message">
-                  {treeError}
-                </div>
-              ) : (
-                <TestCaseTree 
-                  treeData={treeData} 
-                  onNodeClick={handleNodeClick} 
-                  selectedTestId={selectedTestId}
-                  error={treeError}
-                  onTestCaseDeleted={handleTestCaseDeleted}
-                  projectId={selectedProject}
-                />
+            {isTreeVisible && (
+              <div className="tree-container">
+                {treeError && treeError !== 'Project not found' ? (
+                  <div className="error-message">
+                    {treeError}
+                  </div>
+                ) : (
+                  <TestCaseTree 
+                    treeData={treeData} 
+                    onNodeClick={handleNodeClick} 
+                    selectedTestId={selectedTestId}
+                    error={treeError}
+                    onTestCaseDeleted={handleTestCaseDeleted}
+                    projectId={selectedProject}
+                    onToggleVisibility={setIsTreeVisible}
+                  />
+                )}
+              </div>
+            )}
+            <div className={`content-container ${!isTreeVisible ? 'full-width' : ''}`}>
+              {!isTreeVisible && (
+                <button className="show-tree-btn" onClick={() => setIsTreeVisible(true)}>
+                  Show Test Cases
+                </button>
               )}
-            </div>
-            <div className="content-container">
               {testCase ? (
                 <TestCaseSteps
                   test_steps={testCase.test_steps}

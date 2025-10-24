@@ -21,9 +21,43 @@
   gap: 8px;
 }
 
+.title-with-hide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .title-buttons {
   display: flex;
   gap: 10px;
+}
+
+.tree-hide-btn {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  min-width: 32px;
+  height: 28px;
+}
+
+.tree-hide-btn:hover {
+  background: #e9ecef;
+  color: #495057;
+  border-color: #adb5bd;
+}
+
+.tree-hide-btn:active {
+  transform: translateY(1px);
+  background: #dee2e6;
 }
 
 .tree-actions {
@@ -36,6 +70,7 @@
   margin: 0;
   font-size: 1.1rem;
   color: #333;
+  flex: 1;
 }
 
 .create-group-button,

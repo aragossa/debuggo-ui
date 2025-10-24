@@ -254,6 +254,34 @@
   padding: 20px;
 }
 
+.content-container.full-width {
+  width: 100%;
+  flex: 1;
+}
+
+.show-tree-btn {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md);
+  padding: 8px 16px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.show-tree-btn:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
 .test-executions-tab-container {
   flex: 1 !important;
   padding: 0 !important;
@@ -420,6 +448,10 @@
     max-height: 300px;
     margin-bottom: 1rem;
   }
+  
+  .content-container.full-width {
+    width: 100%;
+  }
 
   .dashboard-header {
     flex-direction: column;
@@ -454,6 +486,11 @@
     padding: 1rem;
     margin: 0.5rem;
   }
+}
+
+/* Tree hide/show animation */
+.tree-container {
+  transition: all 0.3s ease;
 }
 
 /* Animation for tab transitions */
