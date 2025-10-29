@@ -1581,6 +1581,54 @@
 }
 
 
+/* Preconditions checkbox styles */
+.preconditions-checkbox-container {
+  display: flex;
+  align-items: center;
+  margin: 0 12px;
+  padding: 8px 12px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.preconditions-checkbox-container:hover {
+  background: rgba(255, 193, 7, 0.15);
+  border-color: rgba(255, 193, 7, 0.5);
+}
+
+.preconditions-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #856404;
+  margin: 0;
+}
+
+.preconditions-checkbox input[type="checkbox"] {
+  margin-right: 8px;
+  cursor: pointer;
+  accent-color: #ffc107;
+}
+
+.preconditions-checkbox input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.preconditions-label {
+  user-select: none;
+  cursor: pointer;
+}
+
+.preconditions-checkbox input[type="checkbox"]:disabled + .preconditions-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 /* Common button styles for action buttons */
 .action-button,
 .add-step-button,
@@ -2386,4 +2434,292 @@
   max-height: 300px;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* API Steps Styles */
+.api-steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0;
+}
+
+.api-step-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.api-step-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.api-step-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+}
+
+.api-step-number {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.api-method {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.api-method-get { background: #28a745; }
+.api-method-post { background: #007bff; }
+.api-method-put { background: #ffc107; color: #000; }
+.api-method-patch { background: #17a2b8; }
+.api-method-delete { background: #dc3545; }
+
+.api-endpoint {
+  flex: 1;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.api-step-details {
+  padding: 16px;
+}
+
+.api-section {
+  margin-bottom: 12px;
+}
+
+.api-section:last-child {
+  margin-bottom: 0;
+}
+
+.api-section strong {
+  display: block;
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.api-json {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 0;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 12px;
+  color: #212529;
+  overflow-x: auto;
+  line-height: 1.4;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.api-step-actions {
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.edit-api-step-btn,
+.delete-step-btn {
+  padding: 6px 12px;
+  border: 1px solid #dee2e6;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.edit-api-step-btn:hover {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.delete-step-btn:hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+/* Test Dependencies Styles */
+.test-dependencies-section {
+  margin: 15px 0;
+  padding: 15px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.dependencies-group {
+  margin-bottom: 15px;
+}
+
+.dependencies-group:last-child {
+  margin-bottom: 0;
+}
+
+.dependencies-title {
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dependencies-title svg {
+  color: #6c757d;
+}
+
+.dependencies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dependency-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.dependency-item:hover {
+  background: #f8f9fa;
+}
+
+.dependency-order {
+  background: #6c757d;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  min-width: 25px;
+  text-align: center;
+}
+
+.dependency-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+  max-width: 300px;
+  flex-shrink: 0;
+}
+
+.dependency-name {
+  font-weight: 600;
+  color: #343a40;
+}
+
+.dependency-type-badge {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.dependency-type-badge.api {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.dependency-type-badge.ui {
+  background: #d4edda;
+  color: #155724;
+}
+
+.dependency-description {
+  flex: 1;
+  color: #6c757d;
+  font-size: 0.9rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  max-width: 100%;
+  line-height: 1.4;
+}
+
+.dependency-delete-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dependency-delete-btn:hover {
+  background: #c82333;
+  transform: scale(1.05);
+}
+
+.dependency-delete-btn:active {
+  transform: scale(0.95);
+}
+
+/* Responsive design for dependencies */
+@media (max-width: 768px) {
+  .dependency-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .dependency-details {
+    min-width: unset;
+    width: 100%;
+  }
+  
+  .dependency-description {
+    white-space: normal;
+  }
 }

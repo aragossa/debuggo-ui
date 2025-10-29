@@ -134,7 +134,9 @@ const StatusBar = () => {
               <div key={`gen-${test.test_case_id || index}`} className="running-test-summary generating">
                 <FontAwesomeIcon icon={faCog} className="activity-icon spinning" />
                 <span className="test-name">{test.test_case_name}</span>
-                <span className="generation-label">Generating API tests...</span>
+                <span className="generation-label">
+                  {test.activity_type === 'ui_generation' ? 'Generating UI test steps...' : 'Generating API tests...'}
+                </span>
               </div>
             ))}
           </div>

@@ -57,6 +57,7 @@ const TestCaseSteps = ({
   test_name, 
   test_description, 
   test_type,
+  requires_preconditions,
   updated_at, 
   projectId,
   onTestCaseUpdate,
@@ -169,7 +170,13 @@ const TestCaseSteps = ({
   const actionDropdownRefs = useRef({});
   const [selectedAIModel, setSelectedAIModel] = useState(null);
   const [activeTab, setActiveTab] = useState('description');
+  const [forceRequirePreconditions, setForceRequirePreconditions] = useState(requires_preconditions !== undefined ? requires_preconditions : true);
   const envVarsDropdownRef = useRef(null);
+  const [dependencies, setDependencies] = useState({
+    preconditions: [],
+    teardowns: []
+  });
+  const [loadingDependencies, setLoadingDependencies] = useState(false);
   const inputRefs = useRef({});
   const locatorTooltipRef = useRef(null);
   const environmentDropdownRef = React.useRef(null);
@@ -639,6 +646,136 @@ const TestCaseSteps = ({
     setCurrentTestDescription(test_description || '');
   }, [test_name, test_description]);
 
+  // Update forceRequirePreconditions when prop changes
+  useEffect(() => {
+    setForceRequirePreconditions(requires_preconditions !== undefined ? requires_preconditions : true);
+  }, [requires_preconditions]);
+
+  // Delete a dependency
+  const deleteDependency = async (dependencyId) => {
+    const token = localStorage.getItem('token');
+    const authHeaders = {
+      'Authorization': `Bearer ${token}`
+    };
+
+    try {
+      const response = await fetch(`/api/dependencies/${dependencyId}`, {
+        method: 'DELETE',
+        headers: authHeaders
+      });
+
+      if (response.ok) {
+        console.log('✅ Dependency deleted successfully');
+        // Refresh dependencies after deletion
+        fetchDependencies();
+      } else {
+        console.error('❌ Failed to delete dependency:', response.status);
+        alert('Failed to delete dependency. Please try again.');
+      }
+    } catch (error) {
+      console.error('❌ Error deleting dependency:', error);
+      alert('Error deleting dependency. Please try again.');
+    }
+  };
+
+  // Fetch test dependencies (preconditions and teardowns)
+  const fetchDependencies = async () => {
+    if (!testCaseId) return;
+    
+    console.log('🔍 Fetching dependencies for test case:', testCaseId);
+    setLoadingDependencies(true);
+    const token = localStorage.getItem('token');
+    console.log('🔑 Auth token exists:', !!token);
+    
+    const authHeaders = {
+      'Authorization': `Bearer ${token}`
+    };
+
+    try {
+      // Fetch preconditions
+      console.log('📡 Fetching preconditions...');
+      const preconditionsResponse = await fetch(`/api/test-cases/${testCaseId}/dependencies?dependency_type=precondition`, {
+        headers: authHeaders
+      });
+      console.log('📥 Preconditions response:', preconditionsResponse.status, preconditionsResponse.ok);
+      
+      // Fetch teardowns
+      console.log('📡 Fetching teardowns...');
+      const teardownsResponse = await fetch(`/api/test-cases/${testCaseId}/dependencies?dependency_type=teardown`, {
+        headers: authHeaders
+      });
+      console.log('📥 Teardowns response:', teardownsResponse.status, teardownsResponse.ok);
+      
+      // Handle responses safely
+      let preconditionsData = { dependencies: [] };
+      let teardownsData = { dependencies: [] };
+      
+      // Handle preconditions response
+      if (preconditionsResponse.ok) {
+        const contentType = preconditionsResponse.headers.get('content-type');
+        console.log('📋 Preconditions content-type:', contentType);
+        
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            preconditionsData = await preconditionsResponse.json();
+          } catch (jsonError) {
+            console.error('❌ Failed to parse preconditions JSON:', jsonError);
+          }
+        } else {
+          console.error('❌ Preconditions response is not JSON, content-type:', contentType);
+          const textResponse = await preconditionsResponse.text();
+          console.error('📄 Actual response was:', textResponse.substring(0, 200));
+        }
+      } else {
+        console.error('❌ Preconditions API failed:', preconditionsResponse.status);
+        const errorText = await preconditionsResponse.text();
+        console.error('📄 Error response:', errorText.substring(0, 200));
+      }
+      
+      // Handle teardowns response
+      if (teardownsResponse.ok) {
+        const contentType = teardownsResponse.headers.get('content-type');
+        console.log('📋 Teardowns content-type:', contentType);
+        
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            teardownsData = await teardownsResponse.json();
+          } catch (jsonError) {
+            console.error('❌ Failed to parse teardowns JSON:', jsonError);
+          }
+        } else {
+          console.error('❌ Teardowns response is not JSON, content-type:', contentType);
+          const textResponse = await teardownsResponse.text();
+          console.error('📄 Actual response was:', textResponse.substring(0, 200));
+        }
+      } else {
+        console.error('❌ Teardowns API failed:', teardownsResponse.status);
+        const errorText = await teardownsResponse.text();
+        console.error('📄 Error response:', errorText.substring(0, 200));
+      }
+      
+      console.log('📋 Preconditions data:', preconditionsData);
+      console.log('📋 Teardowns data:', teardownsData);
+      
+      setDependencies({
+        preconditions: preconditionsData.dependencies || [],
+        teardowns: teardownsData.dependencies || []
+      });
+      
+      console.log('✅ Dependencies set successfully');
+    } catch (error) {
+      console.error('❌ Error fetching dependencies:', error);
+      setDependencies({ preconditions: [], teardowns: [] });
+    } finally {
+      setLoadingDependencies(false);
+    }
+  };
+
+  // Fetch dependencies when testCaseId changes
+  useEffect(() => {
+    fetchDependencies();
+  }, [testCaseId]);
+
   useEffect(() => {
     // This effect runs when the component mounts or when testCaseId changes
     console.log("Test case ID changed to:", testCaseId);
@@ -1054,6 +1191,38 @@ const startStepResultsPolling = () => {
     }
   };
 
+  const updateRequiresPreconditions = async (newValue) => {
+    try {
+      const authHeaders = getAuthHeaders();
+      const response = await fetch(`${API_URL}/api/test_cases/${testCaseId}`, {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify({
+          name: currentTestName,
+          description: currentTestDescription,
+          requires_preconditions: newValue
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update requires_preconditions');
+      }
+
+      const data = await response.json();
+      
+      // Update parent component
+      if (typeof onTestCaseUpdate === 'function') {
+        onTestCaseUpdate(data.name, data.description, data.updated_at, data.requires_preconditions);
+      }
+
+      console.log('Successfully updated requires_preconditions to:', newValue);
+    } catch (error) {
+      console.error('Error updating requires_preconditions:', error);
+      // Revert the checkbox if the save failed
+      setForceRequirePreconditions(!newValue);
+    }
+  };
+
   const toggleRunDetails = (runId) => {
     setExpandedRuns((prevState) => {
       const newState = {
@@ -1420,6 +1589,7 @@ const startStepResultsPolling = () => {
   const generateSteps = async (confirm) => {
     if (!testCaseId || isGeneratingSteps || !isProjectSelected || !selectedEnvironment) return;
     
+    console.log('generateSteps called with forceRequirePreconditions:', forceRequirePreconditions, 'test_type:', test_type);
     setIsGeneratingSteps(true);
     
     // Add this test case to the generating list
@@ -1438,8 +1608,24 @@ const startStepResultsPolling = () => {
         endpoint = `${API_URL}/api/test-cases/${testCaseId}/generate-api-steps`;
         // Send environment_id so backend uses the selected environment
         requestBody.environment_id = parseInt(selectedEnvironment);
+      } else if (test_type === 'ui' && forceRequirePreconditions) {
+        // Use combined UI+API generation endpoint when preconditions are forced
+        console.log('Using combined generation endpoint due to forceRequirePreconditions:', forceRequirePreconditions);
+        endpoint = `${API_URL}/api/test-cases/${testCaseId}/generate-combined-steps`;
+        requestBody.environment_id = parseInt(selectedEnvironment);
+        requestBody.force_preconditions = true;
+        
+        // If projectId exists and is not 'all', add it to the request body
+        if (projectId && projectId !== 'all') {
+          requestBody.project_id = projectId;
+        }
+        
+        // If AI model is selected, add it to the request body
+        if (selectedAIModel) {
+          requestBody.ai_model_id = selectedAIModel;
+        }
       } else {
-        // Use UI test endpoint
+        // Use regular UI test endpoint
         endpoint = confirm 
           ? `${API_URL}/api/confirm_generate_steps/${testCaseId}` 
           : `${API_URL}/api/generate_steps/${testCaseId}`;
@@ -1473,8 +1659,8 @@ const startStepResultsPolling = () => {
       
       const result = await response.json();
       
-      // For API tests, steps are generated asynchronously via Kafka, so poll for real-time updates
-      if (test_type === 'api' || test_type === 'api_test') {
+      // For API tests and combined generation, steps are generated asynchronously via Kafka, so poll for real-time updates
+      if (test_type === 'api' || test_type === 'api_test' || result.mode === 'combined') {
         let previousStepCount = 0;
         
         // Start polling to check for new steps in real-time using generation status endpoint
@@ -2292,13 +2478,12 @@ const startStepResultsPolling = () => {
           )}
           <p className="test-case-id">Test Case ID: {testCaseId}</p>
           <p className="test-description">{currentTestDescription}</p>
+          
           <p className="updated-at">Last updated: {formatDate(updated_at)}</p>
           {generationDuration && (
             <p className="generation-duration">Steps generation time: <span className="duration-value">{generationDuration}</span></p>
           )}
         </div>
-        
-
         
         <div className={`test-steps-actions ${isRunning ? 'running' : ''}`}>
 
@@ -2310,6 +2495,24 @@ const startStepResultsPolling = () => {
           >
             <FontAwesomeIcon icon={faPlus} /> Add Step
           </button>
+          
+          {test_type === 'ui' && (
+            <div className="preconditions-checkbox-container">
+              <label className="preconditions-checkbox">
+                <input
+                  type="checkbox"
+                  checked={forceRequirePreconditions}
+                  onChange={(e) => {
+                    console.log('Preconditions checkbox clicked:', e.target.checked);
+                    setForceRequirePreconditions(e.target.checked);
+                    updateRequiresPreconditions(e.target.checked);
+                  }}
+                  disabled={isGeneratingSteps || isRunning}
+                />
+                <span className="preconditions-label">Requires API preconditions</span>
+              </label>
+            </div>
+          )}
           
           <div className="generate-button-container">
             <button 
@@ -2453,6 +2656,69 @@ const startStepResultsPolling = () => {
         />
       </div>
 
+      {/* Test Dependencies Section - Between header and tabs */}
+      {(dependencies.preconditions.length > 0 || dependencies.teardowns.length > 0) && (
+        <div className="test-dependencies-section">
+          {dependencies.preconditions.length > 0 && (
+            <div className="dependencies-group">
+              <h4 className="dependencies-title">
+                <FontAwesomeIcon icon={faSignInAlt} /> Preconditions ({dependencies.preconditions.length})
+              </h4>
+              <div className="dependencies-list">
+                {dependencies.preconditions.map((dep, index) => (
+                  <div key={dep.dependency_id} className="dependency-item">
+                    <span className="dependency-order">#{dep.execution_order}</span>
+                    <div className="dependency-details">
+                      <span className="dependency-name">{dep.prerequisite_name}</span>
+                      <span className={`dependency-type-badge ${dep.prerequisite_type}`}>
+                        {dep.prerequisite_type?.toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="dependency-description">{dep.prerequisite_description}</span>
+                    <button 
+                      className="dependency-delete-btn"
+                      onClick={() => deleteDependency(dep.dependency_id)}
+                      title="Remove this precondition"
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {dependencies.teardowns.length > 0 && (
+            <div className="dependencies-group">
+              <h4 className="dependencies-title">
+                <FontAwesomeIcon icon={faSignInAlt} /> Teardown ({dependencies.teardowns.length})
+              </h4>
+              <div className="dependencies-list">
+                {dependencies.teardowns.map((dep, index) => (
+                  <div key={dep.dependency_id} className="dependency-item">
+                    <span className="dependency-order">#{dep.execution_order}</span>
+                    <div className="dependency-details">
+                      <span className="dependency-name">{dep.prerequisite_name}</span>
+                      <span className={`dependency-type-badge ${dep.prerequisite_type}`}>
+                        {dep.prerequisite_type?.toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="dependency-description">{dep.prerequisite_description}</span>
+                    <button 
+                      className="dependency-delete-btn"
+                      onClick={() => deleteDependency(dep.dependency_id)}
+                      title="Remove this teardown"
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Tab Navigation */}
       <div className="tab-navigation">
         <button 
@@ -2508,19 +2774,86 @@ const startStepResultsPolling = () => {
             )}
 
             <div className="test-steps-table-container">
-              <table className="test-steps-table">
-                <thead>
-                  <tr>
-                    <th className="drag-handle-column"></th>
-                    <th className="step-description-column">Description</th>
-                    <th className="step-action-column">Action</th>
-                    <th className="step-locator-column">Element Locator</th>
-                    <th className="step-value-column">Value</th>
-                    <th className="step-actions-column">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {steps && steps.map((step) => (
+              {test_type === 'api' ? (
+                // API Test Steps Display
+                <div className="api-steps-container">
+                  {steps && steps.map((step, index) => {
+                    let stepData;
+                    try {
+                      stepData = JSON.parse(step.description);
+                    } catch (e) {
+                      stepData = { method: 'Unknown', endpoint: step.description };
+                    }
+                    
+                    return (
+                      <div key={step.id} className="api-step-card">
+                        <div className="api-step-header">
+                          <span className="api-step-number">Step {index + 1}</span>
+                          <span className={`api-method api-method-${stepData.method?.toLowerCase()}`}>
+                            {stepData.method || 'API'}
+                          </span>
+                          <span className="api-endpoint">{stepData.endpoint}</span>
+                        </div>
+                        <div className="api-step-details">
+                          {stepData.headers && (
+                            <div className="api-section">
+                              <strong>Headers:</strong>
+                              <pre className="api-json">{JSON.stringify(stepData.headers, null, 2)}</pre>
+                            </div>
+                          )}
+                          {stepData.body && (
+                            <div className="api-section">
+                              <strong>Body:</strong>
+                              <pre className="api-json">{JSON.stringify(stepData.body, null, 2)}</pre>
+                            </div>
+                          )}
+                          {stepData.expected_status && (
+                            <div className="api-section">
+                              <strong>Expected Status:</strong> {stepData.expected_status}
+                            </div>
+                          )}
+                          {stepData.extract_variables && Object.keys(stepData.extract_variables).length > 0 && (
+                            <div className="api-section">
+                              <strong>Extract Variables:</strong>
+                              <pre className="api-json">{JSON.stringify(stepData.extract_variables, null, 2)}</pre>
+                            </div>
+                          )}
+                        </div>
+                        <div className="api-step-actions">
+                          <button 
+                            className="edit-api-step-btn"
+                            onClick={() => handleEditApiStep(step)}
+                            title="Edit API Step"
+                          >
+                            <FontAwesomeIcon icon={faEdit} />
+                          </button>
+                          <button 
+                            className="delete-step-btn"
+                            onClick={() => handleDeleteStepClick(step)}
+                            title="Delete Step"
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                // UI Test Steps Display (existing table)
+                <table className="test-steps-table">
+                  <thead>
+                    <tr>
+                      <th className="drag-handle-column"></th>
+                      <th className="step-description-column">Description</th>
+                      <th className="step-action-column">Action</th>
+                      <th className="step-locator-column">Element Locator</th>
+                      <th className="step-value-column">Value</th>
+                      <th className="step-actions-column">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {steps && steps.map((step) => (
                     <tr
                       key={step.id}
                       className="test-step-row"
@@ -2700,9 +3033,10 @@ const startStepResultsPolling = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         )}

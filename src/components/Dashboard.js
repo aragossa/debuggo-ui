@@ -371,16 +371,18 @@ const Dashboard = () => {
                   test_name={testCase.test_name}
                   test_description={testCase.test_description}
                   test_type={testCase.test_type}
+                  requires_preconditions={testCase.requires_preconditions}
                   updated_at={testCase.updated_at}
                   steps_generation_start_time={testCase.steps_generation_start_time}
                   steps_generation_end_time={testCase.steps_generation_end_time}
                   onTestResult={setTestResult}
-                  onTestCaseUpdate={(name, description, updated_at) => {
+                  onTestCaseUpdate={(name, description, updated_at, requires_preconditions) => {
                     setTestCase(prev => ({
                       ...prev,
                       test_name: name,
                       test_description: description,
-                      updated_at: updated_at
+                      updated_at: updated_at,
+                      requires_preconditions: requires_preconditions
                     }));
                   }}
                   projectId={selectedProject}

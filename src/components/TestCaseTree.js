@@ -35,7 +35,8 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     description: '',
     parent_id: null,
     project_id: projectId !== 'all' ? projectId : null,
-    test_type: 'ui'  // Default to 'ui' type
+    test_type: 'ui',  // Default to 'ui' type
+    requires_preconditions: true
   });
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -439,7 +440,8 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       description: '',
       parent_id: parentId,
       project_id: projectId !== 'all' ? projectId : null,
-      test_type: 'ui'  // Default to 'ui' when creating new test case
+      test_type: 'ui',  // Default to 'ui' when creating new test case
+      requires_preconditions: true
     });
     
     // Fetch available groups for the dropdown
@@ -1022,6 +1024,20 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                 <option value="api">API Test</option>
               </select>
             </div>
+            <div className="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={newTestCase.requires_preconditions}
+                  onChange={(e) => setNewTestCase(prev => ({ ...prev, requires_preconditions: e.target.checked }))}
+                  style={{ marginRight: '8px' }}
+                />
+                Requires API preconditions
+              </label>
+              <small style={{ display: 'block', marginTop: '4px', color: '#666', fontSize: '12px' }}>
+                Check this box if this test case needs API setup steps before UI testing
+              </small>
+            </div>
             <div className="modal-actions">
               <button onClick={() => {
                 setShowCreateTestCaseModal(false);
@@ -1031,7 +1047,8 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                   description: '',
                   parent_id: null,
                   project_id: projectId !== 'all' ? projectId : null,
-                  test_type: 'ui'
+                  test_type: 'ui',
+                  requires_preconditions: true
                 });
               }} className="modal-button cancel">Cancel</button>
               <button 
