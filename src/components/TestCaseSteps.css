@@ -696,6 +696,11 @@
   width: 40px;
 }
 
+.step-number-column {
+  width: 50px;
+  text-align: center;
+}
+
 .step-description-column {
   width: 25%;
 }
@@ -731,6 +736,14 @@
 
 .drag-handle-cell.disabled .drag-handle {
   color: var(--gray-400);
+}
+
+.step-number-cell {
+  text-align: center;
+  font-weight: 600;
+  color: var(--gray-600);
+  font-size: 14px;
+  padding: 8px;
 }
 
 .step-description-cell {

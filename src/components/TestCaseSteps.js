@@ -2512,6 +2512,7 @@ const startStepResultsPolling = () => {
                 <thead>
                   <tr>
                     <th className="drag-handle-column"></th>
+                    <th className="step-number-column">#</th>
                     <th className="step-description-column">Description</th>
                     <th className="step-action-column">Action</th>
                     <th className="step-locator-column">Element Locator</th>
@@ -2520,7 +2521,7 @@ const startStepResultsPolling = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {steps && steps.map((step) => (
+                  {steps && steps.map((step, index) => (
                     <tr
                       key={step.id}
                       className="test-step-row"
@@ -2533,6 +2534,9 @@ const startStepResultsPolling = () => {
                     >
                       <td className={`drag-handle-cell ${(isGeneratingSteps || isRunning) ? 'disabled' : ''}`}>
                         <FontAwesomeIcon icon={faGripVertical} className="drag-handle" />
+                      </td>
+                      <td className="step-number-cell">
+                        {index + 1}
                       </td>
                       <td className="step-description-cell">
                         {step.description}
