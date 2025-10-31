@@ -42,6 +42,8 @@ const STEP_ACTIONS = [
   'select',
   'hover',
   'wait',
+  'wait_for_clickable',
+  'wait_for_modal',
   'assert',
   'assert_text_contains',
   'scroll',
