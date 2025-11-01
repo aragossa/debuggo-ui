@@ -2546,8 +2546,12 @@ const startStepResultsPolling = () => {
                     <th className="step-number-column">#</th>
                     <th className="step-description-column">Description</th>
                     <th className="step-action-column">Action</th>
-                    <th className="step-locator-column">Element Locator (XPath)</th>
-                    <th className="step-css-column">CSS Selector (Fallback)</th>
+                    {test_type !== 'api' && test_type !== 'api_test' && test_type !== 'api_group' && (
+                      <>
+                        <th className="step-locator-column">Element Locator (XPath)</th>
+                        <th className="step-css-column">CSS Selector (Fallback)</th>
+                      </>
+                    )}
                     <th className="step-value-column">Value</th>
                     <th className="step-actions-column">Actions</th>
                   </tr>
@@ -2610,29 +2614,33 @@ const startStepResultsPolling = () => {
                           )}
                         </div>
                       </td>
-                      <td className="step-locator-cell">
-                        <div className="element-locator-container">
-                          <input
-                            type="text"
-                            className="element-path-input"
-                            placeholder="Element path (e.g., //input[@id='username'])"
-                            value={step.element_path || ''}
-                            onChange={(e) => handleElementPathChange(step.id, e.target.value)}
-                          />
-                        </div>
-                      </td>
-                      <td className="step-locator-cell">
-                        <div className="element-locator-container">
-                        <input
-                          type="text"
-                          className="css-selector-input"
-                          placeholder="CSS selector (e.g., #username)"
-                          value={step.css_selector || ''}
-                          onChange={(e) => handleCssSelectorChange(step.id, e.target.value)}
-                          title="CSS selector as fallback when XPath fails"
-                        />
-                        </div>
-                      </td>
+                      {test_type !== 'api' && test_type !== 'api_test' && test_type !== 'api_group' && (
+                        <>
+                          <td className="step-locator-cell">
+                            <div className="element-locator-container">
+                              <input
+                                type="text"
+                                className="element-path-input"
+                                placeholder="Element path (e.g., //input[@id='username'])"
+                                value={step.element_path || ''}
+                                onChange={(e) => handleElementPathChange(step.id, e.target.value)}
+                              />
+                            </div>
+                          </td>
+                          <td className="step-locator-cell">
+                            <div className="element-locator-container">
+                            <input
+                              type="text"
+                              className="css-selector-input"
+                              placeholder="CSS selector (e.g., #username)"
+                              value={step.css_selector || ''}
+                              onChange={(e) => handleCssSelectorChange(step.id, e.target.value)}
+                              title="CSS selector as fallback when XPath fails"
+                            />
+                            </div>
+                          </td>
+                        </>
+                      )}
                       <td className="step-value-cell">
                         {step.action === 'api_request' ? (
                           <button 
