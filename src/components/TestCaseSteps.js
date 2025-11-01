@@ -1668,6 +1668,35 @@ const startStepResultsPolling = () => {
     }
   };
 
+  const handleCssSelectorChange = async (stepId, cssSelector) => {
+    try {
+      // Update steps state immediately for better UI responsiveness
+      setSteps(prevSteps => 
+        prevSteps.map(step => 
+          step.id === stepId 
+            ? { ...step, css_selector: cssSelector }
+            : step
+        )
+      );
+
+      const response = await fetch(`${API_URL}/api/update_test_step/${stepId}`, {
+        method: 'PATCH',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ css_selector: cssSelector })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update CSS selector');
+      }
+    } catch (error) {
+      console.error('Error updating CSS selector:', error);
+      await refreshTestCase();
+    }
+  };
+
   const handleDragStart = (e, step) => {
     // Prevent dragging if generating steps or running test
     if (isGeneratingSteps || isRunning) {
@@ -2517,7 +2546,8 @@ const startStepResultsPolling = () => {
                     <th className="step-number-column">#</th>
                     <th className="step-description-column">Description</th>
                     <th className="step-action-column">Action</th>
-                    <th className="step-locator-column">Element Locator</th>
+                    <th className="step-locator-column">Element Locator (XPath)</th>
+                    <th className="step-css-column">CSS Selector (Fallback)</th>
                     <th className="step-value-column">Value</th>
                     <th className="step-actions-column">Actions</th>
                   </tr>
@@ -2589,32 +2619,18 @@ const startStepResultsPolling = () => {
                             value={step.element_path || ''}
                             onChange={(e) => handleElementPathChange(step.id, e.target.value)}
                           />
-                          <FontAwesomeIcon 
-                            icon={faQuestionCircle} 
-                            className="locator-help-icon" 
-                            onClick={() => toggleLocatorTooltip(step.id)}
-                            title="Show locator examples"
-                          />
-                          {locatorValidationStatus[step.id] && (
-                            <span className={`locator-status ${locatorValidationStatus[step.id].status}`}>
-                              <FontAwesomeIcon icon={locatorValidationStatus[step.id].status === 'valid' ? faCheckCircle : faTimesCircle} />
-                              {' '}{locatorValidationStatus[step.id].message}
-                            </span>
-                          )}
-                          {locatorTooltipStep === step.id && (
-                            <div className="locator-info-tooltip" ref={locatorTooltipRef}>
-                              <h4>Locator Examples:</h4>
-                              <ul>
-                                {getLocatorExamples().map((example, index) => (
-                                  <li key={index}>
-                                    <strong>{example.type}:</strong> <code>{example.example}</code>
-                                    <br />
-                                    <span className="locator-example-description">{example.description}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                        </div>
+                      </td>
+                      <td className="step-locator-cell">
+                        <div className="element-locator-container">
+                        <input
+                          type="text"
+                          className="css-selector-input"
+                          placeholder="CSS selector (e.g., #username)"
+                          value={step.css_selector || ''}
+                          onChange={(e) => handleCssSelectorChange(step.id, e.target.value)}
+                          title="CSS selector as fallback when XPath fails"
+                        />
                         </div>
                       </td>
                       <td className="step-value-cell">
