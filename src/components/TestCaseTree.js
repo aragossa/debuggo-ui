@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faEdit, faFolderPlus, faPlus, faExchangeAlt, faMinus, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faEdit, faFolderPlus, faPlus, faExchangeAlt, faMinus, faChevronLeft, faFileImport } from '@fortawesome/free-solid-svg-icons';
 import './TestCaseTree.css';
 
-const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCaseDeleted, projectId, onToggleVisibility }) => {
+const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCaseDeleted, projectId, onToggleVisibility, onGenerateFromFile }) => {
   // Load expanded state from localStorage on mount
   const [expandedNodes, setExpandedNodes] = useState(() => {
     try {
@@ -726,6 +726,12 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
         <div className="tree-actions">
           <button 
             className="create-group-button"
+            onClick={onGenerateFromFile}
+          >
+            <FontAwesomeIcon icon={faFileImport} /> Generate from File
+          </button>
+          <button 
+            className="create-group-button"
             onClick={() => handleCreateGroupClick(null)}
           >
             <FontAwesomeIcon icon={faFolderPlus} /> Create Group
@@ -780,6 +786,12 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
             )}
           </div>
           <div className="title-buttons">
+            <button 
+              className="create-group-button"
+              onClick={onGenerateFromFile}
+            >
+              <FontAwesomeIcon icon={faFileImport} /> Generate from File
+            </button>
             <button 
               className="create-group-button"
               onClick={() => handleCreateGroupClick(null)}

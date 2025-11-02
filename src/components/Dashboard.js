@@ -9,7 +9,7 @@ import ApiSchemaUpload from './ApiSchemaUpload';
 import ConflictNotifications from './ConflictNotifications';
 import ConflictPopup from './ConflictPopup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faFlask, faCog, faFileImport, faChevronDown, faChevronUp, faFolderOpen, faPlay, faFileCode, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faFlask, faCog, faChevronDown, faChevronUp, faFolderOpen, faPlay, faFileCode, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -31,7 +31,6 @@ const Dashboard = () => {
     return localStorage.getItem('selectedProjectId') || null;
   });
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
   const [activeTab, setActiveTab] = useState('testCases');
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [isTreeVisible, setIsTreeVisible] = useState(true);
@@ -284,22 +283,6 @@ const Dashboard = () => {
             No projects created
           </div>
         )}
-        <div className="generate-button-container" 
-             onMouseEnter={() => !isProjectSelected && setShowTooltip(true)} 
-             onMouseLeave={() => setShowTooltip(false)}>
-          <button
-            className={`generate-from-file-button ${!isProjectSelected ? 'disabled' : ''}`}
-            onClick={() => isProjectSelected && setShowUploadPopup(true)}
-            disabled={!isProjectSelected}
-          >
-            <FontAwesomeIcon icon={faFileImport} /> Generate from File
-          </button>
-          {!isProjectSelected && showTooltip && (
-            <div className="tooltip">
-              <FontAwesomeIcon icon={faInfoCircle} /> Please select a project
-            </div>
-          )}
-        </div>
       </div>
       
       <div className="dashboard-content">
@@ -353,6 +336,7 @@ const Dashboard = () => {
                     onTestCaseDeleted={handleTestCaseDeleted}
                     projectId={selectedProject}
                     onToggleVisibility={setIsTreeVisible}
+                    onGenerateFromFile={() => setShowUploadPopup(true)}
                   />
                 )}
               </div>

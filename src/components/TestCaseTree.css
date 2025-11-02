@@ -31,6 +31,7 @@
 .title-buttons {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .tree-hide-btn {
@@ -64,6 +65,7 @@
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .test-case-tree-header h3 {
@@ -73,29 +75,42 @@
   flex: 1;
 }
 
+.generate-from-file-button,
 .create-group-button,
 .create-test-button {
   background: var(--secondary-dark);
   color: white;
   border: none;
-  padding: 8px 12px;
+  padding: 7px 10px;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 6px;
+  font-size: 13px;
   font-weight: 500;
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
 }
 
+.generate-from-file-button:hover,
+.create-group-button:hover,
+.create-test-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(50, 50, 93, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 
+.generate-from-file-button:active,
+.create-group-button:active,
+.create-test-button:active {
+  transform: translateY(0);
+}
 
-
+.generate-from-file-button svg,
 .create-group-button svg,
 .create-test-button svg {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 /* Tree controls container */

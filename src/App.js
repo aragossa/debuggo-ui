@@ -13,6 +13,8 @@ import Projects from './components/Projects';
 import ProjectDetail from './components/ProjectDetail';
 import AIModelsAdmin from './components/AIModelsAdmin';
 import ContactRequests from './components/ContactRequests';
+import UserRequests from './components/UserRequests';
+import AdminRequests from './components/AdminRequests';
 import StatusBar from './components/StatusBar';
 import './App.css';
 
@@ -30,6 +32,7 @@ const AdminMenu = () => {
         <Link to="/users" className="admin-menu-item">Users</Link>
         <Link to="/ai-models" className="admin-menu-item">AI Models</Link>
         <Link to="/contact-requests" className="admin-menu-item">Contact Requests</Link>
+        <Link to="/admin-requests" className="admin-menu-item">User Requests</Link>
       </div>
     );
   }, [user]);
@@ -47,6 +50,7 @@ const MainMenu = () => {
       <div className="main-menu">
         <Link to="/dashboard" className="menu-item">Dashboard</Link>
         <Link to="/projects" className="menu-item">Projects</Link>
+        <Link to="/my-requests" className="menu-item">My Requests</Link>
       </div>
     );
   }, [isAuthenticated]);
@@ -201,6 +205,22 @@ function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <ContactRequests />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-requests"
+              element={
+                <ProtectedRoute>
+                  <UserRequests />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin-requests"
+              element={
+                <ProtectedRoute adminOnly>
+                  <AdminRequests />
                 </ProtectedRoute>
               }
             />
