@@ -8,8 +8,9 @@ import Environments from './Environments';
 import ApiSchemaUpload from './ApiSchemaUpload';
 import ConflictNotifications from './ConflictNotifications';
 import ConflictPopup from './ConflictPopup';
+import PlaceholderHelp from './PlaceholderHelp';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faFlask, faCog, faChevronDown, faChevronUp, faFolderOpen, faPlay, faFileCode, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faFlask, faCog, faChevronDown, faChevronUp, faFolderOpen, faPlay, faFileCode, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -317,6 +318,12 @@ const Dashboard = () => {
           >
             <FontAwesomeIcon icon={faExclamationTriangle} /> Conflicts
           </button>
+          <button 
+            className={`tab-button ${activeTab === 'help' ? 'active' : ''}`}
+            onClick={() => setActiveTab('help')}
+          >
+            <FontAwesomeIcon icon={faQuestionCircle} /> Help
+          </button>
         </div>
         
         {activeTab === 'testCases' ? (
@@ -395,6 +402,10 @@ const Dashboard = () => {
         ) : activeTab === 'conflicts' ? (
           <div className="conflicts-tab-container">
             <ConflictNotifications />
+          </div>
+        ) : activeTab === 'help' ? (
+          <div className="help-tab-container">
+            <PlaceholderHelp />
           </div>
         ) : null}
       </div>

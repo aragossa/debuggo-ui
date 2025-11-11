@@ -1,0 +1,256 @@
+.placeholder-help {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px;
+  background: #f8f9fa;
+  min-height: 100%;
+}
+
+.help-header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 30px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.help-header h1 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+  font-size: 2.5em;
+}
+
+.help-header p {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 1.2em;
+}
+
+.help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.help-section {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.help-section h2 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 1.8em;
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 10px;
+}
+
+.help-section h3 {
+  margin: 20px 0 10px 0;
+  color: #34495e;
+  font-size: 1.3em;
+}
+
+/* Syntax Boxes */
+.syntax-boxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.syntax-box {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  border-radius: 8px;
+  color: white;
+  text-align: center;
+}
+
+.syntax-box strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 1.1em;
+}
+
+.syntax-box code {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px 15px;
+  border-radius: 5px;
+  font-size: 1.1em;
+}
+
+/* Info Box */
+.info-box {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  padding: 15px 20px;
+  border-radius: 8px;
+  border-left: 5px solid #2196f3;
+  margin-bottom: 20px;
+  color: #1976d2;
+}
+
+.info-box strong {
+  color: #0d47a1;
+}
+
+/* Tables */
+.help-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.help-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.help-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.help-table tbody tr {
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.help-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.help-table td {
+  padding: 12px;
+}
+
+.help-table td:first-child {
+  font-weight: 600;
+}
+
+.help-table code {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 0.9em;
+}
+
+/* Example Blocks */
+.example-block {
+  background: #fffbf0;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 5px solid #f39c12;
+}
+
+.example-block h3 {
+  color: #d68910;
+  margin: 0 0 15px 0;
+}
+
+.example-block pre {
+  background: white;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 0;
+  overflow-x: auto;
+  font-size: 0.95em;
+  line-height: 1.6;
+}
+
+/* Tips Grid */
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.tip-card {
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tip-card.do {
+  background: linear-gradient(135deg, #f0fff4 0%, #dcffea 100%);
+  border-left: 5px solid #27ae60;
+}
+
+.tip-card.dont {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+  border-left: 5px solid #e74c3c;
+}
+
+.tip-card h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.4em;
+}
+
+.tip-card.do h3 {
+  color: #229954;
+}
+
+.tip-card.dont h3 {
+  color: #c0392b;
+}
+
+.tip-card ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.tip-card li {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.tip-card code {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* Footer */
+.help-footer {
+  text-align: center;
+  margin-top: 40px;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: #7f8c8d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .placeholder-help {
+    padding: 15px;
+  }
+
+  .help-header {
+    padding: 20px;
+  }
+
+  .help-header h1 {
+    font-size: 1.8em;
+  }
+
+  .help-section {
+    padding: 20px;
+  }
+
+  .help-section h2 {
+    font-size: 1.5em;
+  }
+
+  .syntax-boxes,
+  .tips-grid {
+    grid-template-columns: 1fr;
+  }
+}

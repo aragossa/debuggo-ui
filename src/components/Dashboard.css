@@ -315,6 +315,14 @@
   margin: 1rem;
 }
 
+.help-tab-container {
+  flex: 1;
+  overflow-y: auto;
+  background: #f8f9fa;
+  padding: 0;
+  margin: 0;
+}
+
 .loading-message, 
 .no-environments-message {
   display: flex;
