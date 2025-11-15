@@ -15,6 +15,7 @@ import AIModelsAdmin from './components/AIModelsAdmin';
 import ContactRequests from './components/ContactRequests';
 import UserRequests from './components/UserRequests';
 import AdminRequests from './components/AdminRequests';
+import MonitoringDashboard from './components/MonitoringDashboard';
 import StatusBar from './components/StatusBar';
 import './App.css';
 
@@ -33,6 +34,7 @@ const AdminMenu = () => {
         <Link to="/ai-models" className="admin-menu-item">AI Models</Link>
         <Link to="/contact-requests" className="admin-menu-item">Contact Requests</Link>
         <Link to="/admin-requests" className="admin-menu-item">User Requests</Link>
+        <Link to="/monitoring" className="admin-menu-item">📊 Monitoring</Link>
       </div>
     );
   }, [user]);
@@ -221,6 +223,14 @@ function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <AdminRequests />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/monitoring"
+              element={
+                <ProtectedRoute adminOnly>
+                  <MonitoringDashboard />
                 </ProtectedRoute>
               }
             />

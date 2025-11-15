@@ -97,6 +97,7 @@ const TestCaseSteps = ({
   const [showAddEnvironmentModal, setShowAddEnvironmentModal] = useState(false);
   const [showEditEnvironmentModal, setShowEditEnvironmentModal] = useState(false);
   const [showEnvironmentDropdown, setShowEnvironmentDropdown] = useState(false);
+  const screenshotCacheRef = useRef({}); // Cache for screenshot availability
   const [newEnvironment, setNewEnvironment] = useState({
     name: '',
     base_url: '',
@@ -409,69 +410,81 @@ const TestCaseSteps = ({
     }
   };
 
-  // Function to check if a step has a screenshot
+  // Function to check if a step has a screenshot (with caching)
   const checkStepScreenshot = async (stepId) => {
+    // Return cached result if available
+    if (screenshotCacheRef.current.hasOwnProperty(stepId)) {
+      return screenshotCacheRef.current[stepId];
+    }
+
     try {
       const response = await fetch(`${API_URL}/api/test_step_screenshot/${stepId}`, {
         method: 'GET',
         headers: getAuthHeaders()
       });
       
-      console.log(`Screenshot check for step ${stepId}: status=${response.status}, ok=${response.ok}`);
+      let hasScreenshot = false;
       
       if (!response.ok) {
-        console.log(`Screenshot not available for step ${stepId}: ${response.status}`);
-        return false;
-      }
-      
-      // If response is OK and content-type is image, screenshot exists
-      const contentType = response.headers.get('content-type');
-      console.log(`Step ${stepId} content-type: ${contentType}`);
-      
-      if (contentType && contentType.startsWith('image/')) {
-        console.log(`Screenshot available for step ${stepId}`);
-        return true;
-      }
-      
-      // Try to parse as JSON for error responses
-      try {
-        const data = await response.json();
-        console.log(`Step ${stepId} JSON response:`, data);
+        hasScreenshot = false;
+      } else {
+        // If response is OK and content-type is image, screenshot exists
+        const contentType = response.headers.get('content-type');
         
-        // Check if it's the new format with screenshot_available flag
-        if (data.hasOwnProperty('screenshot_available')) {
-          return data.screenshot_available;
+        if (contentType && contentType.startsWith('image/')) {
+          hasScreenshot = true;
+        } else {
+          // Try to parse as JSON for error responses
+          try {
+            const data = await response.json();
+            
+            // Check if it's the new format with screenshot_available flag
+            if (data.hasOwnProperty('screenshot_available')) {
+              hasScreenshot = data.screenshot_available;
+            } else {
+              // Check if it's the old format with screenshot data
+              hasScreenshot = data.screenshot ? true : false;
+            }
+          } catch (jsonError) {
+            // If we can't parse JSON but response was OK, assume it's an image
+            hasScreenshot = true;
+          }
         }
-        
-        // Check if it's the old format with screenshot data
-        return data.screenshot ? true : false;
-      } catch (jsonError) {
-        // If we can't parse JSON but response was OK, assume it's an image
-        console.log(`Step ${stepId} - couldn't parse JSON, assuming image available`);
-        return true;
       }
+      
+      // Cache the result
+      screenshotCacheRef.current[stepId] = hasScreenshot;
+      return hasScreenshot;
     } catch (error) {
-      console.error('Error checking screenshot availability:', error);
+      // Cache negative result on error
+      screenshotCacheRef.current[stepId] = false;
       return false;
     }
   };
 
-  // Check for screenshots when steps are loaded
+  // Check for screenshots when steps are loaded (only check new steps)
   useEffect(() => {
     const checkScreenshots = async () => {
       if (steps && steps.length > 0) {
-        const screenshotStatus = {};
+        const screenshotStatus = { ...stepsWithScreenshots };
+        let hasNewSteps = false;
         
         for (const step of steps) {
-          screenshotStatus[step.id] = await checkStepScreenshot(step.id);
+          // Only check if we haven't checked this step before
+          if (screenshotStatus[step.id] === undefined) {
+            screenshotStatus[step.id] = await checkStepScreenshot(step.id);
+            hasNewSteps = true;
+          }
         }
         
-        setStepsWithScreenshots(screenshotStatus);
+        if (hasNewSteps) {
+          setStepsWithScreenshots(screenshotStatus);
+        }
       }
     };
     
     checkScreenshots();
-  }, [steps]);
+  }, [steps, stepsWithScreenshots]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -792,7 +805,7 @@ useEffect(() => {
   localStorage.setItem('generatingTestCases', JSON.stringify(generatingTestCases));
 }, [generatingTestCases]);
 
-const startPollingForUpdates = () => {
+const startPollingForUpdates = useCallback(() => {
   // Clear any existing interval
   if (pollingInterval) {
     clearInterval(pollingInterval);
@@ -870,16 +883,16 @@ const startPollingForUpdates = () => {
         setNextGeneratingStep("");
         
         // Stop polling
-        clearInterval(pollingInterval);
+        clearInterval(interval);
         setPollingInterval(null);
       }
     } catch (error) {
       console.error('Error checking test case generation status:', error);
     }
-  }, 2000); // Poll every 2 seconds for more responsive updates
+  }, 3000); // Poll every 3 seconds to reduce UI blocking
   
   setPollingInterval(interval);
-};
+}, [testCaseId, API_URL, pollingInterval]);
 
 // Function to start polling for step execution results during test execution
 const startStepResultsPolling = () => {
@@ -1542,7 +1555,7 @@ const startStepResultsPolling = () => {
           } catch (error) {
             console.error('Error polling for API test steps:', error);
           }
-        }, 2000); // Poll every 2 seconds for real-time updates
+        }, 3000); // Poll every 3 seconds to reduce UI blocking
         
         // Set a timeout to stop polling after 5 minutes (increased from 2 minutes)
         setTimeout(() => {
@@ -2521,19 +2534,6 @@ const startStepResultsPolling = () => {
                   onClick={handleStopGeneration}
                 >
                   <FontAwesomeIcon icon={faTimesCircle} /> Stop Generation
-                </button>
-              </div>
-            )}
-            
-            {isRunning && (
-              <div className="running-indicator">
-                <div className="spinner"></div>
-                <span className="running-indicator-text">Executing test steps... Results will be updated when complete.</span>
-                <button 
-                  className="stop-execution-button"
-                  onClick={handleStopExecution}
-                >
-                  <FontAwesomeIcon icon={faTimesCircle} /> Stop Execution
                 </button>
               </div>
             )}
