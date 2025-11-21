@@ -34,6 +34,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import AIModelSelector from './AIModelSelector';
 import RunningTestIndicator from './RunningTestIndicator';
+import ReasoningPanel from './ReasoningPanel';
 import './TestCaseSteps.css';
 
 const STEP_ACTIONS = [
@@ -2574,6 +2575,14 @@ const startStepResultsPolling = () => {
                 </button>
               </div>
             )}
+
+            {/* AI Reasoning & Planning Panel */}
+            <ReasoningPanel 
+              testCaseId={testCaseId}
+              isGenerating={isGeneratingSteps}
+              API_URL={API_URL}
+              getAuthHeaders={getAuthHeaders}
+            />
 
             <div className="test-steps-table-container">
               <table className="test-steps-table">
