@@ -26,7 +26,7 @@ const MonitoringDashboard = () => {
         axios.get(`${API_BASE_URL}/api/monitoring/health`, { headers }),
         axios.get(`${API_BASE_URL}/api/monitoring/metrics?hours=${timeRange}`, { headers }),
         axios.get(`${API_BASE_URL}/api/monitoring/alerts`, { headers }),
-        axios.get(`${API_BASE_URL}/api/monitoring/trends?hours=${timeRange}&interval_minutes=60`, { headers }),
+        axios.get(`${API_BASE_URL}/api/monitoring/trends?hours=${timeRange}&interval_minutes=60`, { headers }).catch(() => ({ data: { data: [] } })),
       ]);
 
       setHealth(healthRes.data.data);
@@ -44,6 +44,15 @@ const MonitoringDashboard = () => {
 
   useEffect(() => {
     fetchData();
+  }, [timeRange]);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
   }, [timeRange]);
 
   const handleRefresh = () => {

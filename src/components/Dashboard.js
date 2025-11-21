@@ -170,7 +170,27 @@ const Dashboard = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setTestCase(data);
+        // Map API response to expected format
+        if (data.status === 'success' && data.data) {
+          const testCaseData = data.data.test_case;
+          const steps = data.data.steps || [];
+          
+          // Transform the data to match the expected format
+          const formattedTestCase = {
+            test_name: testCaseData.name,
+            test_description: testCaseData.description,
+            test_type: testCaseData.type,
+            test_steps: steps,
+            test_runs: [],
+            updated_at: testCaseData.updated_at || new Date().toISOString(),
+            steps_generation_start_time: testCaseData.steps_generation_start_time,
+            steps_generation_end_time: testCaseData.steps_generation_end_time
+          };
+          
+          setTestCase(formattedTestCase);
+        } else {
+          setTestCase(data);
+        }
       } else {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to fetch test case');

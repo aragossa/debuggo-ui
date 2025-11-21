@@ -43,6 +43,8 @@ const STEP_ACTIONS = [
   'hover',
   'wait',
   'wait_for_clickable',
+  'wait_for_element_to_be_visible',
+  'wait_for_element_visible',
   'wait_for_modal',
   'assert',
   'assert_text_contains',
@@ -847,15 +849,25 @@ const startPollingForUpdates = useCallback(() => {
       
       const testCaseData = await testCaseResponse.json();
       
+      // Extract steps from the API response (handle both old and new response formats)
+      let stepsArray = [];
+      if (testCaseData.data && testCaseData.data.steps && Array.isArray(testCaseData.data.steps)) {
+        // New API format: { status: "success", data: { test_case: {...}, steps: [...] } }
+        stepsArray = testCaseData.data.steps;
+      } else if (testCaseData.test_steps && Array.isArray(testCaseData.test_steps)) {
+        // Old API format: { test_steps: [...] }
+        stepsArray = testCaseData.test_steps;
+      }
+      
       // Update steps with the latest from the server
-      if (testCaseData.test_steps && Array.isArray(testCaseData.test_steps)) {
-        console.log('Received updated steps during polling:', testCaseData.test_steps.length);
-        setSteps(testCaseData.test_steps);
+      if (stepsArray.length > 0 || (stepsArray.length === 0 && testCaseData.data)) {
+        console.log('Received updated steps during polling:', stepsArray.length);
+        setSteps(stepsArray);
         
         // Initialize stepValues for any new type steps
         setStepValues(prevValues => {
           const newValues = { ...prevValues };
-          testCaseData.test_steps.forEach(step => {
+          stepsArray.forEach(step => {
             if (step.action === 'type' && step.value && !newValues[step.id]) {
               newValues[step.id] = step.value;
             }
@@ -864,7 +876,9 @@ const startPollingForUpdates = useCallback(() => {
         });
         
         // Check for screenshots for new steps
-        checkNewStepsForScreenshots(testCaseData.test_steps);
+        if (stepsArray.length > 0) {
+          checkNewStepsForScreenshots(stepsArray);
+        }
       }
       
       // Check if generation is complete
@@ -1058,11 +1072,31 @@ const startStepResultsPolling = () => {
         throw new Error('Failed to fetch updated test case');
       }
       const data = await response.json();
-      setSteps(data.test_steps);
+      
+      // Extract steps from the API response (handle both old and new response formats)
+      let stepsArray = [];
+      let testName = '';
+      let testDescription = '';
+      let updatedAt = null;
+      
+      if (data.data && data.data.test_case) {
+        // New API format: { status: "success", data: { test_case: {...}, steps: [...] } }
+        stepsArray = data.data.steps || [];
+        testName = data.data.test_case.name;
+        testDescription = data.data.test_case.description;
+      } else {
+        // Old API format: { test_steps: [...], test_name: ..., test_description: ... }
+        stepsArray = data.test_steps || [];
+        testName = data.test_name;
+        testDescription = data.test_description;
+        updatedAt = data.updated_at;
+      }
+      
+      setSteps(stepsArray);
       
       // Update parent component with fresh test case data including updated_at
       if (typeof onTestCaseUpdate === 'function') {
-        onTestCaseUpdate(data.test_name, data.test_description, data.updated_at);
+        onTestCaseUpdate(testName, testDescription, updatedAt);
       }
     } catch (error) {
       console.error('Error refreshing test case:', error);
@@ -1429,6 +1463,9 @@ const startStepResultsPolling = () => {
 
   const handleConfirmGenerate = async () => {
     setShowConfirmModal(false);
+    // Clear existing steps immediately when user confirms
+    setSteps([]);
+    setStepValues({});
     await generateSteps(true);
   };
 
@@ -2553,6 +2590,7 @@ const startStepResultsPolling = () => {
                       </>
                     )}
                     <th className="step-value-column">Value</th>
+                    <th className="step-confidence-column">Confidence</th>
                     <th className="step-actions-column">Actions</th>
                   </tr>
                 </thead>
@@ -2709,6 +2747,19 @@ const startStepResultsPolling = () => {
                             </div>
                           )}
                           </div>
+                        )}
+                      </td>
+                      <td className="step-confidence-cell">
+                        {step.overall_confidence !== undefined && step.overall_confidence > 0 ? (
+                          <div className="confidence-text">
+                            <div className="confidence-main">{step.overall_confidence}%</div>
+                            <div className="confidence-breakdown">
+                              <small>Selector: {step.selector_confidence}%</small>
+                              <small>Action: {step.action_confidence}%</small>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="no-confidence">N/A</span>
                         )}
                       </td>
                       <td className="step-actions-cell">
