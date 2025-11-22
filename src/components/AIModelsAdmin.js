@@ -16,7 +16,15 @@ const AIModelsAdmin = () => {
     model_id: '',
     description: '',
     is_active: true,
-    is_default: false
+    is_default: false,
+    input_price_per_1m: 0,
+    output_price_per_1m: 0,
+    tier_threshold: 0,
+    input_price_per_1m_above: 0,
+    output_price_per_1m_above: 0,
+    cache_input_price_per_1m: 0,
+    cache_input_price_per_1m_above: 0,
+    cache_storage_price_per_1m_hour: 0
   });
   const [isCreating, setIsCreating] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -70,7 +78,15 @@ const AIModelsAdmin = () => {
         model_id: '',
         description: '',
         is_active: true,
-        is_default: false
+        is_default: false,
+        input_price_per_1m: 0,
+        output_price_per_1m: 0,
+        tier_threshold: 0,
+        input_price_per_1m_above: 0,
+        output_price_per_1m_above: 0,
+        cache_input_price_per_1m: 0,
+        cache_input_price_per_1m_above: 0,
+        cache_storage_price_per_1m_hour: 0
       });
       setIsCreating(false);
       fetchAIModels();
@@ -213,6 +229,92 @@ const AIModelsAdmin = () => {
               Default
             </label>
           </div>
+          
+          <h4>Pricing Configuration (per 1M tokens)</h4>
+          <div className="form-group">
+            <label>Input Price (base tier):</label>
+            <input
+              type="number"
+              step="0.000001"
+              value={newModel.input_price_per_1m}
+              onChange={(e) => setNewModel({...newModel, input_price_per_1m: parseFloat(e.target.value) || 0})}
+              placeholder="e.g., 1.25"
+            />
+          </div>
+          <div className="form-group">
+            <label>Output Price (base tier):</label>
+            <input
+              type="number"
+              step="0.000001"
+              value={newModel.output_price_per_1m}
+              onChange={(e) => setNewModel({...newModel, output_price_per_1m: parseFloat(e.target.value) || 0})}
+              placeholder="e.g., 10.00"
+            />
+          </div>
+          
+          <h4>Tiered Pricing (Optional)</h4>
+          <div className="form-group">
+            <label>Tier Threshold (tokens):</label>
+            <input
+              type="number"
+              value={newModel.tier_threshold}
+              onChange={(e) => setNewModel({...newModel, tier_threshold: parseInt(e.target.value) || 0})}
+              placeholder="e.g., 200000"
+            />
+          </div>
+          <div className="form-group">
+            <label>Input Price (above tier):</label>
+            <input
+              type="number"
+              step="0.000001"
+              value={newModel.input_price_per_1m_above}
+              onChange={(e) => setNewModel({...newModel, input_price_per_1m_above: parseFloat(e.target.value) || 0})}
+              placeholder="e.g., 2.50"
+            />
+          </div>
+          <div className="form-group">
+            <label>Output Price (above tier):</label>
+            <input
+              type="number"
+              step="0.000001"
+              value={newModel.output_price_per_1m_above}
+              onChange={(e) => setNewModel({...newModel, output_price_per_1m_above: parseFloat(e.target.value) || 0})}
+              placeholder="e.g., 15.00"
+            />
+          </div>
+          
+          <h4>Context Caching Pricing (Optional)</h4>
+          <div className="form-group">
+            <label>Cache Input Price (base tier):</label>
+            <input
+              type="number"
+              step="0.000001"
+              value={newModel.cache_input_price_per_1m}
+              onChange={(e) => setNewModel({...newModel, cache_input_price_per_1m: parseFloat(e.target.value) || 0})}
+              placeholder="e.g., 0.125"
+            />
+          </div>
+          <div className="form-group">
+            <label>Cache Input Price (above tier):</label>
+            <input
+              type="number"
+              step="0.000001"
+              value={newModel.cache_input_price_per_1m_above}
+              onChange={(e) => setNewModel({...newModel, cache_input_price_per_1m_above: parseFloat(e.target.value) || 0})}
+              placeholder="e.g., 0.25"
+            />
+          </div>
+          <div className="form-group">
+            <label>Cache Storage Price (per 1M tokens/hour):</label>
+            <input
+              type="number"
+              step="0.000001"
+              value={newModel.cache_storage_price_per_1m_hour}
+              onChange={(e) => setNewModel({...newModel, cache_storage_price_per_1m_hour: parseFloat(e.target.value) || 0})}
+              placeholder="e.g., 4.50"
+            />
+          </div>
+          
           <div className="form-actions">
             <button className="cancel-btn" onClick={() => setIsCreating(false)}>
               <FontAwesomeIcon icon={faTimes} /> Cancel
@@ -234,6 +336,8 @@ const AIModelsAdmin = () => {
                 <th>Name</th>
                 <th>Model ID</th>
                 <th>Description</th>
+                <th>Input Price</th>
+                <th>Output Price</th>
                 <th>Status</th>
                 <th>Default</th>
                 <th>Actions</th>
@@ -267,6 +371,22 @@ const AIModelsAdmin = () => {
                       </td>
                       <td>
                         <input
+                          type="number"
+                          step="0.000001"
+                          value={editingModel.input_price_per_1m}
+                          onChange={(e) => setEditingModel({...editingModel, input_price_per_1m: parseFloat(e.target.value) || 0})}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          step="0.000001"
+                          value={editingModel.output_price_per_1m}
+                          onChange={(e) => setEditingModel({...editingModel, output_price_per_1m: parseFloat(e.target.value) || 0})}
+                        />
+                      </td>
+                      <td>
+                        <input
                           type="checkbox"
                           checked={editingModel.is_active}
                           onChange={(e) => setEditingModel({...editingModel, is_active: e.target.checked})}
@@ -294,6 +414,8 @@ const AIModelsAdmin = () => {
                       <td>{model.name}</td>
                       <td>{model.model_id}</td>
                       <td>{model.description}</td>
+                      <td>${(parseFloat(model.input_price_per_1m) || 0).toFixed(6)}</td>
+                      <td>${(parseFloat(model.output_price_per_1m) || 0).toFixed(6)}</td>
                       <td>
                         <span className={`status-badge ${model.is_active ? 'active' : 'inactive'}`}>
                           {model.is_active ? 'Active' : 'Inactive'}
@@ -323,7 +445,7 @@ const AIModelsAdmin = () => {
               ))}
               {aiModels.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="no-models">No AI models found. Add one to get started.</td>
+                  <td colSpan="8" className="no-models">No AI models found. Add one to get started.</td>
                 </tr>
               )}
             </tbody>

@@ -58,12 +58,18 @@
 .hero-section {
   text-align: center;
   position: relative;
-  padding: 3rem;
+  padding: 4rem 3rem;
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
+  background: transparent;
+  padding: 0;
 }
 
 .hero-title {
@@ -75,10 +81,14 @@
 }
 
 .hero-highlight {
-  background: var(--secondary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  background: var(--secondary) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  text-decoration: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .hero-subtitle {
@@ -176,39 +186,91 @@
 }
 
 /* Common Section Styles */
-.section-header {
+.landing-section-header {
   text-align: center;
   margin-bottom: 3.5rem;
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.landing-section-header *,
+.landing-section-header h2,
+.landing-section-header p,
+.landing-section-header span {
+  text-decoration: none !important;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Highly specific selectors to override any conflicting styles */
+.landing-page .landing-section-header h2.section-title {
+  font-size: 86.4px !important;
+  font-weight: 800 !important;
+  color: #FFFFFF !important;
+  line-height: 1.1 !important;
+}
+
+.landing-page .landing-section-header p.section-subtitle {
+  font-size: 28.8px !important;
+  color: #FFFFFF !important;
+  line-height: 1.6 !important;
+}
+
+.landing-page .landing-section-header .hero-highlight {
+  background: #00BFA5 !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
 }
 
 .section-title {
-  font-size: clamp(3.5rem, 6vw, 5.5rem);
-  font-weight: 800;
-  margin-bottom: 1rem;
-  color: #FFFFFF;
-  letter-spacing: -0.01em;
+  font-size: 86.4px !important;
+  font-weight: 800 !important;
+  margin-bottom: 1rem !important;
+  color: #FFFFFF !important;
+  letter-spacing: -0.01em !important;
+  text-decoration: none !important;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  line-height: 1.1 !important;
 }
 
 .section-subtitle {
-  font-size: 2rem;
-  color: rgb(255, 255, 255);
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.6;
-  font-weight: 500;
+  font-size: 28.8px !important;
+  color: #FFFFFF !important;
+  max-width: 600px !important;
+  margin: 0 auto !important;
+  line-height: 1.6 !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .section-description {
-  font-size: 1.3rem;
-  color: white;
-  max-width: 800px;
-  margin: 0 auto 2.5rem;
-  line-height: 1.6;
+  font-size: 1.3rem !important;
+  color: #FFFFFF !important;
+  max-width: 800px !important;
+  margin: 0 auto 2.5rem !important;
+  line-height: 1.6 !important;
 }
 
 /* Features Section */
 .features-section {
-  padding: 3rem;
+  padding: 4rem 3rem;
   background: transparent;
   position: relative;
   overflow: hidden;
@@ -368,7 +430,7 @@
 
 /* Contact Section */
 .contact-section {
-  padding: 3rem;
+  padding: 4rem 3rem;
   background: transparent;
 }
 
@@ -578,7 +640,7 @@
 
 /* Screenshots Section */
 .screenshots-section {
-  padding: 3rem;
+  padding: 4rem 3rem;
   background: transparent;
 }
 
@@ -650,12 +712,18 @@
 /* About Section */
 .about-section {
   background: transparent;
-  padding: 3rem;
+  padding: 4rem 3rem;
 }
 
 .about-content {
   max-width: 1000px;
   margin: 0 auto;
+  margin-top: 2rem;
+  background: transparent;
+}
+
+.about-text {
+  background: transparent;
 }
 
 .about-text h3 {
@@ -715,6 +783,7 @@
 /* Team Section */
 .team-section {
   background: transparent;
+  padding: 4rem 3rem;
 }
 
 .team-grid {
@@ -843,13 +912,14 @@
 
 /* Product Section */
 .product-section {
-  padding: 3rem;
+  padding: 4rem 3rem;
   background: transparent;
 }
 
 .product-content {
   max-width: 1000px;
   margin: 0 auto;
+  background: transparent;
 }
 
 .product-overview {
@@ -889,24 +959,29 @@
 
 .product-features {
   margin-bottom: 3rem;
+  margin-top: 2rem;
+  background: transparent;
 }
 
 .product-features h3 {
   font-size: 1.5rem;
   font-weight: 600;
   color: white;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 2rem 0;
+  text-align: center;
 }
 
 .feature-highlights {
   display: grid;
   gap: 1.5rem;
+  background: transparent;
 }
 
 .highlight-item {
   display: flex;
   gap: 1rem;
   align-items: flex-start;
+  background: transparent;
 }
 
 .highlight-icon {
@@ -1083,7 +1158,7 @@
 
 /* Use Cases Section */
 .use-cases-section {
-  padding: 3rem;
+  padding: 4rem 3rem;
   background: transparent;
 }
 
@@ -1132,15 +1207,46 @@
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .hero-section {
-    padding: 5rem 1rem 3rem;
+    padding: 3rem 1rem;
+    min-height: auto;
   }
   
   .hero-title {
     font-size: 2.5rem;
   }
   
+  .hero-subtitle {
+    font-size: 1.2rem;
+  }
+  
+  .hero-description {
+    font-size: 1rem;
+  }
+  
   .hero-stats {
     gap: 2rem;
+  }
+  
+  .about-section,
+  .product-section,
+  .features-section,
+  .screenshots-section,
+  .use-cases-section,
+  .team-section,
+  .contact-section {
+    padding: 3rem 1rem;
+  }
+  
+  .section-title {
+    font-size: 48px !important;
+  }
+  
+  .section-subtitle {
+    font-size: 20px !important;
+  }
+  
+  .section-description {
+    font-size: 1rem;
   }
   
   .features-grid,
@@ -1151,6 +1257,14 @@
   .contact-container {
     grid-template-columns: 1fr;
   }
+  
+  .nav-links {
+    gap: 1rem;
+  }
+  
+  .nav-link {
+    font-size: 1.2rem;
+  }
 }
 
 /* Animation Effects */
@@ -1159,7 +1273,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.section-header,
+.landing-section-header,
 .feature-card,
 .process-step,
 .use-case-card {
