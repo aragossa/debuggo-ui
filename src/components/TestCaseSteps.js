@@ -35,6 +35,8 @@ import { useAuth } from '../context/AuthContext';
 import AIModelSelector from './AIModelSelector';
 import RunningTestIndicator from './RunningTestIndicator';
 import ReasoningPanel from './ReasoningPanel';
+import PlanningPanel from './PlanningPanel';
+import StateMachinePanel from './StateMachinePanel';
 import './TestCaseSteps.css';
 
 const STEP_ACTIONS = [
@@ -2576,13 +2578,33 @@ const startStepResultsPolling = () => {
               </div>
             )}
 
-            {/* AI Reasoning & Planning Panel */}
-            <ReasoningPanel 
+            {/* State Machine Panel - shows current state and transitions */}
+            <StateMachinePanel 
               testCaseId={testCaseId}
-              isGenerating={isGeneratingSteps}
+              isVisible={isGeneratingSteps}
               API_URL={API_URL}
               getAuthHeaders={getAuthHeaders}
             />
+
+            {/* AI Reasoning Panel - for UI tests */}
+            {test_type !== 'api' && test_type !== 'api_test' && test_type !== 'api_group' && (
+              <ReasoningPanel 
+                testCaseId={testCaseId}
+                isGenerating={isGeneratingSteps}
+                API_URL={API_URL}
+                getAuthHeaders={getAuthHeaders}
+              />
+            )}
+
+            {/* AI Planning & Reasoning Visualization Panel - for API tests */}
+            {(test_type === 'api' || test_type === 'api_test' || test_type === 'api_group') && (
+              <PlanningPanel
+                testCaseId={testCaseId}
+                isGenerating={isGeneratingSteps}
+                API_URL={API_URL}
+                getAuthHeaders={getAuthHeaders}
+              />
+            )}
 
             <div className="test-steps-table-container">
               <table className="test-steps-table">
