@@ -179,7 +179,7 @@ const Dashboard = () => {
           const formattedTestCase = {
             test_name: testCaseData.name,
             test_description: testCaseData.description,
-            test_type: testCaseData.type,
+            test_type: testCaseData.test_type || 'ui',  // Use test_type column (ui/api), not type column (test/group)
             test_steps: steps,
             test_runs: [],
             updated_at: testCaseData.updated_at || new Date().toISOString(),

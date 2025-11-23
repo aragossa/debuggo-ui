@@ -2370,8 +2370,8 @@ const startStepResultsPolling = () => {
         <div className="test-case-title">
           <h2>{currentTestName}</h2>
           {test_type && (
-            <div className={`test-type-badge-detail ${test_type}`}>
-              {test_type.toUpperCase()} Test
+            <div className={`test-type-badge-detail ${test_type === 'test' ? 'ui' : test_type}`}>
+              {test_type === 'test' ? 'UI' : test_type.toUpperCase()} Test
             </div>
           )}
           <p className="test-case-id">Test Case ID: {testCaseId}</p>
