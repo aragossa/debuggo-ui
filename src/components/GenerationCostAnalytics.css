@@ -1,0 +1,300 @@
+.page-container {
+    padding: 20px;
+    width: 100%;
+    margin: 0;
+}
+
+.generation-cost-analytics {
+    width: 100%;
+}
+
+.analytics-header {
+    margin-bottom: 30px;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 20px;
+}
+
+.analytics-header h1 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 32px;
+}
+
+.analytics-header .page-description {
+    margin: 0 0 15px 0;
+    color: #666;
+    font-size: 16px;
+}
+
+.period-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.period-selector label {
+    font-weight: 500;
+    color: #666;
+}
+
+.period-selector select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.period-selector select:hover {
+    border-color: #0066cc;
+}
+
+/* Statistics Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+}
+
+.stat-value.total-sum {
+    color: #0066cc;
+}
+
+/* Trends Section */
+.trends-section {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.trends-section h3 {
+    margin: 0 0 20px 0;
+    color: #333;
+}
+
+.trends-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 200px;
+    margin-bottom: 30px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    gap: 2px;
+}
+
+.trend-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 20px;
+    cursor: pointer;
+}
+
+.trend-fill {
+    width: 100%;
+    background: linear-gradient(to top, #0066cc, #4da6ff);
+    border-radius: 2px 2px 0 0;
+    transition: background 0.2s;
+    min-height: 2px;
+}
+
+.trend-bar:hover .trend-fill {
+    background: linear-gradient(to top, #0052a3, #3d8cd9);
+}
+
+.trend-label {
+    font-size: 10px;
+    color: #666;
+    margin-top: 5px;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    white-space: nowrap;
+}
+
+/* Trends Table */
+.trends-table {
+    overflow-x: auto;
+}
+
+.trends-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.trends-table th {
+    background: #f8f9fa;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.trends-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.trends-table tr:hover {
+    background: #f8f9fa;
+}
+
+/* Jobs Section */
+.jobs-section {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 30px;
+}
+
+.jobs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.jobs-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #666;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.toggle-btn:hover {
+    color: #0066cc;
+}
+
+.jobs-table {
+    margin-top: 20px;
+    overflow-x: auto;
+}
+
+.jobs-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.jobs-table th {
+    background: #f8f9fa;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.jobs-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.jobs-table tr:hover {
+    background: #f8f9fa;
+}
+
+.job-id {
+    font-family: monospace;
+    font-size: 12px;
+    color: #666;
+}
+
+.cost-cell {
+    font-weight: 500;
+    color: #0066cc;
+}
+
+.request-types {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Loading and Error States */
+.loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    font-size: 18px;
+}
+
+.error-message {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    padding: 20px;
+    color: #856404;
+}
+
+.no-data {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+    font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    
+    .analytics-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .trend-label {
+        font-size: 8px;
+    }
+    
+    .jobs-table,
+    .trends-table {
+        font-size: 14px;
+    }
+}

@@ -2,8 +2,8 @@
 
 .admin-requests-container {
   padding: 24px;
-  max-width: 1600px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 .admin-requests-header {

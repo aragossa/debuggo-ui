@@ -17,6 +17,7 @@ import UserRequests from './components/UserRequests';
 import AdminRequests from './components/AdminRequests';
 import MonitoringDashboard from './components/MonitoringDashboard';
 import Phase4Dashboard from './components/Phase4Dashboard';
+import GenerationCostAnalytics from './components/GenerationCostAnalytics';
 import StatusBar from './components/StatusBar';
 import './App.css';
 
@@ -37,6 +38,7 @@ const AdminMenu = () => {
         <Link to="/admin-requests" className="admin-menu-item">User Requests</Link>
         <Link to="/monitoring" className="admin-menu-item">📊 Monitoring</Link>
         <Link to="/phase4" className="admin-menu-item">🚀 Phase 4</Link>
+        <Link to="/cost-analytics" className="admin-menu-item">💰 Cost Analytics</Link>
       </div>
     );
   }, [user]);
@@ -241,6 +243,14 @@ function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <Phase4Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cost-analytics"
+              element={
+                <ProtectedRoute adminOnly>
+                  <GenerationCostAnalytics />
                 </ProtectedRoute>
               }
             />
