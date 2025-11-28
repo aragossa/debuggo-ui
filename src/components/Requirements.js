@@ -26,7 +26,7 @@ const Requirements = ({ projectId }) => {
     status: 'draft'
   });
 
-  const API_BASE = 'http://localhost:9000';
+  const API_BASE = process.env.REACT_APP_API_URL || '';
 
   useEffect(() => {
     if (projectId && user?.client_id) {

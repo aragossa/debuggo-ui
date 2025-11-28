@@ -231,6 +231,28 @@
   text-transform: uppercase;
 }
 
+.remove-test-button {
+  background: none;
+  border: none;
+  color: #bdc3c7;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.remove-test-button:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.test-item:hover .remove-test-button {
+  color: #e74c3c;
+}
+
 .child-suites {
   margin-top: 16px;
   padding-top: 16px;

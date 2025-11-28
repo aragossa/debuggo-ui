@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './TestSuites.css';
-import { FaPlus, FaEdit, FaTrash, FaChevronDown, FaChevronRight, FaFolder, FaList } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaChevronDown, FaChevronRight, FaFolder, FaList, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 
 const TestSuites = ({ projectId }) => {
@@ -197,11 +197,35 @@ const TestSuites = ({ projectId }) => {
     }
   };
 
-  const handleOpenAddTestsModal = (suite) => {
+  const handleOpenAddTestsModal = async (suite) => {
     setSelectedSuite(suite);
-    setSelectedTests(new Set());
-    loadAvailableTests(suite.id);
+    // Load suite tests first, then pre-select them
+    await loadSuiteTests(suite.id);
+    await loadAvailableTests(suite.id);
+    // Pre-select tests that are already in the suite
+    const existingTestIds = new Set((suiteTests[suite.id] || []).map(t => t.test_case_id));
+    setSelectedTests(existingTestIds);
     setShowAddTestsModal(true);
+  };
+
+  const handleRemoveTestFromSuite = async (suiteId, testCaseId) => {
+    if (!window.confirm('Remove this test from the suite?')) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/api/suites/${suiteId}/tests/${testCaseId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) throw new Error('Failed to remove test from suite');
+
+      // Refresh suite tests
+      await loadSuiteTests(suiteId);
+      await loadSuites();
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const handleAddTestsToSuite = async () => {
@@ -332,6 +356,16 @@ const TestSuites = ({ projectId }) => {
                       <FaList style={{ marginRight: '8px', color: test.test_type === 'ui' ? '#3498db' : '#e74c3c' }} />
                       <span className="test-name">{test.test_name}</span>
                       <span className="test-type">{test.test_type}</span>
+                      <button
+                        className="remove-test-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveTestFromSuite(suite.id, test.test_case_id);
+                        }}
+                        title="Remove test from suite"
+                      >
+                        <FaTimes />
+                      </button>
                     </li>
                   ))}
                 </ul>

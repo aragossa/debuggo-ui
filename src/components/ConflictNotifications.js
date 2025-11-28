@@ -5,6 +5,7 @@ const ConflictNotifications = () => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedNotification, setSelectedNotification] = useState(null);
+    const API_BASE = process.env.REACT_APP_API_URL || '';
 
     useEffect(() => {
         fetchNotifications();
@@ -16,7 +17,7 @@ const ConflictNotifications = () => {
     const fetchNotifications = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:9000/api/conflict-notifications/pending', {
+            const response = await fetch(`${API_BASE}/api/conflict-notifications/pending`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -36,7 +37,7 @@ const ConflictNotifications = () => {
     const handleApprove = async (notificationId) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:9000/api/conflict-notifications/${notificationId}/approve`, {
+            const response = await fetch(`${API_BASE}/api/conflict-notifications/${notificationId}/approve`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -64,7 +65,7 @@ const ConflictNotifications = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:9000/api/conflict-notifications/${notificationId}/reject`, {
+            const response = await fetch(`${API_BASE}/api/conflict-notifications/${notificationId}/reject`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

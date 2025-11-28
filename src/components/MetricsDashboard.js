@@ -18,7 +18,7 @@ const MetricsDashboard = () => {
   const [failureAnalysis, setFailureAnalysis] = useState(null);
   const [dashboard, setDashboard] = useState(null);
 
-  const API_BASE = 'http://localhost:9000';
+  const API_BASE = process.env.REACT_APP_API_URL || '';
 
   // Fetch available plans
   useEffect(() => {
