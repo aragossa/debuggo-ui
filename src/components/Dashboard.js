@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import TestCaseTree from './TestCaseTree';
 import TestCaseSteps from './TestCaseSteps';
-import TestExecutionsTree from './TestExecutionsTree';
+import TestSuites from './TestSuites';
 import UploadPopup from './UploadPopup';
 import TestResultPopup from './TestResultPopup';
 import Environments from './Environments';
@@ -9,8 +9,11 @@ import ApiSchemaUpload from './ApiSchemaUpload';
 import ConflictNotifications from './ConflictNotifications';
 import ConflictPopup from './ConflictPopup';
 import PlaceholderHelp from './PlaceholderHelp';
+import MetricsDashboard from './MetricsDashboard';
+import ExecutionPlans from './ExecutionPlans';
+import Requirements from './Requirements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faFlask, faCog, faChevronDown, faChevronUp, faFolderOpen, faPlay, faFileCode, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faFlask, faCog, faChevronDown, faChevronUp, faFolderOpen, faFileCode, faExclamationTriangle, faQuestionCircle, faFolder, faChartLine, faClipboardList, faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -315,12 +318,6 @@ const Dashboard = () => {
             <FontAwesomeIcon icon={faFlask} /> Test Cases
           </button>
           <button 
-            className={`tab-button ${activeTab === 'testExecutions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('testExecutions')}
-          >
-            <FontAwesomeIcon icon={faPlay} /> Test Executions
-          </button>
-          <button 
             className={`tab-button ${activeTab === 'environments' ? 'active' : ''}`}
             onClick={() => setActiveTab('environments')}
           >
@@ -333,10 +330,34 @@ const Dashboard = () => {
             <FontAwesomeIcon icon={faFileCode} /> API Schemas
           </button>
           <button 
+            className={`tab-button ${activeTab === 'suites' ? 'active' : ''}`}
+            onClick={() => setActiveTab('suites')}
+          >
+            <FontAwesomeIcon icon={faFolder} /> Test Suites
+          </button>
+          <button 
             className={`tab-button ${activeTab === 'conflicts' ? 'active' : ''}`}
             onClick={() => setActiveTab('conflicts')}
           >
             <FontAwesomeIcon icon={faExclamationTriangle} /> Conflicts
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'executionPlans' ? 'active' : ''}`}
+            onClick={() => setActiveTab('executionPlans')}
+          >
+            <FontAwesomeIcon icon={faClipboardList} /> Execution Plans
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'metrics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('metrics')}
+          >
+            <FontAwesomeIcon icon={faChartLine} /> Metrics
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'requirements' ? 'active' : ''}`}
+            onClick={() => setActiveTab('requirements')}
+          >
+            <FontAwesomeIcon icon={faClipboardCheck} /> Requirements
           </button>
           <button 
             className={`tab-button ${activeTab === 'help' ? 'active' : ''}`}
@@ -407,10 +428,6 @@ const Dashboard = () => {
               )}
             </div>
           </div>
-        ) : activeTab === 'testExecutions' ? (
-          <div className="test-executions-tab-container">
-            <TestExecutionsTree selectedProjectId={selectedProject} />
-          </div>
         ) : activeTab === 'environments' ? (
           <div className="environments-tab-container">
             <Environments projectId={selectedProject} />
@@ -419,9 +436,25 @@ const Dashboard = () => {
           <div className="api-schemas-tab-container">
             <ApiSchemaUpload projectId={selectedProject} />
           </div>
+        ) : activeTab === 'suites' ? (
+          <div className="suites-tab-container">
+            <TestSuites projectId={selectedProject} />
+          </div>
         ) : activeTab === 'conflicts' ? (
           <div className="conflicts-tab-container">
             <ConflictNotifications />
+          </div>
+        ) : activeTab === 'executionPlans' ? (
+          <div className="execution-plans-tab-container">
+            <ExecutionPlans projectId={selectedProject} />
+          </div>
+        ) : activeTab === 'metrics' ? (
+          <div className="metrics-tab-container">
+            <MetricsDashboard />
+          </div>
+        ) : activeTab === 'requirements' ? (
+          <div className="requirements-tab-container">
+            <Requirements projectId={selectedProject} />
           </div>
         ) : activeTab === 'help' ? (
           <div className="help-tab-container">

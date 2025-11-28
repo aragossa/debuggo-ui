@@ -118,9 +118,6 @@ const TestCaseSteps = ({
   const [isTestingLocator, setIsTestingLocator] = useState(false);
   const [showAddStepModal, setShowAddStepModal] = useState(false);
   const [isAddingStep, setIsAddingStep] = useState(false);
-  const [showExecutionDropdown, setShowExecutionDropdown] = useState(false);
-  const [inProgressExecutions, setInProgressExecutions] = useState([]);
-  const [selectedExecution, setSelectedExecution] = useState(null);
   const [newStep, setNewStep] = useState({
     description: '',
     action: '',
@@ -498,9 +495,6 @@ const TestCaseSteps = ({
       }
       if (environmentDropdownRef.current && !environmentDropdownRef.current.contains(event.target)) {
         setShowEnvironmentDropdown(false);
-      }
-      if (!event.target.closest('.run-button-container')) {
-        setShowExecutionDropdown(false);
       }
       
       // Close action dropdown when clicking outside
@@ -1331,67 +1325,11 @@ const startStepResultsPolling = () => {
     }
   };
 
-  // Fetch in-progress executions for the project
-  const fetchInProgressExecutions = async () => {
-    if (!projectId || projectId === 'all') {
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/api/projects/${projectId}/test-executions/in-progress`, {
-        headers: getAuthHeaders()
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setInProgressExecutions(data.executions || []);
-      }
-    } catch (error) {
-      console.error('Error fetching in-progress executions:', error);
-      setInProgressExecutions([]);
-    }
-  };
-
-  // Handle execution selection
-  const handleExecutionSelect = (execution) => {
-    setSelectedExecution(execution);
-    setShowExecutionDropdown(false);
-  };
-
-  // Run test with execution assignment
-  const runTestWithExecution = async (executionId) => {
-    const runResult = await runTest();
-    
-    // If test run was successful, assign it to the execution
-    if (runResult && runResult.test_run_id) {
-      try {
-        const response = await fetch(`${API_URL}/api/test-runs/assign-to-execution`, {
-          method: 'POST',
-          headers: {
-            ...getAuthHeaders(),
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            test_run_id: runResult.test_run_id,
-            execution_id: executionId
-          })
-        });
-
-        if (response.ok) {
-          console.log('Test run assigned to execution successfully');
-        }
-      } catch (error) {
-        console.error('Error assigning test run to execution:', error);
-      }
-    }
-  };
-
   const handleRunClick = async () => {
     if (isRunning || !testCaseId || !hasTestSteps) return;
     
-    // Always fetch executions and show dropdown for selection
-    await fetchInProgressExecutions();
-    setShowExecutionDropdown(true);
+    // Directly run the test (uses Quick Run for tracking)
+    await runTest();
   };
 
   const handleRunConfirm = async () => {
@@ -1409,13 +1347,46 @@ const startStepResultsPolling = () => {
         requestBody.environment_id = selectedEnvironment;
       }
       
+      // Step 1: Create a quick run plan for tracking
+      let quickRunId = null;
+      try {
+        const quickRunResponse = await fetch(`${API_URL}/api/quick-run/test-case`, {
+          method: 'POST',
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            client_id: user?.client_id,
+            project_id: projectId,
+            test_case_id: testCaseId,
+            created_by: user?.uuid || user?.id || user?.client_id
+          })
+        });
+        
+        if (quickRunResponse.ok) {
+          const quickRunData = await quickRunResponse.json();
+          quickRunId = quickRunData.run_id;
+          console.log('Quick run created:', quickRunData);
+        } else {
+          console.warn('Failed to create quick run, continuing without it');
+        }
+      } catch (quickRunError) {
+        console.warn('Quick run creation failed:', quickRunError);
+      }
+      
+      // Step 2: Run the test case (include quick_run_id if available)
+      if (quickRunId) {
+        requestBody.quick_run_id = quickRunId;
+      }
+      
       const response = await fetch(`${API_URL}/api/run_test_case/${testCaseId}`, {
         method: 'POST',
         headers: {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
         },
-        body: Object.keys(requestBody).length > 0 ? JSON.stringify(requestBody) : undefined
+        body: JSON.stringify(requestBody)
       });
       
       if (!response.ok) {
@@ -1425,6 +1396,11 @@ const startStepResultsPolling = () => {
       const result = await response.json();
       console.log('Test run result:', result);
       
+      // Add quick_run_id to result for tracking
+      if (quickRunId) {
+        result.quick_run_id = quickRunId;
+      }
+      
       // Start polling for step execution results if test is running
       if (result.status === 'running' || result.status === 'pending') {
         startStepResultsPolling();
@@ -1432,6 +1408,21 @@ const startStepResultsPolling = () => {
       
       // Refresh the test case to show the latest test run
       await refreshTestCase();
+      
+      // Step 3: Complete the quick run after test finishes (async, don't wait)
+      if (quickRunId && (result.status === 'completed' || result.status === 'failure' || result.status === 'error')) {
+        fetch(`${API_URL}/api/quick-run/complete`, {
+          method: 'POST',
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            run_id: quickRunId,
+            status: result.status === 'completed' ? 'completed' : 'failed'
+          })
+        }).catch(err => console.warn('Failed to complete quick run:', err));
+      }
       
       // Return the result so we can get test_run_id for execution assignment
       return result;
@@ -2459,73 +2450,6 @@ const startStepResultsPolling = () => {
             {showRunTooltip && !hasTestSteps && (
               <div className="tooltip run-tooltip">
                 <FontAwesomeIcon icon={faInfoCircle} /> No test steps to run
-              </div>
-            )}
-            
-            {/* Execution Dropdown */}
-            {showExecutionDropdown && (
-              <div className="execution-dropdown">
-                <div className="execution-dropdown-header">
-                  <strong>Select Execution</strong>
-                  <button 
-                    className="close-dropdown-btn"
-                    onClick={() => setShowExecutionDropdown(false)}
-                  >
-                    <FontAwesomeIcon icon={faTimes} />
-                  </button>
-                </div>
-                
-                {inProgressExecutions.length > 0 ? (
-                  inProgressExecutions.map(execution => (
-                    <div 
-                      key={execution.id}
-                      className="execution-dropdown-option"
-                      onClick={() => {
-                        runTestWithExecution(execution.id);
-                        setShowExecutionDropdown(false);
-                      }}
-                    >
-                      <div className="execution-option-info">
-                        <span className="execution-name">{execution.name}</span>
-                        <div className="execution-details">
-                          <span className={`execution-status ${execution.status.toLowerCase().replace(' ', '-')}`}>
-                            {execution.status}
-                          </span>
-                          <span className="execution-date">
-                            {new Date(execution.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="execution-dropdown-message">
-                    <FontAwesomeIcon icon={faInfoCircle} /> No executions found for this project.
-                  </div>
-                )}
-                
-                <div className="execution-dropdown-separator"></div>
-                
-                <div 
-                  className="execution-dropdown-option create-new"
-                  onClick={() => {
-                    setShowExecutionDropdown(false);
-                    // TODO: Open create execution modal
-                    alert('Create execution functionality coming soon!');
-                  }}
-                >
-                  <FontAwesomeIcon icon={faPlus} /> Create new execution
-                </div>
-                
-                <div 
-                  className="execution-dropdown-option standalone"
-                  onClick={() => {
-                    runTest();
-                    setShowExecutionDropdown(false);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faPlay} /> Run without execution
-                </div>
               </div>
             )}
           </div>

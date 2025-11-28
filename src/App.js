@@ -18,6 +18,7 @@ import AdminRequests from './components/AdminRequests';
 import MonitoringDashboard from './components/MonitoringDashboard';
 import Phase4Dashboard from './components/Phase4Dashboard';
 import GenerationCostAnalytics from './components/GenerationCostAnalytics';
+import MetricsDashboard from './components/MetricsDashboard';
 import StatusBar from './components/StatusBar';
 import './App.css';
 
@@ -251,6 +252,14 @@ function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <GenerationCostAnalytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/metrics"
+              element={
+                <ProtectedRoute>
+                  <MetricsDashboard />
                 </ProtectedRoute>
               }
             />
