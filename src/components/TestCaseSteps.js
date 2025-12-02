@@ -29,7 +29,17 @@ import {
   faImage,
   faMagicWandSparkles,
   faSignInAlt,
-  faCamera
+  faCamera,
+  faMousePointer,
+  faKeyboard,
+  faClock,
+  faEye,
+  faList,
+  faLink,
+  faArrowRight,
+  faCheckSquare,
+  faScroll,
+  faEraser
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import AIModelSelector from './AIModelSelector';
@@ -57,14 +67,32 @@ const STEP_ACTIONS = [
   'press_key'
 ];
 
-const TestCaseSteps = ({ 
-  test_steps, 
-  test_runs, 
-  testCaseId, 
-  test_name, 
-  test_description, 
+const ACTION_ICONS = {
+  'click': faMousePointer,
+  'type': faKeyboard,
+  'select': faList,
+  'hover': faMousePointer,
+  'wait': faClock,
+  'wait_for_clickable': faClock,
+  'wait_for_element_to_be_visible': faEye,
+  'wait_for_element_visible': faEye,
+  'wait_for_modal': faClock,
+  'assert': faCheckSquare,
+  'assert_text_contains': faCheckSquare,
+  'scroll': faScroll,
+  'clear': faEraser,
+  'navigate': faLink,
+  'press_key': faKeyboard
+};
+
+const TestCaseSteps = ({
+  test_steps,
+  test_runs,
+  testCaseId,
+  test_name,
+  test_description,
   test_type,
-  updated_at, 
+  updated_at,
   projectId,
   onTestCaseUpdate,
   steps_generation_start_time,
@@ -156,7 +184,7 @@ const TestCaseSteps = ({
       if (response.ok) {
         const data = await response.json();
         setRunningTests(data.running_tests || []);
-        
+
         // Update local running state if current test case is running
         const currentTestRunning = data.running_tests.some(test => test.test_case_id == testCaseId);
         setIsRunning(currentTestRunning);
@@ -185,7 +213,7 @@ const TestCaseSteps = ({
 
   // State for step execution results
   const [stepExecutionResults, setStepExecutionResults] = useState({});
-  
+
   // State for API step editor
   const [showApiStepEditor, setShowApiStepEditor] = useState(false);
   const [editingApiStep, setEditingApiStep] = useState(null);
@@ -197,7 +225,7 @@ const TestCaseSteps = ({
     headers: { "Content-Type": "application/json" },
     extract_variables: {}
   });
-  
+
   // Local state for test runs (to allow refreshing)
   const [localTestRuns, setLocalTestRuns] = useState(test_runs || []);
 
@@ -234,7 +262,7 @@ const TestCaseSteps = ({
   // Function to refresh step execution results for the latest test run during execution
   const refreshLatestStepResults = async () => {
     if (!localTestRuns || localTestRuns.length === 0) return;
-    
+
     // Get the most recent test run
     const latestRun = localTestRuns[0];
     if (latestRun && latestRun.id) {
@@ -246,7 +274,7 @@ const TestCaseSteps = ({
   const closeScreenshotModal = () => {
     console.log('closeScreenshotModal - Called');
     console.log('closeScreenshotModal - currentBlobUrlRef.current before cleanup:', currentBlobUrlRef.current);
-    
+
     // Clean up blob URL from ref
     if (currentBlobUrlRef.current) {
       console.log('closeScreenshotModal - Revoking blob URL:', currentBlobUrlRef.current);
@@ -254,7 +282,7 @@ const TestCaseSteps = ({
       currentBlobUrlRef.current = null;
       console.log('closeScreenshotModal - Blob URL revoked and ref set to null');
     }
-    
+
     console.log('closeScreenshotModal - Clearing React state');
     setShowScreenshotModal(false);
     setCurrentScreenshot(null);
@@ -284,11 +312,11 @@ const TestCaseSteps = ({
       });
 
       console.log('openStepScreenshot - Response status:', response.status);
-      
+
       if (response.ok) {
         const contentType = response.headers.get('content-type');
         console.log('openStepScreenshot - Content-Type:', contentType);
-        
+
         if (contentType && contentType.includes('application/json')) {
           const data = await response.json();
           console.log('openStepScreenshot - JSON response:', data);
@@ -300,29 +328,29 @@ const TestCaseSteps = ({
         } else {
           const blob = await response.blob();
           console.log('openStepScreenshot - Blob created:', {
-            size: blob.size, 
+            size: blob.size,
             type: blob.type
           });
-          
+
           if (blob.size === 0) {
             setScreenshotError('Screenshot data is empty');
             setShowScreenshotModal(true);
             return;
           }
-          
+
           // Check if blob contains base64 data instead of binary PNG
           const blobSlice = blob.slice(0, 8);
           const arrayBuffer = await blobSlice.arrayBuffer();
           const bytes = new Uint8Array(arrayBuffer);
           const pngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
           const isValidPNG = pngSignature.every((byte, index) => bytes[index] === byte);
-          
+
           console.log('openStepScreenshot - Blob first 8 bytes:', Array.from(bytes).map(b => '0x' + b.toString(16).padStart(2, '0')));
           console.log('openStepScreenshot - Expected PNG signature:', pngSignature.map(b => '0x' + b.toString(16).padStart(2, '0')));
           console.log('openStepScreenshot - Is valid PNG?', isValidPNG);
-          
+
           let finalBlob = blob;
-          
+
           if (!isValidPNG) {
             // Backend sent base64 data instead of binary - decode it
             console.log('openStepScreenshot - Detected base64 data, converting to binary');
@@ -330,28 +358,28 @@ const TestCaseSteps = ({
               const base64Text = await blob.text();
               console.log('openStepScreenshot - Base64 text length:', base64Text.length);
               console.log('openStepScreenshot - Base64 first 20 chars:', base64Text.substring(0, 20));
-              
+
               // Decode base64 to binary
               const binaryString = atob(base64Text);
               const bytes = new Uint8Array(binaryString.length);
               for (let i = 0; i < binaryString.length; i++) {
                 bytes[i] = binaryString.charCodeAt(i);
               }
-              
+
               // Create new blob with binary data
               finalBlob = new Blob([bytes], { type: 'image/png' });
               console.log('openStepScreenshot - Converted to binary blob:', {
                 size: finalBlob.size,
                 type: finalBlob.type
               });
-              
+
               // Verify PNG signature after conversion
               const convertedSlice = finalBlob.slice(0, 8);
               const convertedBuffer = await convertedSlice.arrayBuffer();
               const convertedBytes = new Uint8Array(convertedBuffer);
               const isValidAfterConversion = pngSignature.every((byte, index) => convertedBytes[index] === byte);
               console.log('openStepScreenshot - Valid PNG after conversion?', isValidAfterConversion);
-              
+
               if (!isValidAfterConversion) {
                 setScreenshotError('Failed to convert base64 data to valid PNG');
                 setShowScreenshotModal(true);
@@ -364,21 +392,21 @@ const TestCaseSteps = ({
               return;
             }
           }
-          
+
           // Revoke previous blob URL if it exists
           if (currentBlobUrlRef.current) {
             console.log('openStepScreenshot - Revoking previous blob URL:', currentBlobUrlRef.current);
             URL.revokeObjectURL(currentBlobUrlRef.current);
             console.log('openStepScreenshot - Previous blob URL revoked');
           }
-          
+
           // Create new blob URL and store in ref using the final blob (converted if needed)
           const imageUrl = URL.createObjectURL(finalBlob);
           currentBlobUrlRef.current = imageUrl;
           console.log('openStepScreenshot - Created blob URL:', imageUrl);
           console.log('openStepScreenshot - Blob URL stored in ref:', currentBlobUrlRef.current);
           console.log('openStepScreenshot - About to update React state with imageUrl:', imageUrl);
-          
+
           // Test if the blob URL is accessible by creating a test image
           const testImg = new Image();
           testImg.onload = () => {
@@ -389,7 +417,7 @@ const TestCaseSteps = ({
           };
           testImg.src = imageUrl;
           console.log('openStepScreenshot - Started blob URL test load');
-          
+
           // Only show modal after successful blob URL creation
           setCurrentScreenshot(imageUrl);
           console.log('openStepScreenshot - React state updated, about to show modal');
@@ -424,22 +452,22 @@ const TestCaseSteps = ({
         method: 'GET',
         headers: getAuthHeaders()
       });
-      
+
       let hasScreenshot = false;
-      
+
       if (!response.ok) {
         hasScreenshot = false;
       } else {
         // If response is OK and content-type is image, screenshot exists
         const contentType = response.headers.get('content-type');
-        
+
         if (contentType && contentType.startsWith('image/')) {
           hasScreenshot = true;
         } else {
           // Try to parse as JSON for error responses
           try {
             const data = await response.json();
-            
+
             // Check if it's the new format with screenshot_available flag
             if (data.hasOwnProperty('screenshot_available')) {
               hasScreenshot = data.screenshot_available;
@@ -453,7 +481,7 @@ const TestCaseSteps = ({
           }
         }
       }
-      
+
       // Cache the result
       screenshotCacheRef.current[stepId] = hasScreenshot;
       return hasScreenshot;
@@ -470,7 +498,7 @@ const TestCaseSteps = ({
       if (steps && steps.length > 0) {
         const screenshotStatus = { ...stepsWithScreenshots };
         let hasNewSteps = false;
-        
+
         for (const step of steps) {
           // Only check if we haven't checked this step before
           if (screenshotStatus[step.id] === undefined) {
@@ -478,13 +506,13 @@ const TestCaseSteps = ({
             hasNewSteps = true;
           }
         }
-        
+
         if (hasNewSteps) {
           setStepsWithScreenshots(screenshotStatus);
         }
       }
     };
-    
+
     checkScreenshots();
   }, [steps, stepsWithScreenshots]);
 
@@ -496,11 +524,11 @@ const TestCaseSteps = ({
       if (environmentDropdownRef.current && !environmentDropdownRef.current.contains(event.target)) {
         setShowEnvironmentDropdown(false);
       }
-      
+
       // Close action dropdown when clicking outside
-      if (actionDropdownStepId && 
-          actionDropdownRefs.current[actionDropdownStepId] && 
-          !actionDropdownRefs.current[actionDropdownStepId].contains(event.target)) {
+      if (actionDropdownStepId &&
+        actionDropdownRefs.current[actionDropdownStepId] &&
+        !actionDropdownRefs.current[actionDropdownStepId].contains(event.target)) {
         setActionDropdownStepId(null);
       }
     };
@@ -518,7 +546,7 @@ const TestCaseSteps = ({
         setShowEnvVarsDropdown(false);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -532,7 +560,7 @@ const TestCaseSteps = ({
         setLocatorTooltipStep(null);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -543,10 +571,10 @@ const TestCaseSteps = ({
   useEffect(() => {
     if (steps_generation_start_time && steps_generation_end_time) {
       console.log('Duration calculation - start:', steps_generation_start_time, 'end:', steps_generation_end_time);
-      
+
       const startTime = new Date(steps_generation_start_time);
       const endTime = new Date(steps_generation_end_time);
-      
+
       // Validate dates
       if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
         console.error('Invalid date format in duration calculation:', {
@@ -558,17 +586,17 @@ const TestCaseSteps = ({
         setGenerationDuration("Invalid time");
         return;
       }
-      
+
       let durationMs = endTime - startTime;
       console.log('Calculated duration (ms):', durationMs);
-      
+
       // Check for unreasonable durations (more than 1 hour = likely data issue)
       if (durationMs < 0 || durationMs > 3600000) {
         console.warn('Unreasonable duration detected:', durationMs, 'ms');
         setGenerationDuration("Invalid duration");
         return;
       }
-      
+
       // Format duration as mm:ss
       const totalSeconds = Math.floor(durationMs / 1000);
       const minutes = Math.floor(totalSeconds / 60);
@@ -587,7 +615,7 @@ const TestCaseSteps = ({
       console.log("Test steps received:", test_steps);
       console.log("Step has_screenshot properties:", test_steps.map(s => ({ id: s.id, has_screenshot: s.has_screenshot })));
       console.log("Current stepsWithScreenshots state:", stepsWithScreenshots);
-      
+
       setSteps(test_steps);
       // Initialize stepValues with values from test_steps
       const initialValues = {};
@@ -614,7 +642,7 @@ const TestCaseSteps = ({
     if (projectId && projectId !== 'all' && environments.length > 0) {
       const storageKey = `selectedEnvironment_${projectId}`;
       const persistedEnvironmentId = localStorage.getItem(storageKey);
-      
+
       if (persistedEnvironmentId) {
         // Check if the persisted environment still exists in the current project
         const environmentExists = environments.some(env => env.id.toString() === persistedEnvironmentId);
@@ -646,7 +674,7 @@ const TestCaseSteps = ({
       description: currentTestDescription
     });
   }, [currentTestName, currentTestDescription]);
-  
+
   // Update the current test name and description when props change
   useEffect(() => {
     setCurrentTestName(test_name || '');
@@ -656,7 +684,7 @@ const TestCaseSteps = ({
   useEffect(() => {
     // This effect runs when the component mounts or when testCaseId changes
     console.log("Test case ID changed to:", testCaseId);
-    
+
     // Reset relevant state when test case changes
     setShowAddStepModal(false);
     setShowDeleteStepModal(false);
@@ -666,7 +694,7 @@ const TestCaseSteps = ({
     setShowScreenshotModal(false);
     setLocatorTooltipStep(null);
     setIsTestingLocator(false);
-    
+
     if (testCaseId) {
       // Reset steps when test case changes
       if (!generatingTestCases[testCaseId]) {
@@ -676,272 +704,272 @@ const TestCaseSteps = ({
           setPollingInterval(null);
         }
       }
-      
+
       // Check if this test case is in the list of generating test cases
       const isGenerating = generatingTestCases[testCaseId];
-      
+
       if (isGenerating) {
-    }
-  }
-}, [projectId, environments]);
-
-useEffect(() => {
-  setEditedTestCase({
-    name: currentTestName,
-    description: currentTestDescription
-  });
-}, [currentTestName, currentTestDescription]);
-
-// Fetch test runs separately when switching to results tab
-useEffect(() => {
-  console.log('🔄 Tab changed to:', activeTab, 'Test Case ID:', testCaseId);
-  
-  if (activeTab === 'results' && testCaseId) {
-    console.log('🔄 Switching to results tab - fetching fresh test runs');
-    
-    const fetchTestRuns = async () => {
-      try {
-        console.log('📡 Fetching test runs from:', `${API_URL}/api/get_test_runs/${testCaseId}`);
-        const response = await fetch(`${API_URL}/api/get_test_runs/${testCaseId}`, {
-          headers: getAuthHeaders()
-        });
-        console.log('📡 Response status:', response.status);
-        
-        if (response.ok) {
-          const runs = await response.json();
-          console.log('✅ Received test runs:', runs.length, 'runs');
-          console.log('📊 Test runs data:', runs);
-          setLocalTestRuns(runs);
-          console.log('✅ Updated localTestRuns state');
-          
-          // Fetch step results for all runs (or just the latest few)
-          if (runs.length > 0) {
-            // Fetch step results for the first 3 runs
-            const runsToFetch = runs.slice(0, 3);
-            for (const run of runsToFetch) {
-              if (run.id) {
-                console.log('📡 Fetching step results for run:', run.id);
-                await fetchStepExecutionResults(run.id);
-              }
-            }
-            console.log('✅ Fetched step execution results');
-          }
-        } else {
-          console.error('❌ Failed to fetch test runs, status:', response.status);
-        }
-      } catch (error) {
-        console.error('❌ Error fetching test runs:', error);
       }
-    };
-    
-    fetchTestRuns();
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [activeTab, testCaseId, API_URL]);
+    }
+  }, [projectId, environments]);
 
-// Update local test runs when prop changes
-useEffect(() => {
-  setLocalTestRuns(test_runs || []);
-}, [test_runs]);
-  
-// Update the current test name and description when props change
-useEffect(() => {
-  setCurrentTestName(test_name || '');
-  setCurrentTestDescription(test_description || '');
-}, [test_name, test_description]);
+  useEffect(() => {
+    setEditedTestCase({
+      name: currentTestName,
+      description: currentTestDescription
+    });
+  }, [currentTestName, currentTestDescription]);
 
-useEffect(() => {
-  // This effect runs when the component mounts or when testCaseId changes
-  console.log("Test case ID changed to:", testCaseId);
-  
-  // Reset relevant state when test case changes
-  setShowAddStepModal(false);
-  setShowDeleteStepModal(false);
-  setShowConfirmModal(false);
-  setShowRunConfirmModal(false);
-  setShowEditTestCaseModal(false);
-  setShowScreenshotModal(false);
-  setLocatorTooltipStep(null);
-  setIsTestingLocator(false);
-  
-  if (testCaseId) {
-    // Reset steps when test case changes
-    if (!generatingTestCases[testCaseId]) {
-      setIsGeneratingSteps(false);
+  // Fetch test runs separately when switching to results tab
+  useEffect(() => {
+    console.log('🔄 Tab changed to:', activeTab, 'Test Case ID:', testCaseId);
+
+    if (activeTab === 'results' && testCaseId) {
+      console.log('🔄 Switching to results tab - fetching fresh test runs');
+
+      const fetchTestRuns = async () => {
+        try {
+          console.log('📡 Fetching test runs from:', `${API_URL}/api/get_test_runs/${testCaseId}`);
+          const response = await fetch(`${API_URL}/api/get_test_runs/${testCaseId}`, {
+            headers: getAuthHeaders()
+          });
+          console.log('📡 Response status:', response.status);
+
+          if (response.ok) {
+            const runs = await response.json();
+            console.log('✅ Received test runs:', runs.length, 'runs');
+            console.log('📊 Test runs data:', runs);
+            setLocalTestRuns(runs);
+            console.log('✅ Updated localTestRuns state');
+
+            // Fetch step results for all runs (or just the latest few)
+            if (runs.length > 0) {
+              // Fetch step results for the first 3 runs
+              const runsToFetch = runs.slice(0, 3);
+              for (const run of runsToFetch) {
+                if (run.id) {
+                  console.log('📡 Fetching step results for run:', run.id);
+                  await fetchStepExecutionResults(run.id);
+                }
+              }
+              console.log('✅ Fetched step execution results');
+            }
+          } else {
+            console.error('❌ Failed to fetch test runs, status:', response.status);
+          }
+        } catch (error) {
+          console.error('❌ Error fetching test runs:', error);
+        }
+      };
+
+      fetchTestRuns();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, testCaseId, API_URL]);
+
+  // Update local test runs when prop changes
+  useEffect(() => {
+    setLocalTestRuns(test_runs || []);
+  }, [test_runs]);
+
+  // Update the current test name and description when props change
+  useEffect(() => {
+    setCurrentTestName(test_name || '');
+    setCurrentTestDescription(test_description || '');
+  }, [test_name, test_description]);
+
+  useEffect(() => {
+    // This effect runs when the component mounts or when testCaseId changes
+    console.log("Test case ID changed to:", testCaseId);
+
+    // Reset relevant state when test case changes
+    setShowAddStepModal(false);
+    setShowDeleteStepModal(false);
+    setShowConfirmModal(false);
+    setShowRunConfirmModal(false);
+    setShowEditTestCaseModal(false);
+    setShowScreenshotModal(false);
+    setLocatorTooltipStep(null);
+    setIsTestingLocator(false);
+
+    if (testCaseId) {
+      // Reset steps when test case changes
+      if (!generatingTestCases[testCaseId]) {
+        setIsGeneratingSteps(false);
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+      }
+
+      // Check if this test case is in the list of generating test cases
+      const isGenerating = generatingTestCases[testCaseId];
+
+      if (isGenerating) {
+        setIsGeneratingSteps(true);
+        startPollingForUpdates();
+      }
+    }
+
+    // Cleanup polling when component unmounts or testCaseId changes
+    return () => {
       if (pollingInterval) {
         clearInterval(pollingInterval);
         setPollingInterval(null);
       }
-    }
-    
-    // Check if this test case is in the list of generating test cases
-    const isGenerating = generatingTestCases[testCaseId];
-    
-    if (isGenerating) {
-      setIsGeneratingSteps(true);
-      startPollingForUpdates();
-    }
-  }
-  
-  // Cleanup polling when component unmounts or testCaseId changes
-  return () => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
-    }
-    if (stepResultsPollingInterval) {
-      clearInterval(stepResultsPollingInterval);
-      setStepResultsPollingInterval(null);
-    }
-    // Clean up blob URLs
-    if (typeof currentScreenshot === 'string' && currentScreenshot.startsWith('blob:')) {
-      URL.revokeObjectURL(currentScreenshot);
-    }
-  };
-}, [testCaseId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-useEffect(() => {
-  localStorage.setItem('generatingTestCases', JSON.stringify(generatingTestCases));
-}, [generatingTestCases]);
-
-const startPollingForUpdates = useCallback(() => {
-  // Clear any existing interval
-  if (pollingInterval) {
-    clearInterval(pollingInterval);
-  }
-  
-  // Set up a new polling interval
-  const interval = setInterval(async () => {
-    if (!testCaseId) return;
-    
-    try {
-      // First, check the generation status
-      const statusResponse = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
-        headers: getAuthHeaders()
-      });
-      
-      if (!statusResponse.ok) {
-        throw new Error('Failed to fetch test case generation status');
-      }
-      
-      const statusData = await statusResponse.json();
-      
-      // Update current and next step information if available
-      if (statusData.current_step) {
-        setCurrentGeneratingStep(statusData.current_step);
-      }
-      
-      if (statusData.next_step) {
-        setNextGeneratingStep(statusData.next_step);
-      }
-      
-      // Then, get the latest test case data to ensure we have the most up-to-date steps
-      const testCaseResponse = await fetch(`${API_URL}/api/get_test_cases/${testCaseId}`, {
-        headers: getAuthHeaders()
-      });
-      
-      if (!testCaseResponse.ok) {
-        throw new Error('Failed to fetch test case data');
-      }
-      
-      const testCaseData = await testCaseResponse.json();
-      
-      // Extract steps from the API response (handle both old and new response formats)
-      let stepsArray = [];
-      if (testCaseData.data && testCaseData.data.steps && Array.isArray(testCaseData.data.steps)) {
-        // New API format: { status: "success", data: { test_case: {...}, steps: [...] } }
-        stepsArray = testCaseData.data.steps;
-      } else if (testCaseData.test_steps && Array.isArray(testCaseData.test_steps)) {
-        // Old API format: { test_steps: [...] }
-        stepsArray = testCaseData.test_steps;
-      }
-      
-      // Update steps with the latest from the server
-      if (stepsArray.length > 0 || (stepsArray.length === 0 && testCaseData.data)) {
-        console.log('Received updated steps during polling:', stepsArray.length);
-        setSteps(stepsArray);
-        
-        // Initialize stepValues for any new type steps
-        setStepValues(prevValues => {
-          const newValues = { ...prevValues };
-          stepsArray.forEach(step => {
-            if (step.action === 'type' && step.value && !newValues[step.id]) {
-              newValues[step.id] = step.value;
-            }
-          });
-          return newValues;
-        });
-        
-        // Check for screenshots for new steps
-        if (stepsArray.length > 0) {
-          checkNewStepsForScreenshots(stepsArray);
-        }
-      }
-      
-      // Check if generation is complete
-      if (!statusData.is_generating) {
-        setIsGeneratingSteps(false);
-        
-        // Remove this test case from the generating list
-        setGeneratingTestCases(prev => {
-          const updated = { ...prev };
-          delete updated[testCaseId];
-          return updated;
-        });
-        
-        // Reset current and next step information
-        setCurrentGeneratingStep("");
-        setNextGeneratingStep("");
-        
-        // Stop polling
-        clearInterval(interval);
-        setPollingInterval(null);
-      }
-    } catch (error) {
-      console.error('Error checking test case generation status:', error);
-    }
-  }, 3000); // Poll every 3 seconds to reduce UI blocking
-  
-  setPollingInterval(interval);
-}, [testCaseId, API_URL, pollingInterval]);
-
-// Function to start polling for step execution results during test execution
-const startStepResultsPolling = () => {
-  // Clear any existing interval
-  if (stepResultsPollingInterval) {
-    clearInterval(stepResultsPollingInterval);
-  }
-  
-  // Set up a new polling interval for step results
-  const interval = setInterval(async () => {
-    if (!localTestRuns || localTestRuns.length === 0) return;
-    
-    try {
-      // Get the most recent test run
-      const latestRun = localTestRuns[0];
-      if (latestRun && latestRun.id && (latestRun.result === 'running' || latestRun.result === 'pending')) {
-        await fetchStepExecutionResults(latestRun.id);
-      } else {
-        // Test is complete, stop polling
+      if (stepResultsPollingInterval) {
         clearInterval(stepResultsPollingInterval);
         setStepResultsPollingInterval(null);
       }
-    } catch (error) {
-      console.error('Error in step results polling:', error);
+      // Clean up blob URLs
+      if (typeof currentScreenshot === 'string' && currentScreenshot.startsWith('blob:')) {
+        URL.revokeObjectURL(currentScreenshot);
+      }
+    };
+  }, [testCaseId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    localStorage.setItem('generatingTestCases', JSON.stringify(generatingTestCases));
+  }, [generatingTestCases]);
+
+  const startPollingForUpdates = useCallback(() => {
+    // Clear any existing interval
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
     }
-  }, 3000);
-  
-  setStepResultsPollingInterval(interval);
-};
+
+    // Set up a new polling interval
+    const interval = setInterval(async () => {
+      if (!testCaseId) return;
+
+      try {
+        // First, check the generation status
+        const statusResponse = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
+          headers: getAuthHeaders()
+        });
+
+        if (!statusResponse.ok) {
+          throw new Error('Failed to fetch test case generation status');
+        }
+
+        const statusData = await statusResponse.json();
+
+        // Update current and next step information if available
+        if (statusData.current_step) {
+          setCurrentGeneratingStep(statusData.current_step);
+        }
+
+        if (statusData.next_step) {
+          setNextGeneratingStep(statusData.next_step);
+        }
+
+        // Then, get the latest test case data to ensure we have the most up-to-date steps
+        const testCaseResponse = await fetch(`${API_URL}/api/get_test_cases/${testCaseId}`, {
+          headers: getAuthHeaders()
+        });
+
+        if (!testCaseResponse.ok) {
+          throw new Error('Failed to fetch test case data');
+        }
+
+        const testCaseData = await testCaseResponse.json();
+
+        // Extract steps from the API response (handle both old and new response formats)
+        let stepsArray = [];
+        if (testCaseData.data && testCaseData.data.steps && Array.isArray(testCaseData.data.steps)) {
+          // New API format: { status: "success", data: { test_case: {...}, steps: [...] } }
+          stepsArray = testCaseData.data.steps;
+        } else if (testCaseData.test_steps && Array.isArray(testCaseData.test_steps)) {
+          // Old API format: { test_steps: [...] }
+          stepsArray = testCaseData.test_steps;
+        }
+
+        // Update steps with the latest from the server
+        if (stepsArray.length > 0 || (stepsArray.length === 0 && testCaseData.data)) {
+          console.log('Received updated steps during polling:', stepsArray.length);
+          setSteps(stepsArray);
+
+          // Initialize stepValues for any new type steps
+          setStepValues(prevValues => {
+            const newValues = { ...prevValues };
+            stepsArray.forEach(step => {
+              if (step.action === 'type' && step.value && !newValues[step.id]) {
+                newValues[step.id] = step.value;
+              }
+            });
+            return newValues;
+          });
+
+          // Check for screenshots for new steps
+          if (stepsArray.length > 0) {
+            checkNewStepsForScreenshots(stepsArray);
+          }
+        }
+
+        // Check if generation is complete
+        if (!statusData.is_generating) {
+          setIsGeneratingSteps(false);
+
+          // Remove this test case from the generating list
+          setGeneratingTestCases(prev => {
+            const updated = { ...prev };
+            delete updated[testCaseId];
+            return updated;
+          });
+
+          // Reset current and next step information
+          setCurrentGeneratingStep("");
+          setNextGeneratingStep("");
+
+          // Stop polling
+          clearInterval(interval);
+          setPollingInterval(null);
+        }
+      } catch (error) {
+        console.error('Error checking test case generation status:', error);
+      }
+    }, 3000); // Poll every 3 seconds to reduce UI blocking
+
+    setPollingInterval(interval);
+  }, [testCaseId, API_URL, pollingInterval]);
+
+  // Function to start polling for step execution results during test execution
+  const startStepResultsPolling = () => {
+    // Clear any existing interval
+    if (stepResultsPollingInterval) {
+      clearInterval(stepResultsPollingInterval);
+    }
+
+    // Set up a new polling interval for step results
+    const interval = setInterval(async () => {
+      if (!localTestRuns || localTestRuns.length === 0) return;
+
+      try {
+        // Get the most recent test run
+        const latestRun = localTestRuns[0];
+        if (latestRun && latestRun.id && (latestRun.result === 'running' || latestRun.result === 'pending')) {
+          await fetchStepExecutionResults(latestRun.id);
+        } else {
+          // Test is complete, stop polling
+          clearInterval(stepResultsPollingInterval);
+          setStepResultsPollingInterval(null);
+        }
+      } catch (error) {
+        console.error('Error in step results polling:', error);
+      }
+    }, 3000);
+
+    setStepResultsPollingInterval(interval);
+  };
 
   // Start polling for running tests
   useEffect(() => {
     fetchRunningTests();
-    
+
     // Start polling every 3 seconds
     const interval = setInterval(fetchRunningTests, 3000);
     setRunningTestsPollingInterval(interval);
-    
+
     return () => {
       if (interval) {
         clearInterval(interval);
@@ -979,34 +1007,34 @@ const startStepResultsPolling = () => {
   // Helper function to check for screenshots for new steps
   const checkNewStepsForScreenshots = async (newSteps) => {
     if (!newSteps || newSteps.length === 0) return;
-    
+
     const screenshotStatus = { ...stepsWithScreenshots };
-    
+
     for (const step of newSteps) {
       // Only check steps we haven't checked before
       if (screenshotStatus[step.id] === undefined) {
         screenshotStatus[step.id] = await checkStepScreenshot(step.id);
       }
     }
-    
+
     setStepsWithScreenshots(screenshotStatus);
   };
 
   const handleStopGeneration = async () => {
     if (!testCaseId || !isGeneratingSteps) return;
-    
+
     try {
       const response = await fetch(`${API_URL}/api/stop_test_case_generation/${testCaseId}`, {
         method: 'POST',
         headers: getAuthHeaders()
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to stop test step generation');
       }
-      
+
       console.log('Requested to stop test step generation');
-      
+
       // Refresh test case to get updated timestamp
       await refreshTestCase();
     } catch (error) {
@@ -1017,17 +1045,17 @@ const startStepResultsPolling = () => {
 
   const handleStopExecution = async () => {
     if (!testCaseId || !isRunning) return;
-    
+
     try {
       const response = await fetch(`${API_URL}/api/stop_test_case_execution/${testCaseId}`, {
         method: 'POST',
         headers: getAuthHeaders()
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to stop test execution');
       }
-      
+
       console.log('Requested to stop test execution');
     } catch (error) {
       console.error('Error stopping test execution:', error);
@@ -1038,19 +1066,19 @@ const startStepResultsPolling = () => {
 
   const fetchEnvironments = async () => {
     if (!projectId || projectId === 'all') return;
-    
+
     try {
       const response = await fetch(`${API_URL}/api/projects/${projectId}/environments`, {
         headers: getAuthHeaders()
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch environments');
       }
-      
+
       const data = await response.json();
       setEnvironments(data);
-      
+
       // Environment selection will be handled by the useEffect that depends on environments array
     } catch (error) {
       console.error('Error fetching environments:', error);
@@ -1069,13 +1097,13 @@ const startStepResultsPolling = () => {
         throw new Error('Failed to fetch updated test case');
       }
       const data = await response.json();
-      
+
       // Extract steps from the API response (handle both old and new response formats)
       let stepsArray = [];
       let testName = '';
       let testDescription = '';
       let updatedAt = null;
-      
+
       if (data.data && data.data.test_case) {
         // New API format: { status: "success", data: { test_case: {...}, steps: [...] } }
         stepsArray = data.data.steps || [];
@@ -1088,9 +1116,9 @@ const startStepResultsPolling = () => {
         testDescription = data.test_description;
         updatedAt = data.updated_at;
       }
-      
+
       setSteps(stepsArray);
-      
+
       // Update parent component with fresh test case data including updated_at
       if (typeof onTestCaseUpdate === 'function') {
         onTestCaseUpdate(testName, testDescription, updatedAt);
@@ -1106,12 +1134,12 @@ const startStepResultsPolling = () => {
         ...prevState,
         [runId]: !prevState[runId],
       };
-      
+
       // If expanding the run details and we don't have step execution results yet, fetch them
       if (newState[runId] && !stepExecutionResults[runId]) {
         fetchStepExecutionResults(runId);
       }
-      
+
       return newState;
     });
   };
@@ -1119,13 +1147,13 @@ const startStepResultsPolling = () => {
   const handleEnvironmentChange = async (environmentId) => {
     setSelectedEnvironment(environmentId);
     setShowEnvironmentDropdown(false);
-    
+
     // Persist selected environment to localStorage with project context
     if (projectId && projectId !== 'all') {
       const storageKey = `selectedEnvironment_${projectId}`;
       localStorage.setItem(storageKey, environmentId);
     }
-    
+
     // Notify backend about environment selection (optional - for analytics/logging)
     try {
       await fetch(`${API_URL}/api/environments/${environmentId}/select`, {
@@ -1165,7 +1193,7 @@ const startStepResultsPolling = () => {
 
   const handleUpdateEnvironment = async (e) => {
     e.preventDefault();
-    
+
     if (!newEnvironment.name || !newEnvironment.base_url) {
       alert('Name and Base URL are required fields');
       return;
@@ -1184,7 +1212,7 @@ const startStepResultsPolling = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Error response:', errorText);
-        
+
         let errorMessage;
         try {
           const errorData = JSON.parse(errorText);
@@ -1192,7 +1220,7 @@ const startStepResultsPolling = () => {
         } catch (e) {
           errorMessage = `HTTP error! status: ${response.status}`;
         }
-        
+
         throw new Error(errorMessage);
       }
 
@@ -1209,7 +1237,7 @@ const startStepResultsPolling = () => {
 
       // Refresh environments
       await fetchEnvironments();
-      
+
     } catch (error) {
       console.error('Error updating environment:', error);
       alert('Failed to update environment: ' + error.message);
@@ -1218,14 +1246,14 @@ const startStepResultsPolling = () => {
 
   const handleNewEnvironmentChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Check if this is a custom variable field
     if (name.startsWith('custom_variables[')) {
       const match = name.match(/custom_variables\[(\d+)\]\.(\w+)/);
       if (match) {
         const index = parseInt(match[1]);
         const field = match[2]; // 'name' or 'value'
-        
+
         setNewEnvironment(prev => {
           const updatedVars = [...prev.custom_variables];
           if (!updatedVars[index]) {
@@ -1262,7 +1290,7 @@ const startStepResultsPolling = () => {
 
   const handleAddEnvironment = async (e) => {
     e.preventDefault(); // Prevent form submission
-    
+
     // Validate form
     if (!newEnvironment.name || !newEnvironment.base_url) {
       alert('Name and Base URL are required fields');
@@ -1272,7 +1300,7 @@ const startStepResultsPolling = () => {
     try {
       console.log('Creating environment:', newEnvironment);
       console.log('Project ID:', projectId);
-      
+
       const response = await fetch(`${API_URL}/api/projects/${projectId}/environments`, {
         method: 'POST',
         headers: {
@@ -1283,11 +1311,11 @@ const startStepResultsPolling = () => {
       });
 
       console.log('Response status:', response.status);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Error response:', errorText);
-        
+
         let errorMessage;
         try {
           const errorData = JSON.parse(errorText);
@@ -1295,7 +1323,7 @@ const startStepResultsPolling = () => {
         } catch (e) {
           errorMessage = `HTTP error! status: ${response.status}`;
         }
-        
+
         throw new Error(errorMessage);
       }
 
@@ -1314,7 +1342,7 @@ const startStepResultsPolling = () => {
 
       // Refresh environments
       await fetchEnvironments();
-      
+
       // Select the newly created environment
       if (data && data.id) {
         setSelectedEnvironment(data.id.toString());
@@ -1327,7 +1355,7 @@ const startStepResultsPolling = () => {
 
   const handleRunClick = async () => {
     if (isRunning || !testCaseId || !hasTestSteps) return;
-    
+
     // Directly run the test (uses Quick Run for tracking)
     await runTest();
   };
@@ -1341,12 +1369,12 @@ const startStepResultsPolling = () => {
     setIsRunning(true);
     try {
       const requestBody = {};
-      
+
       // If an environment is selected, include it in the request
       if (selectedEnvironment) {
         requestBody.environment_id = selectedEnvironment;
       }
-      
+
       // Step 1: Create a quick run plan for tracking
       let quickRunId = null;
       try {
@@ -1363,7 +1391,7 @@ const startStepResultsPolling = () => {
             created_by: user?.uuid || user?.id || user?.client_id
           })
         });
-        
+
         if (quickRunResponse.ok) {
           const quickRunData = await quickRunResponse.json();
           quickRunId = quickRunData.run_id;
@@ -1374,12 +1402,12 @@ const startStepResultsPolling = () => {
       } catch (quickRunError) {
         console.warn('Quick run creation failed:', quickRunError);
       }
-      
+
       // Step 2: Run the test case (include quick_run_id if available)
       if (quickRunId) {
         requestBody.quick_run_id = quickRunId;
       }
-      
+
       const response = await fetch(`${API_URL}/api/run_test_case/${testCaseId}`, {
         method: 'POST',
         headers: {
@@ -1388,27 +1416,27 @@ const startStepResultsPolling = () => {
         },
         body: JSON.stringify(requestBody)
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to run test case');
       }
-      
+
       const result = await response.json();
       console.log('Test run result:', result);
-      
+
       // Add quick_run_id to result for tracking
       if (quickRunId) {
         result.quick_run_id = quickRunId;
       }
-      
+
       // Start polling for step execution results if test is running
       if (result.status === 'running' || result.status === 'pending') {
         startStepResultsPolling();
       }
-      
+
       // Refresh the test case to show the latest test run
       await refreshTestCase();
-      
+
       // Step 3: Complete the quick run after test finishes (async, don't wait)
       if (quickRunId && (result.status === 'completed' || result.status === 'failure' || result.status === 'error')) {
         fetch(`${API_URL}/api/quick-run/complete`, {
@@ -1423,10 +1451,10 @@ const startStepResultsPolling = () => {
           })
         }).catch(err => console.warn('Failed to complete quick run:', err));
       }
-      
+
       // Return the result so we can get test_run_id for execution assignment
       return result;
-      
+
     } catch (error) {
       console.error('Error running test case:', error);
       return null;
@@ -1440,18 +1468,18 @@ const startStepResultsPolling = () => {
       setShowProjectTooltip(true);
       return;
     }
-    
+
     // Check if an environment is selected
     if (!selectedEnvironment) {
       alert('Please select an environment before generating test steps');
       return;
     }
-    
+
     if (test_steps && test_steps.length > 0) {
       setShowConfirmModal(true);
       return;
     }
-    
+
     await generateSteps(false);
   };
 
@@ -1465,19 +1493,19 @@ const startStepResultsPolling = () => {
 
   const generateSteps = async (confirm) => {
     if (!testCaseId || isGeneratingSteps || !isProjectSelected || !selectedEnvironment) return;
-    
+
     setIsGeneratingSteps(true);
-    
+
     // Add this test case to the generating list
     setGeneratingTestCases(prev => ({
       ...prev,
       [testCaseId]: true
     }));
-    
+
     try {
       let endpoint;
       let requestBody = {};
-      
+
       // Check if this is an API test case
       if (test_type === 'api' || test_type === 'api_test') {
         // Use API-specific endpoint (no confirm needed for API tests)
@@ -1486,23 +1514,23 @@ const startStepResultsPolling = () => {
         requestBody.environment_id = parseInt(selectedEnvironment);
       } else {
         // Use UI test endpoint
-        endpoint = confirm 
-          ? `${API_URL}/api/confirm_generate_steps/${testCaseId}` 
+        endpoint = confirm
+          ? `${API_URL}/api/confirm_generate_steps/${testCaseId}`
           : `${API_URL}/api/generate_steps/${testCaseId}`;
-        
+
         requestBody.environment_id = parseInt(selectedEnvironment);
-        
+
         // If projectId exists and is not 'all', add it to the request body
         if (projectId && projectId !== 'all') {
           requestBody.project_id = projectId;
         }
-        
+
         // If AI model is selected, add it to the request body
         if (selectedAIModel) {
           requestBody.ai_model_id = selectedAIModel;
         }
       }
-      
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -1511,18 +1539,18 @@ const startStepResultsPolling = () => {
         },
         body: Object.keys(requestBody).length > 0 ? JSON.stringify(requestBody) : undefined
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || 'Failed to generate steps');
       }
-      
+
       const result = await response.json();
-      
+
       // For API tests, steps are generated asynchronously via Kafka, so poll for real-time updates
       if (test_type === 'api' || test_type === 'api_test') {
         let previousStepCount = 0;
-        
+
         // Start polling to check for new steps in real-time using generation status endpoint
         const pollInterval = setInterval(async () => {
           try {
@@ -1530,23 +1558,23 @@ const startStepResultsPolling = () => {
             const statusResponse = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
               headers: getAuthHeaders()
             });
-            
+
             if (statusResponse.ok) {
               const statusData = await statusResponse.json();
               const currentStepCount = statusData.test_steps ? statusData.test_steps.length : 0;
               const isStillGenerating = statusData.is_generating;
-              
+
               console.log(`Generation status: ${isStillGenerating ? 'ACTIVE' : 'COMPLETE'}, Steps: ${currentStepCount}`);
-              
+
               // If new steps appeared, refresh the UI to show them
               if (currentStepCount > previousStepCount) {
                 console.log(`New steps detected: ${currentStepCount} (was ${previousStepCount})`);
                 previousStepCount = currentStepCount;
-                
+
                 // Update steps immediately in local state
                 if (statusData.test_steps && Array.isArray(statusData.test_steps)) {
                   setSteps(statusData.test_steps);
-                  
+
                   // Initialize stepValues for any new type steps
                   setStepValues(prevValues => {
                     const newValues = { ...prevValues };
@@ -1558,25 +1586,25 @@ const startStepResultsPolling = () => {
                     return newValues;
                   });
                 }
-                
+
                 // Also trigger parent component to refresh test case data
                 if (onTestCaseUpdate) {
                   onTestCaseUpdate();
                 }
               }
-              
+
               // Check if generation is complete based on backend status
               if (!isStillGenerating) {
                 console.log(`✅ API test generation COMPLETE: ${currentStepCount} steps generated`);
                 clearInterval(pollInterval);
-                
+
                 setIsGeneratingSteps(false);
                 setGeneratingTestCases(prev => {
                   const updated = { ...prev };
                   delete updated[testCaseId];
                   return updated;
                 });
-                
+
                 // Final refresh to ensure we have all steps
                 if (onTestCaseUpdate) {
                   onTestCaseUpdate();
@@ -1587,7 +1615,7 @@ const startStepResultsPolling = () => {
             console.error('Error polling for API test steps:', error);
           }
         }, 3000); // Poll every 3 seconds to reduce UI blocking
-        
+
         // Set a timeout to stop polling after 5 minutes (increased from 2 minutes)
         setTimeout(() => {
           clearInterval(pollInterval);
@@ -1603,12 +1631,12 @@ const startStepResultsPolling = () => {
         // For UI tests, start polling for updates
         startPollingForUpdates();
       }
-      
+
     } catch (error) {
       console.error('Error generating steps:', error);
       alert(`Failed to generate steps: ${error.message}`);
       setIsGeneratingSteps(false);
-      
+
       // Remove this test case from the generating list
       setGeneratingTestCases(prev => {
         const updated = { ...prev };
@@ -1617,21 +1645,21 @@ const startStepResultsPolling = () => {
       });
     }
   };
-  
+
   const handleActionChange = async (stepId, newAction) => {
     try {
       // Close the dropdown
       setActionDropdownStepId(null);
-      
+
       // Update local state first for immediate feedback
-      setSteps(prevSteps => 
-        prevSteps.map(step => 
-          step.id === stepId 
+      setSteps(prevSteps =>
+        prevSteps.map(step =>
+          step.id === stepId
             ? { ...step, action: newAction }
             : step
         )
       );
-      
+
       // Send update to backend
       const response = await fetch(`${API_URL}/api/update_test_step/${stepId}`, {
         method: 'PATCH',
@@ -1651,7 +1679,7 @@ const startStepResultsPolling = () => {
       refreshTestCase();
     }
   };
-  
+
   const toggleActionDropdown = (stepId) => {
     setActionDropdownStepId(actionDropdownStepId === stepId ? null : stepId);
   };
@@ -1669,9 +1697,9 @@ const startStepResultsPolling = () => {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           value: value,
-          action: currentAction 
+          action: currentAction
         })
       });
 
@@ -1686,9 +1714,9 @@ const startStepResultsPolling = () => {
   const handleElementPathChange = async (stepId, elementPath) => {
     try {
       // Update steps state immediately for better UI responsiveness
-      setSteps(prevSteps => 
-        prevSteps.map(step => 
-          step.id === stepId 
+      setSteps(prevSteps =>
+        prevSteps.map(step =>
+          step.id === stepId
             ? { ...step, element_path: elementPath }
             : step
         )
@@ -1715,9 +1743,9 @@ const startStepResultsPolling = () => {
   const handleCssSelectorChange = async (stepId, cssSelector) => {
     try {
       // Update steps state immediately for better UI responsiveness
-      setSteps(prevSteps => 
-        prevSteps.map(step => 
-          step.id === stepId 
+      setSteps(prevSteps =>
+        prevSteps.map(step =>
+          step.id === stepId
             ? { ...step, css_selector: cssSelector }
             : step
         )
@@ -1747,7 +1775,7 @@ const startStepResultsPolling = () => {
       e.preventDefault();
       return;
     }
-    
+
     setDraggedStep(step);
     e.currentTarget.classList.add('dragging');
   };
@@ -1770,12 +1798,12 @@ const startStepResultsPolling = () => {
   const handleDrop = async (e, targetStep) => {
     e.preventDefault();
     e.currentTarget.classList.remove('drag-over');
-    
+
     if (!draggedStep || draggedStep.id === targetStep.id) return;
 
     const oldIndex = steps.findIndex(s => s.id === draggedStep.id);
     const newIndex = steps.findIndex(s => s.id === targetStep.id);
-    
+
     const newSteps = [...steps];
     newSteps.splice(oldIndex, 1);
     newSteps.splice(newIndex, 0, draggedStep);
@@ -1900,7 +1928,7 @@ const startStepResultsPolling = () => {
         // Close modal first
         setShowApiStepEditor(false);
         setEditingApiStep(null);
-        
+
         // Refresh test case to get updated steps
         try {
           await refreshTestCase();
@@ -1921,20 +1949,20 @@ const startStepResultsPolling = () => {
 
   const handleConfirmDeleteStep = async () => {
     if (!stepToDelete) return;
-    
+
     try {
       const response = await fetch(`${API_URL}/api/delete_test_step/${stepToDelete.id}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete test step');
       }
-      
+
       // Remove the step from the local state
       setSteps(prevSteps => prevSteps.filter(step => step.id !== stepToDelete.id));
-      
+
       setShowDeleteStepModal(false);
       setStepToDelete(null);
     } catch (error) {
@@ -1962,25 +1990,25 @@ const startStepResultsPolling = () => {
 
   const insertEnvVariable = (varName) => {
     if (!activeInputStepId) return;
-    
+
     // Create the variable text with the format {{variable_name}}
     const variableText = `{{${varName}}}`;
-    
+
     // Replace the entire input value with the environment variable
     setStepValues(prev => ({
       ...prev,
       [activeInputStepId]: variableText
     }));
-    
+
     // Save the new value to the database
     const step = steps.find(s => s.id === activeInputStepId);
     if (step) {
       handleValueChange(activeInputStepId, variableText, step.action);
     }
-    
+
     // Close the dropdown
     setShowEnvVarsDropdown(false);
-    
+
     // Focus back on the input and set cursor position at the end
     setTimeout(() => {
       const input = inputRefs.current[activeInputStepId];
@@ -1995,17 +2023,17 @@ const startStepResultsPolling = () => {
 
   const handleTestLocator = async (stepId, elementPath) => {
     if (!elementPath || !selectedEnvironment) return;
-    
+
     const step = steps.find(s => s.id === stepId);
     if (!step) return;
-    
+
     // Set the testing state for this locator
     setIsTestingLocator(true);
     setLocatorValidationStatus(prev => ({
       ...prev,
       [stepId]: { status: 'testing', message: 'Testing locator...' }
     }));
-    
+
     try {
       const response = await fetch(`${API_URL}/api/test_element_locator`, {
         method: 'POST',
@@ -2019,22 +2047,22 @@ const startStepResultsPolling = () => {
           test_case_id: testCaseId
         })
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to test locator');
       }
-      
+
       const result = await response.json();
-      
+
       // Update the validation status based on the result
       setLocatorValidationStatus(prev => ({
         ...prev,
-        [stepId]: { 
-          status: result.valid ? 'valid' : 'invalid', 
+        [stepId]: {
+          status: result.valid ? 'valid' : 'invalid',
           message: result.message || (result.valid ? 'Element found!' : 'Element not found')
         }
       }));
-      
+
     } catch (error) {
       console.error('Error testing locator:', error);
       setLocatorValidationStatus(prev => ({
@@ -2087,27 +2115,27 @@ const startStepResultsPolling = () => {
 
   const handleAddStep = async (e) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!newStep.description || !newStep.action) {
       alert('Description and Action are required fields');
       return;
     }
-    
+
     // If action requires an element path but none is provided, show an error
     if (['click', 'type', 'select', 'hover', 'assert'].includes(newStep.action) && !newStep.element_path) {
       alert('Element path is required for this action');
       return;
     }
-    
+
     // If action is "type" but no value is provided, show an error
     if (newStep.action === 'type' && !newStep.value) {
       alert('Value is required for the "type" action');
       return;
     }
-    
+
     setIsAddingStep(true);
-    
+
     try {
       const response = await fetch(`${API_URL}/api/create_test_step`, {
         method: 'POST',
@@ -2125,11 +2153,11 @@ const startStepResultsPolling = () => {
           expected_result: newStep.expected_result || null
         })
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Error response:', errorText);
-        
+
         let errorMessage;
         try {
           const errorData = JSON.parse(errorText);
@@ -2137,15 +2165,15 @@ const startStepResultsPolling = () => {
         } catch (e) {
           errorMessage = `HTTP error! status: ${response.status}`;
         }
-        
+
         throw new Error(errorMessage);
       }
-      
+
       const newStepData = await response.json();
-      
+
       // Add the new step to the steps array
       setSteps(prevSteps => [...prevSteps, newStepData]);
-      
+
       // Close the modal and reset the form
       setShowAddStepModal(false);
       setNewStep({
@@ -2156,7 +2184,7 @@ const startStepResultsPolling = () => {
         path_type: 'xpath',
         expected_result: ''
       });
-      
+
     } catch (error) {
       console.error('Error adding test step:', error);
       alert('Failed to add test step: ' + error.message);
@@ -2172,7 +2200,7 @@ const startStepResultsPolling = () => {
 
   const handleUpdateTestCase = async (e) => {
     e.preventDefault();
-    
+
     if (!editedTestCase.name || !editedTestCase.description) {
       alert('Name and Description are required fields');
       return;
@@ -2235,18 +2263,18 @@ const startStepResultsPolling = () => {
   const handleImageClick = (event) => {
     const image = event.target;
     const rect = image.getBoundingClientRect();
-    
+
     // Calculate relative position within the image (0 to 1)
     const relativeX = (event.clientX - rect.left) / rect.width;
     const relativeY = (event.clientY - rect.top) / rect.height;
-    
+
     // Toggle zoom state
     const newZoomState = !isZoomed;
-    
+
     // Set zoom position only when zooming in
     if (newZoomState) {
       setZoomPosition({ x: relativeX, y: relativeY });
-      
+
       // Scroll the container to center on the clicked point after a short delay
       setTimeout(() => {
         const container = image.closest('.screenshot-image-container');
@@ -2254,14 +2282,14 @@ const startStepResultsPolling = () => {
           // Calculate scroll position to center on the clicked point
           const zoomedWidth = image.width * 1.75; // Match the CSS scale(1.75)
           const zoomedHeight = image.height * 1.75;
-          
+
           // Add padding offset to ensure corners are visible
           const padding = 100; // Match the CSS padding/margin
-          
+
           // Calculate scroll position with absolute positioning in mind
           const scrollX = Math.max(0, (relativeX * zoomedWidth) - (container.clientWidth / 2));
           const scrollY = Math.max(0, (relativeY * zoomedHeight) - (container.clientHeight / 2));
-          
+
           container.scrollTo({
             left: scrollX,
             top: scrollY,
@@ -2270,7 +2298,7 @@ const startStepResultsPolling = () => {
         }
       }, 50);
     }
-    
+
     setIsZoomed(newZoomState);
   };
 
@@ -2296,166 +2324,183 @@ const startStepResultsPolling = () => {
 
   return (
     <div className="test-steps-container">
-      <div className="selectors-container">
-        <div className="environment-selector-container">
-          <div className="environment-selector-label">Environment</div>
-          <div 
-            className="environment-selector-button"
-            onClick={() => setShowEnvironmentDropdown(!showEnvironmentDropdown)}
-            onMouseEnter={() => setShowEnvTooltip(true)}
-            onMouseLeave={() => setShowEnvTooltip(false)}
-          >
-            {selectedEnvironment 
-              ? environments.find(env => env.id.toString() === selectedEnvironment)?.name || 'Select Environment'
-              : 'Select Environment'}
-            <FontAwesomeIcon icon={showEnvironmentDropdown ? faChevronUp : faChevronDown} />
+      <div className="test-case-header-unified">
+        <div className="header-main-info">
+          <div className="title-row">
+            <h2>{currentTestName}</h2>
+            <button
+              className="edit-test-case-btn"
+              onClick={() => {
+                setEditedTestCase({
+                  name: currentTestName,
+                  description: currentTestDescription
+                });
+                setShowEditTestCaseModal(true);
+              }}
+              title="Edit Test Case"
+            >
+              <FontAwesomeIcon icon={faPencilAlt} />
+            </button>
+            {test_type && (
+              <div className={`test-type-badge-detail ${test_type === 'test' ? 'ui' : test_type}`}>
+                {test_type === 'test' ? 'UI' : test_type.toUpperCase()} Test
+              </div>
+            )}
           </div>
-          {showEnvironmentDropdown && (
-            <div className="environment-dropdown" ref={environmentDropdownRef}>
-              {environments.length > 0 ? (
-                <>
-                  {environments.map(env => (
-                    <div 
-                      key={env.id} 
-                      className={`environment-option ${selectedEnvironment === env.id.toString() ? 'selected' : ''}`}
-                      onClick={() => handleEnvironmentChange(env.id.toString())}
-                    >
-                      <span>{env.name}</span>
-                      <button 
-                        className="edit-environment-button"
-                        onClick={(e) => handleEditEnvironmentClick(env, e)}
+          <div className="meta-row">
+            <span className="test-case-id">ID: {testCaseId}</span>
+            <span className="separator">•</span>
+            <span className="updated-at">Updated: {formatDate(updated_at)}</span>
+            {generationDuration && (
+              <>
+                <span className="separator">•</span>
+                <span className="generation-duration">Gen Time: <span className="duration-value">{generationDuration}</span></span>
+              </>
+            )}
+          </div>
+          <p className="test-description">{currentTestDescription}</p>
+        </div>
+
+        <div className="header-controls-area">
+          <div className="selectors-group">
+            <div className="environment-selector-container">
+              <div
+                className="environment-selector-button"
+                onClick={() => setShowEnvironmentDropdown(!showEnvironmentDropdown)}
+                onMouseEnter={() => setShowEnvTooltip(true)}
+                onMouseLeave={() => setShowEnvTooltip(false)}
+              >
+                {selectedEnvironment
+                  ? environments.find(env => env.id.toString() === selectedEnvironment)?.name || 'Select Environment'
+                  : 'Select Environment'}
+                <FontAwesomeIcon icon={showEnvironmentDropdown ? faChevronUp : faChevronDown} />
+              </div>
+              {showEnvironmentDropdown && (
+                <div className="environment-dropdown" ref={environmentDropdownRef}>
+                  {environments.length > 0 ? (
+                    <>
+                      {environments.map(env => (
+                        <div
+                          key={env.id}
+                          className={`environment-option ${selectedEnvironment === env.id.toString() ? 'selected' : ''}`}
+                          onClick={() => handleEnvironmentChange(env.id.toString())}
+                        >
+                          <span>{env.name}</span>
+                          <button
+                            className="edit-environment-button"
+                            onClick={(e) => handleEditEnvironmentClick(env, e)}
+                          >
+                            <FontAwesomeIcon icon={faEdit} />
+                          </button>
+                        </div>
+                      ))}
+                      <div
+                        className="environment-option add-environment"
+                        onClick={handleAddNewEnvironmentClick}
                       >
-                        <FontAwesomeIcon icon={faEdit} />
+                        <FontAwesomeIcon icon={faPlus} /> Add New Environment
+                      </div>
+                    </>
+                  ) : (
+                    <div className="no-environments">
+                      <p>No environments available</p>
+                      <button
+                        className="add-environment-button"
+                        onClick={handleAddNewEnvironmentClick}
+                      >
+                        <FontAwesomeIcon icon={faPlus} /> Add Environment
                       </button>
                     </div>
-                  ))}
-                  <div 
-                    className="environment-option add-environment"
-                    onClick={handleAddNewEnvironmentClick}
-                  >
-                    <FontAwesomeIcon icon={faPlus} /> Add New Environment
-                  </div>
-                </>
-              ) : (
-                <div className="no-environments">
-                  <p>No environments available</p>
-                  <button 
-                    className="add-environment-button"
-                    onClick={handleAddNewEnvironmentClick}
-                  >
-                    <FontAwesomeIcon icon={faPlus} /> Add Environment
-                  </button>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </div>
-        
-        <AIModelSelector 
-          onModelSelect={setSelectedAIModel} 
-          selectedModelId={selectedAIModel} 
-        />
-      </div>
-      
-      <div className="test-case-header">
-        <div className="test-case-title">
-          <h2>{currentTestName}</h2>
-          {test_type && (
-            <div className={`test-type-badge-detail ${test_type === 'test' ? 'ui' : test_type}`}>
-              {test_type === 'test' ? 'UI' : test_type.toUpperCase()} Test
-            </div>
-          )}
-          <p className="test-case-id">Test Case ID: {testCaseId}</p>
-          <p className="test-description">{currentTestDescription}</p>
-          <p className="updated-at">Last updated: {formatDate(updated_at)}</p>
-          {generationDuration && (
-            <p className="generation-duration">Steps generation time: <span className="duration-value">{generationDuration}</span></p>
-          )}
-        </div>
-        
 
-        
-        <div className={`test-steps-actions ${isRunning ? 'running' : ''}`}>
+            <AIModelSelector
+              onModelSelect={setSelectedAIModel}
+              selectedModelId={selectedAIModel}
+            />
+          </div>
 
-          
-          <button 
-            className="add-step-button action-button"
-            onClick={handleAddStepClick}
-            disabled={isGeneratingSteps || isRunning}
-          >
-            <FontAwesomeIcon icon={faPlus} /> Add Step
-          </button>
-          
-          <div className="generate-button-container">
-            <button 
-              className={`generate-button action-button ${isGeneratingSteps ? 'generating' : ''} ${(!isProjectSelected || isRunning) ? 'disabled' : ''}`}
-              onClick={handleGenerateSteps}
-              disabled={isGeneratingSteps || !isProjectSelected || isRunning}
-              onMouseEnter={() => {
-                if (!isProjectSelected) {
-                  setShowProjectTooltip(true);
-                } else if (isRunning) {
-                  setShowRunningTooltip(true);
-                }
-              }}
-              onMouseLeave={() => {
-                setShowProjectTooltip(false);
-                setShowRunningTooltip(false);
-              }}
+          <div className={`test-steps-actions ${isRunning ? 'running' : ''}`}>
+            <button
+              className="add-step-button action-button"
+              onClick={handleAddStepClick}
+              disabled={isGeneratingSteps || isRunning}
             >
-              {isGeneratingSteps ? (
-                <>
-                  <div className="spinner"></div> Generating Steps
-                </>
-              ) : (
-                <>
-                  <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate with AI
-                </>
-              )}
+              <FontAwesomeIcon icon={faPlus} /> Add Step
             </button>
-            {!isProjectSelected && showProjectTooltip && (
-              <div className="tooltip">
-                <FontAwesomeIcon icon={faInfoCircle} /> Please select a project first
-              </div>
-            )}
-            {isRunning && showRunningTooltip && (
-              <div className="tooltip">
-                <FontAwesomeIcon icon={faInfoCircle} /> Cannot generate steps while test is running
-              </div>
-            )}
-          </div>
-          
-          
-          <div className="run-button-container">
-            {!isRunning ? (
-              <button 
-                className={`run-button action-button ${(!hasTestSteps || isGeneratingSteps) ? 'disabled' : ''}`}
-                onClick={handleRunClick}
-                disabled={!hasTestSteps || isGeneratingSteps}
-                onMouseEnter={() => setShowRunTooltip(true)}
-                onMouseLeave={() => setShowRunTooltip(false)}
+
+            <div className="generate-button-container">
+              <button
+                className={`generate-button action-button ${isGeneratingSteps ? 'generating' : ''} ${(!isProjectSelected || isRunning) ? 'disabled' : ''}`}
+                onClick={handleGenerateSteps}
+                disabled={isGeneratingSteps || !isProjectSelected || isRunning}
+                onMouseEnter={() => {
+                  if (!isProjectSelected) {
+                    setShowProjectTooltip(true);
+                  } else if (isRunning) {
+                    setShowRunningTooltip(true);
+                  }
+                }}
+                onMouseLeave={() => {
+                  setShowProjectTooltip(false);
+                  setShowRunningTooltip(false);
+                }}
               >
-                <FontAwesomeIcon icon={faPlay} /> Run Test
+                {isGeneratingSteps ? (
+                  <>
+                    <div className="spinner"></div> Generating
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faMagicWandSparkles} /> Generate
+                  </>
+                )}
               </button>
-            ) : (
-              <button 
-                className="stop-button action-button"
-                onClick={handleStopExecution}
-                title="Stop test execution"
-              >
-                <FontAwesomeIcon icon={faStop} /> Stop Test
-              </button>
-            )}
-            
-            {showRunTooltip && !hasTestSteps && (
-              <div className="tooltip run-tooltip">
-                <FontAwesomeIcon icon={faInfoCircle} /> No test steps to run
-              </div>
-            )}
+              {!isProjectSelected && showProjectTooltip && (
+                <div className="tooltip">
+                  <FontAwesomeIcon icon={faInfoCircle} /> Please select a project first
+                </div>
+              )}
+              {isRunning && showRunningTooltip && (
+                <div className="tooltip">
+                  <FontAwesomeIcon icon={faInfoCircle} /> Cannot generate steps while test is running
+                </div>
+              )}
+            </div>
+
+            <div className="run-button-container">
+              {!isRunning ? (
+                <button
+                  className={`run-button action-button ${(!hasTestSteps || isGeneratingSteps) ? 'disabled' : ''}`}
+                  onClick={handleRunClick}
+                  disabled={!hasTestSteps || isGeneratingSteps}
+                  onMouseEnter={() => setShowRunTooltip(true)}
+                  onMouseLeave={() => setShowRunTooltip(false)}
+                >
+                  <FontAwesomeIcon icon={faPlay} /> Run
+                </button>
+              ) : (
+                <button
+                  className="stop-button action-button"
+                  onClick={handleStopExecution}
+                  title="Stop test execution"
+                >
+                  <FontAwesomeIcon icon={faStop} /> Stop
+                </button>
+              )}
+
+              {showRunTooltip && !hasTestSteps && (
+                <div className="tooltip run-tooltip">
+                  <FontAwesomeIcon icon={faInfoCircle} /> No test steps to run
+                </div>
+              )}
+            </div>
           </div>
         </div>
-                {/* Running Test Indicator */}
-                <RunningTestIndicator 
+        {/* Running Test Indicator */}
+        <RunningTestIndicator
           testCaseId={testCaseId}
           onRunningStateChange={(isRunning) => setIsRunning(isRunning)}
         />
@@ -2463,13 +2508,13 @@ const startStepResultsPolling = () => {
 
       {/* Tab Navigation */}
       <div className="tab-navigation">
-        <button 
+        <button
           className={`tab-button ${activeTab === 'description' ? 'active' : ''}`}
           onClick={() => setActiveTab('description')}
         >
           Description
         </button>
-        <button 
+        <button
           className={`tab-button ${activeTab === 'results' ? 'active' : ''}`}
           onClick={() => setActiveTab('results')}
         >
@@ -2493,7 +2538,7 @@ const startStepResultsPolling = () => {
                     )}
                   </div>
                 )}
-                <button 
+                <button
                   className="stop-generation-button"
                   onClick={handleStopGeneration}
                 >
@@ -2503,7 +2548,7 @@ const startStepResultsPolling = () => {
             )}
 
             {/* State Machine Panel - shows current state and transitions */}
-            <StateMachinePanel 
+            <StateMachinePanel
               testCaseId={testCaseId}
               isVisible={isGeneratingSteps}
               API_URL={API_URL}
@@ -2512,7 +2557,7 @@ const startStepResultsPolling = () => {
 
             {/* AI Reasoning Panel - for UI tests */}
             {test_type !== 'api' && test_type !== 'api_test' && test_type !== 'api_group' && (
-              <ReasoningPanel 
+              <ReasoningPanel
                 testCaseId={testCaseId}
                 isGenerating={isGeneratingSteps}
                 API_URL={API_URL}
@@ -2540,8 +2585,7 @@ const startStepResultsPolling = () => {
                     <th className="step-action-column">Action</th>
                     {test_type !== 'api' && test_type !== 'api_test' && test_type !== 'api_group' && (
                       <>
-                        <th className="step-locator-column">Element Locator (XPath)</th>
-                        <th className="step-css-column">CSS Selector (Fallback)</th>
+                        <th className="step-target-column">Target Element</th>
                       </>
                     )}
                     <th className="step-value-column">Value</th>
@@ -2572,34 +2616,34 @@ const startStepResultsPolling = () => {
                       </td>
                       <td className="step-action-cell">
                         <div className="action-dropdown-container" ref={el => actionDropdownRefs.current[step.id] = el}>
-                          <div 
+                          <div
                             className="action-dropdown-button"
                             onClick={() => toggleActionDropdown(step.id)}
                           >
-                            <FontAwesomeIcon icon={faCog} className="action-icon" />
                             <span>
                               {step.action ? step.action.replace('_', ' ') : 'Select Action'}
                             </span>
-                            <FontAwesomeIcon 
-                              icon={actionDropdownStepId === step.id ? faChevronUp : faChevronDown} 
-                              className="dropdown-icon" 
+                            <FontAwesomeIcon
+                              icon={actionDropdownStepId === step.id ? faChevronUp : faChevronDown}
+                              className="dropdown-icon"
                             />
                           </div>
-                          
+
                           {actionDropdownStepId === step.id && (
                             <div className="action-dropdown">
-                              <div 
+                              <div
                                 className={`action-option ${!step.action ? 'selected' : ''}`}
                                 onClick={() => handleActionChange(step.id, '')}
                               >
                                 <span>Select Action</span>
                               </div>
                               {STEP_ACTIONS.map((action) => (
-                                <div 
-                                  key={action} 
+                                <div
+                                  key={action}
                                   className={`action-option ${step.action === action ? 'selected' : ''}`}
                                   onClick={() => handleActionChange(step.id, action)}
                                 >
+                                  <FontAwesomeIcon icon={ACTION_ICONS[action] || faCog} className="action-icon" />
                                   <span>{action.replace('_', ' ')}</span>
                                 </div>
                               ))}
@@ -2609,34 +2653,35 @@ const startStepResultsPolling = () => {
                       </td>
                       {test_type !== 'api' && test_type !== 'api_test' && test_type !== 'api_group' && (
                         <>
-                          <td className="step-locator-cell">
-                            <div className="element-locator-container">
-                              <input
-                                type="text"
-                                className="element-path-input"
-                                placeholder="Element path (e.g., //input[@id='username'])"
-                                value={step.element_path || ''}
-                                onChange={(e) => handleElementPathChange(step.id, e.target.value)}
-                              />
-                            </div>
-                          </td>
-                          <td className="step-locator-cell">
-                            <div className="element-locator-container">
-                            <input
-                              type="text"
-                              className="css-selector-input"
-                              placeholder="CSS selector (e.g., #username)"
-                              value={step.css_selector || ''}
-                              onChange={(e) => handleCssSelectorChange(step.id, e.target.value)}
-                              title="CSS selector as fallback when XPath fails"
-                            />
+                          <td className="step-target-cell">
+                            <div className="target-element-container">
+                              <div className="target-row">
+                                <span className="target-label">XPath:</span>
+                                <input
+                                  type="text"
+                                  className="element-path-input"
+                                  placeholder="//input[@id='...']"
+                                  value={step.element_path || ''}
+                                  onChange={(e) => handleElementPathChange(step.id, e.target.value)}
+                                />
+                              </div>
+                              <div className="target-row">
+                                <span className="target-label">CSS:</span>
+                                <input
+                                  type="text"
+                                  className="css-selector-input"
+                                  placeholder="#id or .class"
+                                  value={step.css_selector || ''}
+                                  onChange={(e) => handleCssSelectorChange(step.id, e.target.value)}
+                                />
+                              </div>
                             </div>
                           </td>
                         </>
                       )}
                       <td className="step-value-cell">
                         {step.action === 'api_request' ? (
-                          <button 
+                          <button
                             className="edit-api-step-button"
                             onClick={() => handleEditApiStep(step)}
                           >
@@ -2655,52 +2700,52 @@ const startStepResultsPolling = () => {
                               onClick={(e) => handleInputClick(step.id, e)}
                               onKeyUp={handleInputKeyUp}
                             />
-                          {showEnvVarsDropdown && activeInputStepId === step.id && selectedEnvironment && (
-                            <div className="env-vars-dropdown" ref={envVarsDropdownRef}>
-                              <div className="env-vars-dropdown-header">
-                                Environment Variables
-                              </div>
-                              <div 
-                                className="env-vars-dropdown-item"
-                                onClick={() => insertEnvVariable('base_url')}
-                              >
-                                <div className="env-var-item-content">
-                                  <span className="env-var-name">base_url</span>
-                                  <span className="env-var-description">Base URL of the environment</span>
+                            {showEnvVarsDropdown && activeInputStepId === step.id && selectedEnvironment && (
+                              <div className="env-vars-dropdown" ref={envVarsDropdownRef}>
+                                <div className="env-vars-dropdown-header">
+                                  Environment Variables
                                 </div>
-                              </div>
-                              <div 
-                                className="env-vars-dropdown-item"
-                                onClick={() => insertEnvVariable('login')}
-                              >
-                                <div className="env-var-item-content">
-                                  <span className="env-var-name">login</span>
-                                  <span className="env-var-description">Login username</span>
-                                </div>
-                              </div>
-                              <div 
-                                className="env-vars-dropdown-item"
-                                onClick={() => insertEnvVariable('password')}
-                              >
-                                <div className="env-var-item-content">
-                                  <span className="env-var-name">password</span>
-                                  <span className="env-var-description">Login password</span>
-                                </div>
-                              </div>
-                              {environments.find(env => env.id.toString() === selectedEnvironment)?.custom_variables?.map((customVar, index) => (
-                                <div 
-                                  key={index}
+                                <div
                                   className="env-vars-dropdown-item"
-                                  onClick={() => insertEnvVariable(customVar.name)}
+                                  onClick={() => insertEnvVariable('base_url')}
                                 >
                                   <div className="env-var-item-content">
-                                    <span className="env-var-name">{customVar.name}</span>
-                                    <span className="env-var-description">Custom variable</span>
+                                    <span className="env-var-name">base_url</span>
+                                    <span className="env-var-description">Base URL of the environment</span>
                                   </div>
                                 </div>
-                              ))}
-                            </div>
-                          )}
+                                <div
+                                  className="env-vars-dropdown-item"
+                                  onClick={() => insertEnvVariable('login')}
+                                >
+                                  <div className="env-var-item-content">
+                                    <span className="env-var-name">login</span>
+                                    <span className="env-var-description">Login username</span>
+                                  </div>
+                                </div>
+                                <div
+                                  className="env-vars-dropdown-item"
+                                  onClick={() => insertEnvVariable('password')}
+                                >
+                                  <div className="env-var-item-content">
+                                    <span className="env-var-name">password</span>
+                                    <span className="env-var-description">Login password</span>
+                                  </div>
+                                </div>
+                                {environments.find(env => env.id.toString() === selectedEnvironment)?.custom_variables?.map((customVar, index) => (
+                                  <div
+                                    key={index}
+                                    className="env-vars-dropdown-item"
+                                    onClick={() => insertEnvVariable(customVar.name)}
+                                  >
+                                    <div className="env-var-item-content">
+                                      <span className="env-var-name">{customVar.name}</span>
+                                      <span className="env-var-description">Custom variable</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </td>
@@ -2719,7 +2764,7 @@ const startStepResultsPolling = () => {
                       </td>
                       <td className="step-actions-cell">
                         {(step.has_screenshot || stepsWithScreenshots[step.id]) && (
-                          <button 
+                          <button
                             className="view-screenshot-button"
                             onClick={() => openStepScreenshot(step.id)}
                             title="View screenshot"
@@ -2727,7 +2772,7 @@ const startStepResultsPolling = () => {
                             <FontAwesomeIcon icon={faCamera} />
                           </button>
                         )}
-                        <button 
+                        <button
                           className="delete-step-button"
                           onClick={() => handleDeleteStepClick(step)}
                           title="Delete step"
@@ -2797,7 +2842,7 @@ const startStepResultsPolling = () => {
                           <pre>{run.stdout}</pre>
                         </div>
                       )}
-                      
+
                       {/* Step Execution Results */}
                       <div className="step-execution-results">
                         <h4>Step Execution Details</h4>
@@ -2868,7 +2913,7 @@ const startStepResultsPolling = () => {
                                                 const parts = message.split('Response:');
                                                 const beforeResponse = parts[0];
                                                 const responseText = parts[1];
-                                                
+
                                                 try {
                                                   const jsonMatch = responseText.match(/\{.*\}/s);
                                                   if (jsonMatch) {
@@ -2893,12 +2938,12 @@ const startStepResultsPolling = () => {
                                         )}
                                       </td>
                                       <td className="step-duration">
-                                        {stepResult.execution_time_ms ? 
+                                        {stepResult.execution_time_ms ?
                                           `${stepResult.execution_time_ms}ms` : 'N/A'}
                                       </td>
                                       <td className="step-actions">
                                         {stepResult.has_screenshot && (
-                                          <button 
+                                          <button
                                             className="screenshot-btn"
                                             onClick={() => openStepScreenshot(stepResult.test_step_id)}
                                             title="View Screenshot"
@@ -2969,9 +3014,9 @@ const startStepResultsPolling = () => {
             <h3>Edit API Request Step</h3>
             <div className="form-group">
               <label>HTTP Method:</label>
-              <select 
-                value={apiStepData.method} 
-                onChange={(e) => setApiStepData({...apiStepData, method: e.target.value})}
+              <select
+                value={apiStepData.method}
+                onChange={(e) => setApiStepData({ ...apiStepData, method: e.target.value })}
               >
                 <option value="GET">GET</option>
                 <option value="POST">POST</option>
@@ -2982,24 +3027,24 @@ const startStepResultsPolling = () => {
             </div>
             <div className="form-group">
               <label>Endpoint:</label>
-              <input 
-                type="text" 
-                value={apiStepData.endpoint} 
-                onChange={(e) => setApiStepData({...apiStepData, endpoint: e.target.value})}
+              <input
+                type="text"
+                value={apiStepData.endpoint}
+                onChange={(e) => setApiStepData({ ...apiStepData, endpoint: e.target.value })}
                 placeholder="e.g., {{base_url}}/api/auth"
               />
             </div>
             <div className="form-group">
               <label>Headers (JSON):</label>
-              <textarea 
-                value={typeof apiStepData.headers === 'object' ? JSON.stringify(apiStepData.headers, null, 2) : apiStepData.headers} 
+              <textarea
+                value={typeof apiStepData.headers === 'object' ? JSON.stringify(apiStepData.headers, null, 2) : apiStepData.headers}
                 onChange={(e) => {
                   try {
                     const parsed = JSON.parse(e.target.value);
-                    setApiStepData({...apiStepData, headers: parsed});
+                    setApiStepData({ ...apiStepData, headers: parsed });
                   } catch (err) {
                     // Allow invalid JSON while typing
-                    setApiStepData({...apiStepData, headers: e.target.value});
+                    setApiStepData({ ...apiStepData, headers: e.target.value });
                   }
                 }}
                 placeholder='{"Content-Type": "application/json", "Authorization": "Bearer {{access_token}}"}'
@@ -3009,33 +3054,33 @@ const startStepResultsPolling = () => {
             </div>
             <div className="form-group">
               <label>Request Body (JSON):</label>
-              <textarea 
-                value={apiStepData.body} 
-                onChange={(e) => setApiStepData({...apiStepData, body: e.target.value})}
+              <textarea
+                value={apiStepData.body}
+                onChange={(e) => setApiStepData({ ...apiStepData, body: e.target.value })}
                 placeholder='{"key": "value"}'
                 rows="8"
               />
             </div>
             <div className="form-group">
               <label>Expected Status Code:</label>
-              <input 
-                type="number" 
-                value={apiStepData.expected_status} 
-                onChange={(e) => setApiStepData({...apiStepData, expected_status: e.target.value})}
+              <input
+                type="number"
+                value={apiStepData.expected_status}
+                onChange={(e) => setApiStepData({ ...apiStepData, expected_status: e.target.value })}
                 placeholder="200"
               />
             </div>
             <div className="form-group">
               <label>Extract Variables (JSON):</label>
-              <textarea 
-                value={typeof apiStepData.extract_variables === 'object' ? JSON.stringify(apiStepData.extract_variables, null, 2) : apiStepData.extract_variables} 
+              <textarea
+                value={typeof apiStepData.extract_variables === 'object' ? JSON.stringify(apiStepData.extract_variables, null, 2) : apiStepData.extract_variables}
                 onChange={(e) => {
                   try {
                     const parsed = JSON.parse(e.target.value);
-                    setApiStepData({...apiStepData, extract_variables: parsed});
+                    setApiStepData({ ...apiStepData, extract_variables: parsed });
                   } catch (err) {
                     // Allow invalid JSON while typing
-                    setApiStepData({...apiStepData, extract_variables: e.target.value});
+                    setApiStepData({ ...apiStepData, extract_variables: e.target.value });
                   }
                 }}
                 placeholder='{"access_token": "$.token", "user_id": "$.user.id"}'
@@ -3090,7 +3135,7 @@ const startStepResultsPolling = () => {
           </div>
         </div>
       )}
-      
+
       {/* Add Environment Modal */}
       {showAddEnvironmentModal && (
         <div className="modal-overlay">
@@ -3125,23 +3170,23 @@ const startStepResultsPolling = () => {
                   <ul className="custom-variables-list">
                     {newEnvironment.custom_variables.map((variable, index) => (
                       <li key={index} className="custom-variable-item">
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           className="custom-variable-name"
                           placeholder="Variable name"
-                          name={`custom_variables[${index}].name`} 
-                          value={variable.name} 
-                          onChange={handleNewEnvironmentChange} 
+                          name={`custom_variables[${index}].name`}
+                          value={variable.name}
+                          onChange={handleNewEnvironmentChange}
                         />
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           className="custom-variable-value"
                           placeholder="Variable value"
-                          name={`custom_variables[${index}].value`} 
-                          value={variable.value} 
-                          onChange={handleNewEnvironmentChange} 
+                          name={`custom_variables[${index}].value`}
+                          value={variable.value}
+                          onChange={handleNewEnvironmentChange}
                         />
-                        <button 
+                        <button
                           type="button"
                           className="remove-variable-button"
                           onClick={() => handleRemoveCustomVariable(index)}
@@ -3151,7 +3196,7 @@ const startStepResultsPolling = () => {
                       </li>
                     ))}
                   </ul>
-                  <button 
+                  <button
                     type="button"
                     className="add-variable-button"
                     onClick={handleAddCustomVariable}
@@ -3203,23 +3248,23 @@ const startStepResultsPolling = () => {
                   <ul className="custom-variables-list">
                     {newEnvironment.custom_variables.map((variable, index) => (
                       <li key={index} className="custom-variable-item">
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           className="custom-variable-name"
                           placeholder="Variable name"
-                          name={`custom_variables[${index}].name`} 
-                          value={variable.name} 
-                          onChange={handleNewEnvironmentChange} 
+                          name={`custom_variables[${index}].name`}
+                          value={variable.name}
+                          onChange={handleNewEnvironmentChange}
                         />
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           className="custom-variable-value"
                           placeholder="Variable value"
-                          name={`custom_variables[${index}].value`} 
-                          value={variable.value} 
-                          onChange={handleNewEnvironmentChange} 
+                          name={`custom_variables[${index}].value`}
+                          value={variable.value}
+                          onChange={handleNewEnvironmentChange}
                         />
-                        <button 
+                        <button
                           type="button"
                           className="remove-variable-button"
                           onClick={() => handleRemoveCustomVariable(index)}
@@ -3229,7 +3274,7 @@ const startStepResultsPolling = () => {
                       </li>
                     ))}
                   </ul>
-                  <button 
+                  <button
                     type="button"
                     className="add-variable-button"
                     onClick={handleAddCustomVariable}
@@ -3259,7 +3304,7 @@ const startStepResultsPolling = () => {
               </div>
               <div className="form-group">
                 <label>Action:</label>
-                <select 
+                <select
                   value={newStep.action || ''}
                   onChange={(e) => handleNewStepChange(e)}
                   name="action"
@@ -3283,7 +3328,7 @@ const startStepResultsPolling = () => {
               </div>
               <div className="form-group">
                 <label>Path Type:</label>
-                <select 
+                <select
                   value={newStep.path_type || ''}
                   onChange={(e) => handleNewStepChange(e)}
                   name="path_type"
@@ -3308,21 +3353,21 @@ const startStepResultsPolling = () => {
       {/* Screenshot Modal */}
       {showScreenshotModal && (
         <div className="modal-overlay">
-          <div 
+          <div
             className={`modal-content screenshot-modal ${isZoomed ? 'zoomed-modal' : ''}`}
             style={{
-              width: isZoomed && imageSize.width > 0 ? 
-                `min(95vw, ${Math.max(800, Math.min(imageSize.width * 1.8, window.innerWidth * 0.95))}px)` : 
+              width: isZoomed && imageSize.width > 0 ?
+                `min(95vw, ${Math.max(800, Math.min(imageSize.width * 1.8, window.innerWidth * 0.95))}px)` :
                 undefined,
-              maxHeight: isZoomed && imageSize.height > 0 ? 
-                `min(95vh, ${Math.max(600, Math.min(imageSize.height * 1.5, window.innerHeight * 0.95))}px)` : 
+              maxHeight: isZoomed && imageSize.height > 0 ?
+                `min(95vh, ${Math.max(600, Math.min(imageSize.height * 1.5, window.innerHeight * 0.95))}px)` :
                 undefined
             }}
           >
             <div className="modal-header">
               <h3>Screenshot</h3>
-              <button 
-                onClick={() => setShowScreenshotModal(false)} 
+              <button
+                onClick={() => setShowScreenshotModal(false)}
                 className="modal-close-button"
                 title="Close"
               >
@@ -3345,9 +3390,9 @@ const startStepResultsPolling = () => {
                     <p className="screenshot-description">{currentScreenshot.description}</p>
                   )}
                   <div className="screenshot-image-container">
-                    <img 
+                    <img
                       src={currentScreenshot}
-                      alt="Test step screenshot" 
+                      alt="Test step screenshot"
                       className={`step-screenshot ${isZoomed ? 'zoomed' : ''}`}
                       onClick={handleImageClick}
                       onLoad={(e) => {

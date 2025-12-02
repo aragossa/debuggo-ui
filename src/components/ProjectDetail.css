@@ -14,57 +14,65 @@
 .project-detail-header h1 {
   margin: 0;
   flex-grow: 1;
-  color: #333;
+  color: var(--gray-900);
+  font-size: 2rem;
+  font-weight: 700;
 }
 
 .back-button {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
+  background-color: white;
+  color: var(--gray-600);
+  border: 1px solid var(--gray-300);
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
   cursor: pointer;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: background-color 0.2s;
+  gap: 0.5rem;
+  transition: all 0.2s;
 }
 
 .back-button:hover {
-  background-color: #5a6268;
+  background-color: var(--gray-50);
+  color: var(--gray-900);
+  border-color: var(--gray-400);
 }
 
 .add-test-cases-button {
-  background-color: #28a745;
+  background-color: var(--primary);
   color: white;
   border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: background-color 0.2s;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
 }
 
 .add-test-cases-button:hover {
-  background-color: #218838;
+  background-color: var(--primary-dark);
+  box-shadow: var(--shadow-md);
 }
 
 .project-description {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 20px;
+  background-color: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .project-description p {
   margin: 0;
-  color: #495057;
-  line-height: 1.5;
+  color: var(--gray-600);
+  line-height: 1.6;
+  font-size: 1.05rem;
 }
 
 .test-cases-section {
@@ -93,9 +101,10 @@
 
 .test-cases-list {
   background-color: white;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--border-radius-lg);
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .test-cases-list table {
@@ -105,15 +114,18 @@
 
 .test-cases-list th,
 .test-cases-list td {
-  padding: 12px 15px;
+  padding: 1rem 1.5rem;
   text-align: left;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--gray-100);
 }
 
 .test-cases-list th {
-  background-color: #f8f9fa;
+  background-color: var(--gray-50);
   font-weight: 600;
-  color: #495057;
+  color: var(--gray-700);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .test-cases-list tr:last-child td {
@@ -163,6 +175,7 @@
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -171,13 +184,14 @@
 
 .modal-content {
   background-color: white;
-  border-radius: 8px;
+  border-radius: var(--border-radius-xl);
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-2xl);
+  border: 1px solid var(--gray-200);
 }
 
 .modal-header {
@@ -335,12 +349,12 @@
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .test-case-actions {
     flex-direction: column;
     gap: 5px;
   }
-  
+
   .action-button {
     width: 100%;
   }

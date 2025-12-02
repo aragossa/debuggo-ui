@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { ArrowRight, Check, Clock, Database, Code, Zap, Shield, BarChart, Layers, GitBranch, Users, Cpu, RefreshCw, Sliders, Target, Bug, Bot, Linkedin } from 'lucide-react';
 import Login from './Login';
 import './LandingPage.css';
@@ -13,6 +14,14 @@ const LandingPage = () => {
 
   return (
     <div className="landing-page">
+      <Helmet>
+        <title>Debuggo | AI-Powered No-Code Test Automation Platform</title>
+        <meta name="description" content="Revolutionize your QA with Debuggo. Generate and execute automated tests from screenshots, API schemas, and tech docs. Join the free beta today!" />
+        <meta name="keywords" content="AI test automation, no-code QA, automated testing, screenshot to test, API testing, Debuggo, reduce QA testing time, AI in software testing" />
+        <meta property="og:title" content="Debuggo | AI-Powered No-Code Test Automation Platform" />
+        <meta property="og:description" content="Revolutionize your QA with Debuggo. Generate and execute automated tests from screenshots, API schemas, and tech docs." />
+        <meta property="og:type" content="website" />
+      </Helmet>
       {/* Navigation */}
       <nav className="nav-container">
         <div className="nav-content">

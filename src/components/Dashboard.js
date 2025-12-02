@@ -13,7 +13,7 @@ import MetricsDashboard from './MetricsDashboard';
 import ExecutionPlans from './ExecutionPlans';
 import Requirements from './Requirements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faFlask, faCog, faChevronDown, faChevronUp, faFolderOpen, faFileCode, faExclamationTriangle, faQuestionCircle, faFolder, faChartLine, faClipboardList, faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faFlask, faCog, faChevronDown, faChevronUp, faFolderOpen, faFileCode, faExclamationTriangle, faQuestionCircle, faFolder, faChartLine, faClipboardList, faClipboardCheck, faBars, faAngleLeft, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -38,6 +38,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('testCases');
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [isTreeVisible, setIsTreeVisible] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const projectDropdownRef = useRef(null);
 
   useEffect(() => {
@@ -46,14 +47,14 @@ const Dashboard = () => {
     if (selectedTestId) {
       fetchTestCase(selectedTestId);
     }
-    
+
     // Close project dropdown when clicking outside
     const handleClickOutside = (event) => {
       if (projectDropdownRef.current && !projectDropdownRef.current.contains(event.target)) {
         setShowProjectDropdown(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -80,12 +81,12 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setProjects(data);
-        
+
         // Always auto-select the first available project if we have projects
         if (data.length > 0) {
           let projectToSelect = null;
           let shouldUpdateState = false;
-          
+
           // Check if current selected project exists in the fetched list
           if (selectedProject && data.find(p => p.id === selectedProject)) {
             projectToSelect = selectedProject; // Keep current selection if valid
@@ -94,13 +95,13 @@ const Dashboard = () => {
             projectToSelect = data[0].id;
             shouldUpdateState = true;
           }
-          
+
           // Update state and localStorage if needed
           if (shouldUpdateState) {
             setSelectedProject(projectToSelect);
             localStorage.setItem('selectedProjectId', projectToSelect);
           }
-          
+
           // Load test tree for the selected project
           if (projectToSelect) {
             fetchTreeDataForProject(projectToSelect);
@@ -152,7 +153,7 @@ const Dashboard = () => {
     const projectId = e.target.value;
     setSelectedProject(projectId);
     localStorage.setItem('selectedProjectId', projectId);
-    
+
     // Clear the selected test case when changing projects
     setSelectedTestId(null);
     setTestCase(null);
@@ -177,7 +178,7 @@ const Dashboard = () => {
         if (data.status === 'success' && data.data) {
           const testCaseData = data.data.test_case;
           const steps = data.data.steps || [];
-          
+
           // Transform the data to match the expected format
           const formattedTestCase = {
             test_name: testCaseData.name,
@@ -189,7 +190,7 @@ const Dashboard = () => {
             steps_generation_start_time: testCaseData.steps_generation_start_time,
             steps_generation_end_time: testCaseData.steps_generation_end_time
           };
-          
+
           setTestCase(formattedTestCase);
         } else {
           setTestCase(data);
@@ -208,7 +209,7 @@ const Dashboard = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      
+
       // Add the project_id to the form data (project is always selected now)
       if (selectedProject) {
         formData.append('project_id', selectedProject);
@@ -230,9 +231,9 @@ const Dashboard = () => {
 
       const data = await response.json();
       console.log('File upload successful:', data);
-      
+
       setShowUploadPopup(false);
-      
+
       // Refresh the tree data based on the selected project
       if (selectedProject) {
         fetchTreeDataForProject(selectedProject);
@@ -253,7 +254,7 @@ const Dashboard = () => {
       // If null is passed, just refresh the tree without clearing the selection
       // This happens when a group is created, renamed, or a test case is moved
     }
-    
+
     // Refresh the tree data based on the selected project
     if (selectedProject) {
       fetchTreeDataForProject(selectedProject);
@@ -267,216 +268,244 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      <div className="dashboard-header">
-        <div className="project-selector-container" ref={projectDropdownRef}>
-          <div className="project-selector-label">Project:</div>
-          <div 
-            className="project-selector-button"
-            onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+      {/* Sidebar Navigation */}
+      {/* Sidebar Navigation */}
+      <div className={`dashboard-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+        <div className="sidebar-header">
+          {!isSidebarCollapsed && <div className="sidebar-logo">Debuggo</div>}
+          <button
+            className="sidebar-toggle-btn"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            <FontAwesomeIcon icon={faFolderOpen} className="project-icon" />
-            <span>
-              {isLoadingProjects ? 'Loading...' : 
-                projects.find(p => p.id === selectedProject)?.name || 'Select Project'}
-            </span>
-            <FontAwesomeIcon 
-              icon={showProjectDropdown ? faChevronUp : faChevronDown} 
-              className="dropdown-icon" 
-            />
+            <FontAwesomeIcon icon={isSidebarCollapsed ? faAngleRight : faAngleLeft} />
+          </button>
+        </div>
+        <div className="sidebar-nav">
+          <button
+            className={`nav-item ${activeTab === 'testCases' ? 'active' : ''}`}
+            onClick={() => setActiveTab('testCases')}
+          >
+            <FontAwesomeIcon icon={faFlask} className="nav-icon" />
+            <span>Test Cases</span>
+          </button>
+          <button
+            className={`nav-item ${activeTab === 'environments' ? 'active' : ''}`}
+            onClick={() => setActiveTab('environments')}
+          >
+            <FontAwesomeIcon icon={faCog} className="nav-icon" />
+            <span>Environments</span>
+          </button>
+          <button
+            className={`nav-item ${activeTab === 'apiSchemas' ? 'active' : ''}`}
+            onClick={() => setActiveTab('apiSchemas')}
+          >
+            <FontAwesomeIcon icon={faFileCode} className="nav-icon" />
+            <span>API Schemas</span>
+          </button>
+          <button
+            className={`nav-item ${activeTab === 'suites' ? 'active' : ''}`}
+            onClick={() => setActiveTab('suites')}
+          >
+            <FontAwesomeIcon icon={faFolder} className="nav-icon" />
+            <span>Test Suites</span>
+          </button>
+          <button
+            className={`nav-item ${activeTab === 'conflicts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('conflicts')}
+          >
+            <FontAwesomeIcon icon={faExclamationTriangle} className="nav-icon" />
+            <span>Conflicts</span>
+          </button>
+          <button
+            className={`nav-item ${activeTab === 'executionPlans' ? 'active' : ''}`}
+            onClick={() => setActiveTab('executionPlans')}
+          >
+            <FontAwesomeIcon icon={faClipboardList} className="nav-icon" />
+            <span>Execution Plans</span>
+          </button>
+          <button
+            className={`nav-item ${activeTab === 'metrics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('metrics')}
+          >
+            <FontAwesomeIcon icon={faChartLine} className="nav-icon" />
+            <span>Metrics</span>
+          </button>
+          <button
+            className={`nav-item ${activeTab === 'requirements' ? 'active' : ''}`}
+            onClick={() => setActiveTab('requirements')}
+          >
+            <FontAwesomeIcon icon={faClipboardCheck} className="nav-icon" />
+            <span>Requirements</span>
+          </button>
+        </div>
+        <div className="sidebar-footer">
+          <button
+            className={`nav-item ${activeTab === 'help' ? 'active' : ''}`}
+            onClick={() => setActiveTab('help')}
+          >
+            <FontAwesomeIcon icon={faQuestionCircle} className="nav-icon" />
+            <span>Help</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="dashboard-main-area">
+        <div className="dashboard-header">
+          <div className="project-selector-container" ref={projectDropdownRef}>
+            <div className="project-selector-label">Current Project:</div>
+            <div
+              className="project-selector-button"
+              onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+            >
+              <FontAwesomeIcon icon={faFolderOpen} className="project-icon" />
+              <span>
+                {isLoadingProjects ? 'Loading...' :
+                  projects.find(p => p.id === selectedProject)?.name || 'Select Project'}
+              </span>
+              <FontAwesomeIcon
+                icon={showProjectDropdown ? faChevronUp : faChevronDown}
+                className="dropdown-icon"
+              />
+            </div>
+
+            {showProjectDropdown && (
+              <div className="project-dropdown">
+                {projects.map((project) => (
+                  <div
+                    key={project.id}
+                    className={`project-option ${selectedProject === project.id ? 'selected' : ''}`}
+                    onClick={() => {
+                      handleProjectChange({ target: { value: project.id } });
+                      setShowProjectDropdown(false);
+                    }}
+                  >
+                    <span>{project.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          
-          {showProjectDropdown && (
-            <div className="project-dropdown">
-              {projects.map((project) => (
-                <div 
-                  key={project.id} 
-                  className={`project-option ${selectedProject === project.id ? 'selected' : ''}`}
-                  onClick={() => {
-                    handleProjectChange({ target: { value: project.id } });
-                    setShowProjectDropdown(false);
-                  }}
-                >
-                  <span>{project.name}</span>
-                </div>
-              ))}
+          {noProjects && (
+            <div className="dashboard-no-projects" style={{ marginTop: 10, color: '#b00', fontWeight: 500 }}>
+              No projects created
             </div>
           )}
         </div>
-        {noProjects && (
-          <div className="dashboard-no-projects" style={{ marginTop: 10, color: '#b00', fontWeight: 500 }}>
-            No projects created
-          </div>
-        )}
-      </div>
-      
-      <div className="dashboard-content">
-        <div className="dashboard-tabs">
-          <button 
-            className={`tab-button ${activeTab === 'testCases' ? 'active' : ''}`}
-            onClick={() => setActiveTab('testCases')}
-          >
-            <FontAwesomeIcon icon={faFlask} /> Test Cases
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'environments' ? 'active' : ''}`}
-            onClick={() => setActiveTab('environments')}
-          >
-            <FontAwesomeIcon icon={faCog} /> Environments
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'apiSchemas' ? 'active' : ''}`}
-            onClick={() => setActiveTab('apiSchemas')}
-          >
-            <FontAwesomeIcon icon={faFileCode} /> API Schemas
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'suites' ? 'active' : ''}`}
-            onClick={() => setActiveTab('suites')}
-          >
-            <FontAwesomeIcon icon={faFolder} /> Test Suites
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'conflicts' ? 'active' : ''}`}
-            onClick={() => setActiveTab('conflicts')}
-          >
-            <FontAwesomeIcon icon={faExclamationTriangle} /> Conflicts
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'executionPlans' ? 'active' : ''}`}
-            onClick={() => setActiveTab('executionPlans')}
-          >
-            <FontAwesomeIcon icon={faClipboardList} /> Execution Plans
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'metrics' ? 'active' : ''}`}
-            onClick={() => setActiveTab('metrics')}
-          >
-            <FontAwesomeIcon icon={faChartLine} /> Metrics
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'requirements' ? 'active' : ''}`}
-            onClick={() => setActiveTab('requirements')}
-          >
-            <FontAwesomeIcon icon={faClipboardCheck} /> Requirements
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'help' ? 'active' : ''}`}
-            onClick={() => setActiveTab('help')}
-          >
-            <FontAwesomeIcon icon={faQuestionCircle} /> Help
-          </button>
-        </div>
-        
-        {activeTab === 'testCases' ? (
-          <div className="dashboard-main">
-            {isTreeVisible && (
-              <div className="tree-container">
-                {treeError && treeError !== 'Project not found' ? (
-                  <div className="error-message">
-                    {treeError}
-                  </div>
-                ) : (
-                  <TestCaseTree 
-                    treeData={treeData} 
-                    onNodeClick={handleNodeClick} 
-                    selectedTestId={selectedTestId}
-                    error={treeError}
-                    onTestCaseDeleted={handleTestCaseDeleted}
-                    projectId={selectedProject}
-                    onToggleVisibility={setIsTreeVisible}
-                    onGenerateFromFile={() => setShowUploadPopup(true)}
-                  />
-                )}
-              </div>
-            )}
-            <div className={`content-container ${!isTreeVisible ? 'full-width' : ''}`}>
-              {!isTreeVisible && (
-                <button className="show-tree-btn" onClick={() => setIsTreeVisible(true)}>
-                  Show Test Cases
-                </button>
-              )}
-              {testCase ? (
-                <TestCaseSteps
-                  test_steps={testCase.test_steps}
-                  test_runs={testCase.test_runs}
-                  testCaseId={selectedTestId}
-                  test_name={testCase.test_name}
-                  test_description={testCase.test_description}
-                  test_type={testCase.test_type}
-                  updated_at={testCase.updated_at}
-                  steps_generation_start_time={testCase.steps_generation_start_time}
-                  steps_generation_end_time={testCase.steps_generation_end_time}
-                  onTestResult={setTestResult}
-                  onTestCaseUpdate={(name, description, updated_at) => {
-                    setTestCase(prev => ({
-                      ...prev,
-                      test_name: name,
-                      test_description: description,
-                      updated_at: updated_at
-                    }));
-                  }}
-                  projectId={selectedProject}
-                />
-              ) : (
-                <div className="no-test-selected">
-                  <div className="empty-state">
-                    <FontAwesomeIcon icon={faInfoCircle} size="2x" />
-                    <h3>No Test Case Selected</h3>
-                    <p>Select a test case from the tree to view its details</p>
-                  </div>
+
+        <div className="dashboard-content">
+          {activeTab === 'testCases' ? (
+            <div className="dashboard-main">
+              {isTreeVisible && (
+                <div className="tree-container">
+                  {treeError && treeError !== 'Project not found' ? (
+                    <div className="error-message">
+                      {treeError}
+                    </div>
+                  ) : (
+                    <TestCaseTree
+                      treeData={treeData}
+                      onNodeClick={handleNodeClick}
+                      selectedTestId={selectedTestId}
+                      error={treeError}
+                      onTestCaseDeleted={handleTestCaseDeleted}
+                      projectId={selectedProject}
+                      onToggleVisibility={setIsTreeVisible}
+                      onGenerateFromFile={() => setShowUploadPopup(true)}
+                    />
+                  )}
                 </div>
               )}
+              <div className={`content-container ${!isTreeVisible ? 'full-width' : ''}`}>
+                {!isTreeVisible && (
+                  <button className="show-tree-btn" onClick={() => setIsTreeVisible(true)}>
+                    Show Test Cases
+                  </button>
+                )}
+                {testCase ? (
+                  <TestCaseSteps
+                    test_steps={testCase.test_steps}
+                    test_runs={testCase.test_runs}
+                    testCaseId={selectedTestId}
+                    test_name={testCase.test_name}
+                    test_description={testCase.test_description}
+                    test_type={testCase.test_type}
+                    updated_at={testCase.updated_at}
+                    steps_generation_start_time={testCase.steps_generation_start_time}
+                    steps_generation_end_time={testCase.steps_generation_end_time}
+                    onTestResult={setTestResult}
+                    onTestCaseUpdate={(name, description, updated_at) => {
+                      setTestCase(prev => ({
+                        ...prev,
+                        test_name: name,
+                        test_description: description,
+                        updated_at: updated_at
+                      }));
+                    }}
+                    projectId={selectedProject}
+                  />
+                ) : (
+                  <div className="no-test-selected">
+                    <div className="empty-state">
+                      <FontAwesomeIcon icon={faInfoCircle} size="2x" />
+                      <h3>No Test Case Selected</h3>
+                      <p>Select a test case from the tree to view its details</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ) : activeTab === 'environments' ? (
-          <div className="environments-tab-container">
-            <Environments projectId={selectedProject} />
-          </div>
-        ) : activeTab === 'apiSchemas' ? (
-          <div className="api-schemas-tab-container">
-            <ApiSchemaUpload projectId={selectedProject} />
-          </div>
-        ) : activeTab === 'suites' ? (
-          <div className="suites-tab-container">
-            <TestSuites projectId={selectedProject} />
-          </div>
-        ) : activeTab === 'conflicts' ? (
-          <div className="conflicts-tab-container">
-            <ConflictNotifications />
-          </div>
-        ) : activeTab === 'executionPlans' ? (
-          <div className="execution-plans-tab-container">
-            <ExecutionPlans projectId={selectedProject} />
-          </div>
-        ) : activeTab === 'metrics' ? (
-          <div className="metrics-tab-container">
-            <MetricsDashboard />
-          </div>
-        ) : activeTab === 'requirements' ? (
-          <div className="requirements-tab-container">
-            <Requirements projectId={selectedProject} />
-          </div>
-        ) : activeTab === 'help' ? (
-          <div className="help-tab-container">
-            <PlaceholderHelp />
-          </div>
-        ) : null}
+          ) : activeTab === 'environments' ? (
+            <div className="environments-tab-container">
+              <Environments projectId={selectedProject} />
+            </div>
+          ) : activeTab === 'apiSchemas' ? (
+            <div className="api-schemas-tab-container">
+              <ApiSchemaUpload projectId={selectedProject} />
+            </div>
+          ) : activeTab === 'suites' ? (
+            <div className="suites-tab-container">
+              <TestSuites projectId={selectedProject} />
+            </div>
+          ) : activeTab === 'conflicts' ? (
+            <div className="conflicts-tab-container">
+              <ConflictNotifications />
+            </div>
+          ) : activeTab === 'executionPlans' ? (
+            <div className="execution-plans-tab-container">
+              <ExecutionPlans projectId={selectedProject} />
+            </div>
+          ) : activeTab === 'metrics' ? (
+            <div className="metrics-tab-container">
+              <MetricsDashboard />
+            </div>
+          ) : activeTab === 'requirements' ? (
+            <div className="requirements-tab-container">
+              <Requirements projectId={selectedProject} />
+            </div>
+          ) : activeTab === 'help' ? (
+            <div className="help-tab-container">
+              <PlaceholderHelp />
+            </div>
+          ) : null}
+        </div>
       </div>
-      
+
       {showUploadPopup && (
         <UploadPopup
           onClose={() => setShowUploadPopup(false)}
           onSubmit={handleFileSubmit}
         />
       )}
-      
+
       {testResult && (
         <TestResultPopup
           result={testResult}
           onClose={() => setTestResult(null)}
         />
       )}
-      
+
       {/* Conflict notification popup - appears automatically when conflicts are detected */}
       <ConflictPopup />
     </div>

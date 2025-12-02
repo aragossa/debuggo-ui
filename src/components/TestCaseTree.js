@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faEdit, faFolderPlus, faPlus, faExchangeAlt, faMinus, faChevronLeft, faFileImport } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faEdit, faFolderPlus, faPlus, faExchangeAlt, faMinus, faChevronLeft, faFileImport, faSearch, faChevronDown, faChevronRight, faFolderOpen, faFolder, faFileAlt } from '@fortawesome/free-solid-svg-icons';
 import './TestCaseTree.css';
 
 const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCaseDeleted, projectId, onToggleVisibility, onGenerateFromFile }) => {
@@ -74,7 +74,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   // Expand all nodes in the tree
   const expandAll = () => {
     const allExpanded = {};
-    
+
     const expandNodes = (nodes) => {
       if (!Array.isArray(nodes)) return;
       nodes.forEach(node => {
@@ -86,7 +86,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
         }
       });
     };
-    
+
     expandNodes(treeData);
     setExpandedNodes(allExpanded);
   };
@@ -104,17 +104,17 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
 
   const handleConfirmDelete = async () => {
     if (!testCaseToDelete) return;
-    
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
-      const endpoint = testCaseToDelete.type === 'group' 
+
+      const endpoint = testCaseToDelete.type === 'group'
         ? `${API_URL}/api/test_groups/${testCaseToDelete.id}`
         : `${API_URL}/api/delete_test_case/${testCaseToDelete.id}`;
-      
+
       const response = await fetch(endpoint, {
         method: 'DELETE',
         headers: {
@@ -122,16 +122,16 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to delete');
       }
-      
+
       // Close the modal
       setShowDeleteModal(false);
       setTestCaseToDelete(null);
-      
+
       // Notify parent component to refresh the tree
       if (onTestCaseDeleted) {
         onTestCaseDeleted(testCaseToDelete.id);
@@ -158,29 +158,29 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   const handleEditTestCaseClick = async (e, testCase) => {
     e.stopPropagation(); // Prevent triggering the node click
     setTestCaseToEdit(testCase);
-    
+
     // Fetch available groups for the dropdown
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
+
       const response = await fetch(`${API_URL}/api/test_groups`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch groups');
       }
-      
+
       const groups = await response.json();
-      
+
       // Transform groups into a flat list with paths
       const flatGroups = [];
-      
+
       const buildGroupPath = (group, parentPath = '') => {
         const currentPath = parentPath ? `${parentPath} / ${group.name}` : group.name;
         flatGroups.push({
@@ -188,15 +188,15 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
           name: group.name,
           path: currentPath
         });
-        
+
         if (group.children && group.children.length > 0) {
           group.children.forEach(child => buildGroupPath(child, currentPath));
         }
       };
-      
+
       groups.forEach(group => buildGroupPath(group));
       setAvailableGroups(flatGroups);
-      
+
       setShowEditTestCaseModal(true);
     } catch (error) {
       console.error('Error fetching groups:', error);
@@ -207,29 +207,29 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   const handleMoveTestCaseClick = async (e, testCase) => {
     e.stopPropagation(); // Prevent triggering the node click
     setTestCaseToMove(testCase);
-    
+
     // Fetch available groups for the dropdown
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
+
       const response = await fetch(`${API_URL}/api/test_groups`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch groups');
       }
-      
+
       const groups = await response.json();
-      
+
       // Transform groups into a flat list with paths
       const flatGroups = [];
-      
+
       const buildGroupPath = (group, parentPath = '') => {
         const currentPath = parentPath ? `${parentPath} / ${group.name}` : group.name;
         flatGroups.push({
@@ -237,15 +237,15 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
           name: group.name,
           path: currentPath
         });
-        
+
         if (group.children && group.children.length > 0) {
           group.children.forEach(child => buildGroupPath(child, currentPath));
         }
       };
-      
+
       groups.forEach(group => buildGroupPath(group));
       setAvailableGroups(flatGroups);
-      
+
       setShowMoveTestCaseModal(true);
     } catch (error) {
       console.error('Error fetching groups:', error);
@@ -258,23 +258,23 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       alert('Group name cannot be empty');
       return;
     }
-    
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
+
       const requestBody = {
         name: newGroupName.trim(),
         parent_id: selectedParentId
       };
-      
+
       // Add project_id to the request if it's available and not 'all'
       if (projectId && projectId !== 'all') {
         requestBody.project_id = projectId;
       }
-      
+
       const response = await fetch(`${API_URL}/api/test_groups`, {
         method: 'POST',
         headers: {
@@ -283,15 +283,15 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
         },
         body: JSON.stringify(requestBody)
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to create group');
       }
-      
+
       // Close the modal
       setShowCreateGroupModal(false);
-      
+
       // Notify parent component to refresh the tree
       if (onTestCaseDeleted) {
         onTestCaseDeleted(null); // Pass null to just refresh the tree
@@ -307,13 +307,13 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       alert('Group name cannot be empty');
       return;
     }
-    
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
+
       const response = await fetch(`${API_URL}/api/test_groups/${groupToRename.id}`, {
         method: 'PUT',
         headers: {
@@ -324,16 +324,16 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
           name: newGroupName.trim()
         })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to rename group');
       }
-      
+
       // Close the modal
       setShowRenameGroupModal(false);
       setGroupToRename(null);
-      
+
       // Notify parent component to refresh the tree
       if (onTestCaseDeleted) {
         onTestCaseDeleted(null); // Pass null to just refresh the tree
@@ -349,13 +349,13 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       alert('Please select a target group');
       return;
     }
-    
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
+
       const response = await fetch(`${API_URL}/api/test_cases/move`, {
         method: 'POST',
         headers: {
@@ -367,17 +367,17 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
           target_group_id: targetGroupId
         })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to move test case');
       }
-      
+
       // Close the modal
       setShowMoveTestCaseModal(false);
       setTestCaseToMove(null);
       setTargetGroupId(null);
-      
+
       // Notify parent component to refresh the tree
       if (onTestCaseDeleted) {
         onTestCaseDeleted(null); // Pass null to just refresh the tree
@@ -393,13 +393,13 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       alert('Test case name cannot be empty');
       return;
     }
-    
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
+
       const response = await fetch(`${API_URL}/api/test_cases/${testCaseToEdit.id}`, {
         method: 'PUT',
         headers: {
@@ -412,16 +412,16 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
           parent_id: testCaseToEdit.parent_id
         })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to update test case');
       }
-      
+
       // Close the modal
       setShowEditTestCaseModal(false);
       setTestCaseToEdit(null);
-      
+
       // Notify parent component to refresh the tree
       if (onTestCaseDeleted) {
         onTestCaseDeleted(null); // Pass null to just refresh the tree
@@ -431,7 +431,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       alert(`Failed to update test case: ${error.message}`);
     }
   };
-  
+
   const handleCreateTestCaseClick = async (parentId = null) => {
     // Reset form
     setNewTestCase({
@@ -441,29 +441,29 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       project_id: projectId !== 'all' ? projectId : null,
       test_type: 'ui'  // Default to 'ui' when creating new test case
     });
-    
+
     // Fetch available groups for the dropdown
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
+
       const response = await fetch(`${API_URL}/api/test_groups`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch groups');
       }
-      
+
       const groups = await response.json();
-      
+
       // Transform groups into a flat list with paths
       const flatGroups = [];
-      
+
       const buildGroupPath = (group, parentPath = '') => {
         const currentPath = parentPath ? `${parentPath} / ${group.name}` : group.name;
         flatGroups.push({
@@ -471,18 +471,18 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
           name: group.name,
           path: currentPath
         });
-        
+
         if (group.children && group.children.length > 0) {
           group.children.forEach(child => buildGroupPath(child, currentPath));
         }
       };
-      
+
       groups.forEach(group => buildGroupPath(group));
       setAvailableGroups(flatGroups);
-      
+
       // Fetch available projects
       fetchProjects();
-      
+
       // Show modal
       setShowCreateTestCaseModal(true);
     } catch (error) {
@@ -498,22 +498,22 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
+
       const response = await fetch(`${API_URL}/api/projects`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to fetch projects');
       }
-      
+
       const data = await response.json();
       setAvailableProjects(data);
-      
+
       // If the current projectId is set and valid, select it by default
       if (projectId && projectId !== 'all') {
         setNewTestCase(prev => ({ ...prev, project_id: projectId }));
@@ -535,18 +535,18 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       alert('Test case name cannot be empty');
       return;
     }
-    
+
     if (!newTestCase.project_id) {
       alert('Please select a project');
       return;
     }
-    
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
+
       const requestBody = {
         name: newTestCase.name.trim(),
         description: newTestCase.description.trim(),
@@ -554,7 +554,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
         project_id: newTestCase.project_id,
         test_type: newTestCase.test_type || 'ui'  // Include test_type, default to 'ui'
       };
-      
+
       const response = await fetch(`${API_URL}/api/test_cases`, {
         method: 'POST',
         headers: {
@@ -563,15 +563,15 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
         },
         body: JSON.stringify(requestBody)
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to create test case');
       }
-      
+
       // Close the modal
       setShowCreateTestCaseModal(false);
-      
+
       // Notify parent component to refresh the tree
       if (onTestCaseDeleted) {
         onTestCaseDeleted(null); // Pass null to just refresh the tree
@@ -582,6 +582,49 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     }
   };
 
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Filter tree data based on search term
+  const filterTreeData = (nodes, term) => {
+    if (!term) return nodes;
+
+    return nodes.reduce((acc, node) => {
+      const matches = node.name.toLowerCase().includes(term.toLowerCase());
+      const children = node.children ? filterTreeData(node.children, term) : [];
+
+      if (matches || children.length > 0) {
+        acc.push({
+          ...node,
+          children: children,
+          // Force expand if children match or if node matches
+          expanded: true
+        });
+      }
+      return acc;
+    }, []);
+  };
+
+  const filteredTreeData = React.useMemo(() =>
+    filterTreeData(treeData, searchTerm),
+    [treeData, searchTerm]
+  );
+
+  // Auto-expand nodes when searching
+  React.useEffect(() => {
+    if (searchTerm) {
+      const expandFiltered = (nodes) => {
+        const newExpanded = {};
+        const traverse = (n) => {
+          newExpanded[n.id] = true;
+          if (n.children) n.children.forEach(traverse);
+        };
+        nodes.forEach(traverse);
+        setExpandedNodes(prev => ({ ...prev, ...newExpanded }));
+      };
+      expandFiltered(filteredTreeData);
+    }
+  }, [searchTerm, filteredTreeData]);
+
   const renderNode = (node) => {
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = expandedNodes[node.id];
@@ -589,7 +632,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
 
     return (
       <div key={node.id} className="tree-node">
-        <div 
+        <div
           className={`node-content ${isSelected ? 'selected' : ''}`}
           data-type={node.type}
           onClick={() => {
@@ -602,26 +645,31 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
             }
           }}
         >
-          {hasChildren && (
+          {hasChildren ? (
             <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
-              {isExpanded ? '▼' : '▶'}
+              <FontAwesomeIcon icon={isExpanded ? faChevronDown : faChevronRight} />
             </span>
+          ) : (
+            <span className="node-spacer"></span>
           )}
-          <div className="node-content-text">
-            {/* Show test type for test cases */}
-            {(node.type === 'test' || node.type === 'api_test') && node.test_type && (
-              <div className={`test-type-badge ${node.test_type}`}>
-                {node.test_type.toUpperCase()}
-              </div>
+
+          <div className="node-icon">
+            {node.type === 'group' || node.type === 'type_group' ? (
+              <FontAwesomeIcon icon={isExpanded ? faFolderOpen : faFolder} className="folder-icon" />
+            ) : (
+              <FontAwesomeIcon icon={faFileAlt} className="file-icon" />
             )}
+          </div>
+
+          <div className="node-content-text">
             <span className="node-name">{node.name}</span>
           </div>
-          
+
           <div className="node-actions">
             {/* Group actions */}
             {(node.type === 'group' || node.type === 'api_group') && (
               <>
-                <button 
+                <button
                   className="tree-action-button"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -631,14 +679,14 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                 >
                   <FontAwesomeIcon icon={faFolderPlus} />
                 </button>
-                <button 
+                <button
                   className="tree-action-button"
                   onClick={(e) => handleRenameGroupClick(e, node)}
                   title="Rename group"
                 >
                   <FontAwesomeIcon icon={faEdit} />
                 </button>
-                <button 
+                <button
                   className="tree-action-button"
                   onClick={(e) => handleDeleteClick(e, node)}
                   title="Delete group"
@@ -647,18 +695,18 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                 </button>
               </>
             )}
-            
+
             {/* Type group actions */}
             {node.type === 'type_group' && (
               <>
-                <button 
+                <button
                   className="tree-action-button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setNewTestCase(prev => ({ 
-                      ...prev, 
-                      parent_id: null, 
-                      test_type: node.test_type 
+                    setNewTestCase(prev => ({
+                      ...prev,
+                      parent_id: null,
+                      test_type: node.test_type
                     }));
                     handleCreateTestCaseClick();
                   }}
@@ -666,7 +714,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                 >
                   <FontAwesomeIcon icon={faPlus} />
                 </button>
-                <button 
+                <button
                   className="tree-action-button"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -678,25 +726,25 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                 </button>
               </>
             )}
-            
+
             {/* Test case actions */}
             {(node.type === 'test' || node.type === 'api_test') && (
               <>
-                <button 
+                <button
                   className="tree-action-button"
                   onClick={(e) => handleEditTestCaseClick(e, node)}
                   title="Edit test case"
                 >
                   <FontAwesomeIcon icon={faEdit} />
                 </button>
-                <button 
+                <button
                   className="tree-action-button"
                   onClick={(e) => handleMoveTestCaseClick(e, node)}
                   title="Move to another group"
                 >
                   <FontAwesomeIcon icon={faExchangeAlt} />
                 </button>
-                <button 
+                <button
                   className="tree-action-button"
                   onClick={(e) => handleDeleteClick(e, node)}
                   title="Delete test case"
@@ -720,39 +768,98 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     return <div className="tree-error">{error}</div>;
   }
 
-  if (!treeData || treeData.length === 0) {
-    return (
-      <div className="test-case-tree-container">
-        <div className="tree-actions">
-          <button 
-            className="create-group-button"
-            onClick={onGenerateFromFile}
+  return (
+    <div className="test-case-tree-container">
+      <div className="test-case-tree-header">
+        <div className="header-top-row">
+          <h3>Test Cases</h3>
+          <div className="header-actions">
+            <button
+              className="icon-button"
+              onClick={onGenerateFromFile}
+              title="Generate from File"
+            >
+              <FontAwesomeIcon icon={faFileImport} />
+            </button>
+            <button
+              className="icon-button"
+              onClick={() => handleCreateGroupClick(null)}
+              title="New Group"
+            >
+              <FontAwesomeIcon icon={faFolderPlus} />
+            </button>
+            <button
+              className="icon-button primary"
+              onClick={handleCreateTestCaseClick}
+              title="New Test Case"
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </button>
+          </div>
+        </div>
+        <div className="search-bar-container">
+          <FontAwesomeIcon icon={faSearch} className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search test cases..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="tree-search-input"
+          />
+        </div>
+      </div>
+
+      <div className="test-case-tree">
+        <div className="tree-controls">
+          <button
+            className="tree-control-button collapse"
+            onClick={collapseAll}
+            title="Collapse All"
           >
-            <FontAwesomeIcon icon={faFileImport} /> Generate from File
+            <FontAwesomeIcon icon={faMinus} />
           </button>
-          <button 
-            className="create-group-button"
-            onClick={() => handleCreateGroupClick(null)}
+          <button
+            className="tree-control-button expand"
+            onClick={expandAll}
+            title="Expand All"
           >
-            <FontAwesomeIcon icon={faFolderPlus} /> Create Group
-          </button>
-          <button 
-            className="create-test-button"
-            onClick={handleCreateTestCaseClick}
-          >
-            <FontAwesomeIcon icon={faPlus} /> Create Test Case
+            <FontAwesomeIcon icon={faPlus} />
           </button>
         </div>
-        <div className="tree-empty">No test cases available.</div>
-        {/* Ensure create group modal is rendered even if tree is empty */}
-        {showCreateGroupModal && (
+        {treeData.map(node => renderNode(node))}
+      </div>
+
+      {/* Confirmation Modal for Deleting */}
+      {
+        showDeleteModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Confirm Delete {testCaseToDelete?.type === 'group' ? 'Group' : 'Test Case'}</h3>
+              {testCaseToDelete?.type === 'group' ? (
+                <p>Are you sure you want to delete this group? This action cannot be undone. Note that you cannot delete groups that contain test cases or subgroups.</p>
+              ) : (
+                <p>Are you sure you want to delete this test case? This action cannot be undone.</p>
+              )}
+              <p><strong>Name:</strong> {testCaseToDelete?.name}</p>
+              <div className="modal-actions">
+                <button onClick={() => setShowDeleteModal(false)} className="modal-button cancel">Cancel</button>
+                <button onClick={handleConfirmDelete} className="modal-button delete">Delete</button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Create Group Modal */}
+      {
+        showCreateGroupModal && (
           <div className="modal-overlay">
             <div className="modal-content">
               <h3>Create New Group</h3>
               <div className="form-group">
                 <label>Group Name:</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
                   placeholder="Enter group name"
@@ -764,300 +871,206 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
               </div>
             </div>
           </div>
-        )}
-      </div>
-    );
-  }
+        )
+      }
 
-  return (
-    <div className="test-case-tree-container">
-      <div className="test-case-tree-header">
-        <div className="header-title-section">
-          <div className="title-with-hide">
-            <h3>Test Cases</h3>
-            {onToggleVisibility && (
-              <button 
-                className="tree-hide-btn"
-                onClick={() => onToggleVisibility(false)}
-                title="Hide Test Cases Tree"
-              >
-                <FontAwesomeIcon icon={faChevronLeft} />
-              </button>
-            )}
-          </div>
-          <div className="title-buttons">
-            <button 
-              className="create-group-button"
-              onClick={onGenerateFromFile}
-            >
-              <FontAwesomeIcon icon={faFileImport} /> Generate from File
-            </button>
-            <button 
-              className="create-group-button"
-              onClick={() => handleCreateGroupClick(null)}
-            >
-              <FontAwesomeIcon icon={faFolderPlus} /> Create Group
-            </button>
-            <button 
-              className="create-test-button"
-              onClick={handleCreateTestCaseClick}
-            >
-              <FontAwesomeIcon icon={faPlus} /> Create Test Case
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      <div className="test-case-tree">
-        <div className="tree-controls">
-          <button 
-            className="tree-control-button collapse"
-            onClick={collapseAll}
-            title="Collapse All"
-          >
-            <FontAwesomeIcon icon={faMinus} />
-          </button>
-          <button 
-            className="tree-control-button expand"
-            onClick={expandAll}
-            title="Expand All"
-          >
-            <FontAwesomeIcon icon={faPlus} />
-          </button>
-        </div>
-        {treeData.map(node => renderNode(node))}
-      </div>
-      
-      {/* Confirmation Modal for Deleting */}
-      {showDeleteModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Confirm Delete {testCaseToDelete?.type === 'group' ? 'Group' : 'Test Case'}</h3>
-            {testCaseToDelete?.type === 'group' ? (
-              <p>Are you sure you want to delete this group? This action cannot be undone. Note that you cannot delete groups that contain test cases or subgroups.</p>
-            ) : (
-              <p>Are you sure you want to delete this test case? This action cannot be undone.</p>
-            )}
-            <p><strong>Name:</strong> {testCaseToDelete?.name}</p>
-            <div className="modal-actions">
-              <button onClick={() => setShowDeleteModal(false)} className="modal-button cancel">Cancel</button>
-              <button onClick={handleConfirmDelete} className="modal-button delete">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Create Group Modal */}
-      {showCreateGroupModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Create New Group</h3>
-            <div className="form-group">
-              <label>Group Name:</label>
-              <input 
-                type="text" 
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder="Enter group name"
-              />
-            </div>
-            <div className="modal-actions">
-              <button onClick={() => setShowCreateGroupModal(false)} className="modal-button cancel">Cancel</button>
-              <button onClick={handleConfirmCreateGroup} className="modal-button create">Create</button>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {/* Rename Group Modal */}
-      {showRenameGroupModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Rename Group</h3>
-            <div className="form-group">
-              <label>New Group Name:</label>
-              <input 
-                type="text" 
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder="Enter new group name"
-              />
-            </div>
-            <div className="modal-actions">
-              <button onClick={() => setShowRenameGroupModal(false)} className="modal-button cancel">Cancel</button>
-              <button onClick={handleConfirmRenameGroup} className="modal-button update">Update</button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Move Test Case Modal */}
-      {showMoveTestCaseModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Move Test Case</h3>
-            <div className="form-group">
-              <label>Select Target Group:</label>
-              <select 
-                value={targetGroupId || ''}
-                onChange={(e) => setTargetGroupId(e.target.value ? parseInt(e.target.value) : null)}
-              >
-                <option value="">-- Select a group --</option>
-                {availableGroups.map(group => (
-                  <option key={group.id} value={group.id}>{group.path}</option>
-                ))}
-              </select>
-            </div>
-            <div className="modal-actions">
-              <button onClick={() => setShowMoveTestCaseModal(false)} className="modal-button cancel">Cancel</button>
-              <button onClick={handleConfirmMoveTestCase} className="modal-button update">Move</button>
+      {
+        showRenameGroupModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Rename Group</h3>
+              <div className="form-group">
+                <label>New Group Name:</label>
+                <input
+                  type="text"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="Enter new group name"
+                />
+              </div>
+              <div className="modal-actions">
+                <button onClick={() => setShowRenameGroupModal(false)} className="modal-button cancel">Cancel</button>
+                <button onClick={handleConfirmRenameGroup} className="modal-button update">Update</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {showEditTestCaseModal && testCaseToEdit && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Edit Test Case</h3>
-            <div className="form-group">
-              <label>Name:</label>
-              <input 
-                type="text" 
-                value={testCaseToEdit.name || ''}
-                onChange={(e) => setTestCaseToEdit({...testCaseToEdit, name: e.target.value})}
-                placeholder="Enter test case name"
-              />
-            </div>
-            <div className="form-group">
-              <label>Description:</label>
-              <textarea 
-                value={testCaseToEdit.description || ''}
-                onChange={(e) => setTestCaseToEdit({...testCaseToEdit, description: e.target.value})}
-                placeholder="Enter test case description"
-                rows="4"
-              />
-            </div>
-            <div className="form-group">
-              <label>Group:</label>
-              <select 
-                value={testCaseToEdit.parent_id || ''}
-                onChange={(e) => setTestCaseToEdit({...testCaseToEdit, parent_id: e.target.value ? parseInt(e.target.value) : null})}
-              >
-                <option value="">-- Root --</option>
-                {availableGroups.map(group => (
-                  <option key={group.id} value={group.id}>{group.path}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Test Type:</label>
-              <select 
-                value={testCaseToEdit.test_type || 'ui'}
-                onChange={(e) => setTestCaseToEdit({...testCaseToEdit, test_type: e.target.value})}
-              >
-                <option value="ui">UI Test</option>
-                <option value="api">API Test</option>
-              </select>
-            </div>
-            <div className="modal-actions">
-              <button onClick={() => setShowEditTestCaseModal(false)} className="modal-button cancel">Cancel</button>
-              <button onClick={handleConfirmEditTestCase} className="modal-button update">Update</button>
+      {/* Move Test Case Modal */}
+      {
+        showMoveTestCaseModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Move Test Case</h3>
+              <div className="form-group">
+                <label>Select Target Group:</label>
+                <select
+                  value={targetGroupId || ''}
+                  onChange={(e) => setTargetGroupId(e.target.value ? parseInt(e.target.value) : null)}
+                >
+                  <option value="">-- Select a group --</option>
+                  {availableGroups.map(group => (
+                    <option key={group.id} value={group.id}>{group.path}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button onClick={() => setShowMoveTestCaseModal(false)} className="modal-button cancel">Cancel</button>
+                <button onClick={handleConfirmMoveTestCase} className="modal-button update">Move</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      
+        )
+      }
+
+      {
+        showEditTestCaseModal && testCaseToEdit && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Edit Test Case</h3>
+              <div className="form-group">
+                <label>Name:</label>
+                <input
+                  type="text"
+                  value={testCaseToEdit.name || ''}
+                  onChange={(e) => setTestCaseToEdit({ ...testCaseToEdit, name: e.target.value })}
+                  placeholder="Enter test case name"
+                />
+              </div>
+              <div className="form-group">
+                <label>Description:</label>
+                <textarea
+                  value={testCaseToEdit.description || ''}
+                  onChange={(e) => setTestCaseToEdit({ ...testCaseToEdit, description: e.target.value })}
+                  placeholder="Enter test case description"
+                  rows="4"
+                />
+              </div>
+              <div className="form-group">
+                <label>Group:</label>
+                <select
+                  value={testCaseToEdit.parent_id || ''}
+                  onChange={(e) => setTestCaseToEdit({ ...testCaseToEdit, parent_id: e.target.value ? parseInt(e.target.value) : null })}
+                >
+                  <option value="">-- Root --</option>
+                  {availableGroups.map(group => (
+                    <option key={group.id} value={group.id}>{group.path}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Test Type:</label>
+                <select
+                  value={testCaseToEdit.test_type || 'ui'}
+                  onChange={(e) => setTestCaseToEdit({ ...testCaseToEdit, test_type: e.target.value })}
+                >
+                  <option value="ui">UI Test</option>
+                  <option value="api">API Test</option>
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button onClick={() => setShowEditTestCaseModal(false)} className="modal-button cancel">Cancel</button>
+                <button onClick={handleConfirmEditTestCase} className="modal-button update">Update</button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
       {/* Create Test Case Modal */}
-      {showCreateTestCaseModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Create New Test Case</h3>
-            <div className="form-group">
-              <label>Test Case Name: <span className="required">*</span></label>
-              <input 
-                type="text" 
-                value={newTestCase.name}
-                onChange={(e) => setNewTestCase(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Enter test case name"
-              />
-            </div>
-            <div className="form-group">
-              <label>Test Case Description:</label>
-              <textarea 
-                value={newTestCase.description}
-                onChange={(e) => setNewTestCase(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Enter test case description"
-              />
-            </div>
-            <div className="form-group">
-              <label>Select Parent Group:</label>
-              <select
-                value={newTestCase.parent_id || ''}
-                onChange={(e) => setNewTestCase(prev => ({ ...prev, parent_id: e.target.value ? e.target.value : null }))}
-              >
-                <option value="">-- Select a group --</option>
-                {availableGroups.map(group => (
-                  <option key={group.id} value={group.id}>
-                    {group.path}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Select Project: <span className="required">*</span></label>
-              <select
-                value={newTestCase.project_id || ''}
-                onChange={(e) => setNewTestCase(prev => ({ ...prev, project_id: e.target.value }))}
-                required
-              >
-                <option value="">-- Select a project --</option>
-                {availableProjects.map(project => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-              {isLoadingProjects && <div className="loading-indicator">Loading projects...</div>}
-              {availableProjects.length === 0 && !isLoadingProjects && (
-                <div className="no-projects-warning">No projects available. Please create a project first.</div>
-              )}
-            </div>
-            <div className="form-group">
-              <label>Test Type: <span className="required">*</span></label>
-              <select
-                value={newTestCase.test_type}
-                onChange={(e) => setNewTestCase(prev => ({ ...prev, test_type: e.target.value }))}
-                required
-              >
-                <option value="ui">UI Test</option>
-                <option value="api">API Test</option>
-              </select>
-            </div>
-            <div className="modal-actions">
-              <button onClick={() => {
-                setShowCreateTestCaseModal(false);
-                // Reset form when canceled
-                setNewTestCase({
-                  name: '',
-                  description: '',
-                  parent_id: null,
-                  project_id: projectId !== 'all' ? projectId : null,
-                  test_type: 'ui'
-                });
-              }} className="modal-button cancel">Cancel</button>
-              <button 
-                onClick={handleConfirmCreateTestCase} 
-                className="modal-button create"
-                disabled={isLoadingProjects || availableProjects.length === 0}
-              >
-                Create
-              </button>
+      {
+        showCreateTestCaseModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Create New Test Case</h3>
+              <div className="form-group">
+                <label>Test Case Name: <span className="required">*</span></label>
+                <input
+                  type="text"
+                  value={newTestCase.name}
+                  onChange={(e) => setNewTestCase(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter test case name"
+                />
+              </div>
+              <div className="form-group">
+                <label>Test Case Description:</label>
+                <textarea
+                  value={newTestCase.description}
+                  onChange={(e) => setNewTestCase(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter test case description"
+                />
+              </div>
+              <div className="form-group">
+                <label>Select Parent Group:</label>
+                <select
+                  value={newTestCase.parent_id || ''}
+                  onChange={(e) => setNewTestCase(prev => ({ ...prev, parent_id: e.target.value ? e.target.value : null }))}
+                >
+                  <option value="">-- Select a group --</option>
+                  {availableGroups.map(group => (
+                    <option key={group.id} value={group.id}>
+                      {group.path}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Select Project: <span className="required">*</span></label>
+                <select
+                  value={newTestCase.project_id || ''}
+                  onChange={(e) => setNewTestCase(prev => ({ ...prev, project_id: e.target.value }))}
+                  required
+                >
+                  <option value="">-- Select a project --</option>
+                  {availableProjects.map(project => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+                {isLoadingProjects && <div className="loading-indicator">Loading projects...</div>}
+                {availableProjects.length === 0 && !isLoadingProjects && (
+                  <div className="no-projects-warning">No projects available. Please create a project first.</div>
+                )}
+              </div>
+              <div className="form-group">
+                <label>Test Type: <span className="required">*</span></label>
+                <select
+                  value={newTestCase.test_type}
+                  onChange={(e) => setNewTestCase(prev => ({ ...prev, test_type: e.target.value }))}
+                  required
+                >
+                  <option value="ui">UI Test</option>
+                  <option value="api">API Test</option>
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button onClick={() => {
+                  setShowCreateTestCaseModal(false);
+                  // Reset form when canceled
+                  setNewTestCase({
+                    name: '',
+                    description: '',
+                    parent_id: null,
+                    project_id: projectId !== 'all' ? projectId : null,
+                    test_type: 'ui'
+                  });
+                }} className="modal-button cancel">Cancel</button>
+                <button
+                  onClick={handleConfirmCreateTestCase}
+                  className="modal-button create"
+                  disabled={isLoadingProjects || availableProjects.length === 0}
+                >
+                  Create
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

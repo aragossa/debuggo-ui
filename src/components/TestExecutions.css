@@ -1,9 +1,9 @@
 /* Test Executions Styles */
 .test-executions {
-    padding: 20px;
-    background: #f8f9fa;
-    min-height: calc(100vh - 120px);
-    max-height: calc(100vh - 120px);
+    padding: 2rem;
+    background: var(--gray-50);
+    min-height: calc(100vh - 60px);
+    max-height: calc(100vh - 60px);
     overflow-y: auto;
 }
 
@@ -24,18 +24,24 @@
 }
 
 .create-execution-btn {
-    background: var(--secondary-dark);
+    background: var(--primary);
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.create-execution-btn:hover {
+    background: var(--primary-dark);
+    box-shadow: var(--shadow-md);
 }
 
 
@@ -58,7 +64,7 @@
     padding: 60px 20px;
     background: white;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .no-executions p {
@@ -92,28 +98,29 @@
 
 .execution-item {
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
     transition: all 0.3s ease;
+    border: 1px solid var(--gray-200);
 }
 
 .execution-item:hover {
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
 .execution-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: 1.5rem;
     cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--gray-100);
     transition: background-color 0.2s ease;
 }
 
 .execution-header:hover {
-    background-color: #f8f9fa;
+    background-color: var(--gray-50);
 }
 
 .execution-info {
@@ -144,26 +151,27 @@
 }
 
 .status-badge {
-    padding: 4px 12px;
-    border-radius: 15px;
-    font-size: 12px;
-    font-weight: 500;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .status-new {
-    background: #e3f2fd;
-    color: #1976d2;
+    background: var(--info-light);
+    color: white;
 }
 
 .status-in-progress {
-    background: #fff3e0;
-    color: #f57c00;
+    background: var(--accent);
+    color: white;
 }
 
 .status-done {
-    background: #e8f5e8;
-    color: #388e3c;
+    background: var(--secondary);
+    color: white;
 }
 
 .test-runs-count {
@@ -213,11 +221,12 @@
 }
 
 .execution-details {
-    padding: 10px 20px;
+    padding: 1rem 1.5rem;
     display: flex;
-    gap: 20px;
+    gap: 2rem;
     flex-wrap: wrap;
-    background: #f8f9fa;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
 }
 
 .execution-detail-item {
@@ -227,10 +236,9 @@
 
 /* Test Runs */
 .execution-test-runs {
-    padding: 20px;
-    background: #fafafa;
-    border-top: 1px solid #e9ecef;
-    max-height: 500px;
+    padding: 1.5rem;
+    background: white;
+    max-height: 600px;
     overflow-y: auto;
 }
 
@@ -243,10 +251,11 @@
 
 .test-case-item {
     background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-md);
+    margin-bottom: 1rem;
     overflow: hidden;
+    box-shadow: var(--shadow-xs);
 }
 
 .test-case-header {
@@ -274,12 +283,13 @@
 }
 
 .test-case-type {
-    background: #17a2b8;
-    color: white;
-    padding: 4px 8px;
+    background: var(--gray-200);
+    color: var(--gray-700);
+    padding: 0.25rem 0.6rem;
     border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
 .test-runs-count {
@@ -351,18 +361,18 @@
 }
 
 .status-passed {
-    background: #d4edda;
-    color: #155724;
+    background: var(--secondary-light);
+    color: white;
 }
 
 .status-failed {
-    background: #f8d7da;
-    color: #721c24;
+    background: var(--danger);
+    color: white;
 }
 
 .status-running {
-    background: #fff3cd;
-    color: #856404;
+    background: var(--accent);
+    color: white;
 }
 
 .test-run-date {
@@ -480,12 +490,12 @@
 
 .modal {
     background: white;
-    border-radius: 8px;
+    border-radius: var(--border-radius-xl);
     width: 90%;
     max-width: 500px;
     max-height: 80vh;
     overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-2xl);
 }
 
 .modal-header {
@@ -623,39 +633,39 @@
     .test-executions {
         padding: 15px;
     }
-    
+
     .test-executions-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
     }
-    
+
     .execution-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
     }
-    
+
     .execution-actions {
         align-self: flex-end;
     }
-    
+
     .execution-meta {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
     }
-    
+
     .test-run-info {
         flex-wrap: wrap;
     }
-    
+
     .test-step-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
-    
+
     .test-step-actions {
         align-self: flex-end;
     }

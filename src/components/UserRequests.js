@@ -59,7 +59,7 @@ const UserRequests = () => {
     const ua = navigator.userAgent;
     let browserName = 'Unknown';
     let version = 'Unknown';
-    
+
     if (ua.indexOf('Chrome') > -1) {
       browserName = 'Chrome';
       version = ua.match(/Chrome\/(\d+)/)?.[1] || 'Unknown';
@@ -70,7 +70,7 @@ const UserRequests = () => {
       browserName = 'Safari';
       version = ua.match(/Version\/(\d+)/)?.[1] || 'Unknown';
     }
-    
+
     const os = navigator.platform;
     return `${browserName} ${version} on ${os}`;
   }
@@ -181,47 +181,68 @@ const UserRequests = () => {
           </button>
         </div>
       ) : (
-        <div className="requests-grid">
-          {requests.map(request => {
-            const typeConfig = getTypeConfig(request.request_type);
-            const statusConfig = STATUS_CONFIG[request.status] || STATUS_CONFIG.new;
-            
-            return (
-              <div 
-                key={request.id} 
-                className="request-card"
-                onClick={() => setSelectedRequest(request)}
-              >
-                <div className="request-card-header">
-                  <div className="request-type" style={{ backgroundColor: typeConfig.color }}>
-                    <FontAwesomeIcon icon={typeConfig.icon} />
-                    <span>{typeConfig.label}</span>
-                  </div>
-                  <div className="request-status" style={{ color: statusConfig.color }}>
-                    <FontAwesomeIcon icon={statusConfig.icon} />
-                    <span>{statusConfig.label}</span>
-                  </div>
-                </div>
-                
-                <h3 className="request-title">{request.title}</h3>
-                
-                <p className="request-description">
-                  {request.description.length > 150 
-                    ? `${request.description.substring(0, 150)}...` 
-                    : request.description}
-                </p>
-                
-                <div className="request-meta">
-                  <span className="request-priority priority-{request.priority}">
-                    Priority: {request.priority}
-                  </span>
-                  <span className="request-date">
-                    {formatDate(request.created_at)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+        <div className="requests-table-container">
+          <table className="requests-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Date</th>
+                <th className="actions-header">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map(request => {
+                const typeConfig = getTypeConfig(request.request_type);
+                const statusConfig = STATUS_CONFIG[request.status] || STATUS_CONFIG.new;
+
+                return (
+                  <tr key={request.id} onClick={() => setSelectedRequest(request)} className="request-row">
+                    <td>
+                      <div className="request-type-badge" style={{ backgroundColor: typeConfig.color }}>
+                        <FontAwesomeIcon icon={typeConfig.icon} />
+                        <span>{typeConfig.label}</span>
+                      </div>
+                    </td>
+                    <td className="request-title-cell">{request.title}</td>
+                    <td className="request-desc-cell">
+                      {request.description.length > 50
+                        ? `${request.description.substring(0, 50)}...`
+                        : request.description}
+                    </td>
+                    <td>
+                      <div className="request-status-badge" style={{ color: statusConfig.color }}>
+                        <FontAwesomeIcon icon={statusConfig.icon} />
+                        <span>{statusConfig.label}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`priority-badge priority-${request.priority}`}>
+                        {request.priority}
+                      </span>
+                    </td>
+                    <td className="request-date-cell">
+                      {formatDate(request.created_at)}
+                    </td>
+                    <td className="actions-cell">
+                      <button
+                        className="view-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRequest(request);
+                        }}
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -243,8 +264,8 @@ const UserRequests = () => {
                 <label>Request Type *</label>
                 <div className="type-selector">
                   {REQUEST_TYPES.map(type => (
-                    <label 
-                      key={type.value} 
+                    <label
+                      key={type.value}
                       className={`type-option ${formData.request_type === type.value ? 'selected' : ''}`}
                     >
                       <input
@@ -333,16 +354,16 @@ const UserRequests = () => {
               </div>
 
               <div className="modal-actions">
-                <button 
-                  type="button" 
-                  className="cancel-btn" 
+                <button
+                  type="button"
+                  className="cancel-btn"
                   onClick={() => setShowModal(false)}
                   disabled={submitting}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="submit-btn"
                   disabled={submitting}
                 >

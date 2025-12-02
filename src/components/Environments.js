@@ -37,15 +37,15 @@ const Environments = ({ projectId }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch(`${API_URL}/api/projects/${projectId}/environments`, {
         headers: getAuthHeaders()
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch environments');
       }
-      
+
       const data = await response.json();
       setEnvironments(data);
     } catch (error) {
@@ -95,25 +95,25 @@ const Environments = ({ projectId }) => {
     if (!window.confirm('Are you sure you want to delete this environment?')) {
       return;
     }
-    
+
     try {
       setDeletingEnvironmentId(environmentId);
       setError(null);
-      
+
       const response = await fetch(`${API_URL}/api/environments/${environmentId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || 'Failed to delete environment');
       }
-      
+
       // Show success message
       setSuccessMessage('Environment deleted successfully');
       setTimeout(() => setSuccessMessage(null), 3000);
-      
+
       // Refresh the environments list
       fetchEnvironments();
     } catch (error) {
@@ -126,16 +126,16 @@ const Environments = ({ projectId }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate form
     if (!formData.name || !formData.base_url) {
       setError('Name and Base URL are required fields');
       return;
     }
-    
+
     try {
       let url, method;
-      
+
       if (showAddForm) {
         url = `${API_URL}/api/projects/${projectId}/environments`;
         method = 'POST';
@@ -143,11 +143,11 @@ const Environments = ({ projectId }) => {
         url = `${API_URL}/api/environments/${currentEnvironment.id}`;
         method = 'PUT';
       }
-      
+
       const requestBody = {
         ...formData
       };
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -156,12 +156,12 @@ const Environments = ({ projectId }) => {
         },
         body: JSON.stringify(requestBody)
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || `Failed to ${showAddForm ? 'create' : 'update'} environment`);
       }
-      
+
       // Reset form and fetch updated environments
       resetForm();
       setShowAddForm(false);
@@ -201,7 +201,7 @@ const Environments = ({ projectId }) => {
     <div className="environments-container">
       <div className="environments-header">
         <h2>Environments</h2>
-        <button 
+        <button
           className="add-environment-button"
           onClick={handleAddClick}
           disabled={showAddForm || showEditForm}
@@ -209,19 +209,19 @@ const Environments = ({ projectId }) => {
           <FontAwesomeIcon icon={faPlus} /> Add Environment
         </button>
       </div>
-      
+
       {error && (
         <div className="error-message">
           <FontAwesomeIcon icon={faInfoCircle} /> {error}
         </div>
       )}
-      
+
       {successMessage && (
         <div className="success-message">
           <FontAwesomeIcon icon={faCheck} /> {successMessage}
         </div>
       )}
-      
+
       {(showAddForm || showEditForm) && (
         <div className="environment-form-container">
           <h3>{showAddForm ? 'Add New Environment' : 'Edit Environment'}</h3>
@@ -238,7 +238,7 @@ const Environments = ({ projectId }) => {
                 required
               />
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="base_url">Base URL*</label>
               <input
@@ -251,7 +251,7 @@ const Environments = ({ projectId }) => {
                 required
               />
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="login">Login</label>
               <input
@@ -263,7 +263,7 @@ const Environments = ({ projectId }) => {
                 placeholder="username or email"
               />
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="password">Password</label>
               <input
@@ -275,7 +275,7 @@ const Environments = ({ projectId }) => {
                 placeholder="password"
               />
             </div>
-            
+
             <div className="form-actions">
               <button type="button" className="cancel-button" onClick={handleCancel}>
                 <FontAwesomeIcon icon={faTimes} /> Cancel
@@ -287,7 +287,7 @@ const Environments = ({ projectId }) => {
           </form>
         </div>
       )}
-      
+
       {loading ? (
         <div className="loading-message">Loading environments...</div>
       ) : environments.length === 0 ? (
@@ -300,36 +300,47 @@ const Environments = ({ projectId }) => {
           )}
         </div>
       ) : (
-        <div className="environments-list">
-          {environments.map((env) => (
-            <div key={env.id} className="environment-card">
-              <div className="environment-info">
-                <h3>{env.name}</h3>
-                <p><strong>Base URL:</strong> {env.base_url}</p>
-                <p><strong>Login:</strong> {env.login || 'Not set'}</p>
-                <p><strong>Password:</strong> {env.password ? '••••••••' : 'Not set'}</p>
-              </div>
-              <div className="environment-actions">
-                <button 
-                  className="edit-button" 
-                  onClick={() => handleEditClick(env)}
-                  disabled={showAddForm || showEditForm || generatingLogin}
-                  title="Edit environment"
-                >
-                  <FontAwesomeIcon icon={faEdit} />
-                </button>
+        <div className="environments-table-container">
+          <table className="environments-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Base URL</th>
+                <th>Login</th>
+                <th>Password</th>
+                <th className="actions-header">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {environments.map((env) => (
+                <tr key={env.id}>
+                  <td className="env-name">{env.name}</td>
+                  <td className="env-url">{env.base_url}</td>
+                  <td>{env.login || <span className="text-muted">-</span>}</td>
+                  <td>{env.password ? '••••••••' : <span className="text-muted">-</span>}</td>
+                  <td className="actions-cell">
+                    <button
+                      className="edit-button"
+                      onClick={() => handleEditClick(env)}
+                      disabled={showAddForm || showEditForm || generatingLogin}
+                      title="Edit environment"
+                    >
+                      <FontAwesomeIcon icon={faEdit} />
+                    </button>
 
-                <button 
-                  className="delete-button" 
-                  onClick={() => handleDeleteClick(env.id)}
-                  disabled={showAddForm || showEditForm || generatingLogin || deletingEnvironmentId === env.id}
-                  title="Delete environment"
-                >
-                  <FontAwesomeIcon icon={deletingEnvironmentId === env.id ? faSpinner : faTrash} spin={deletingEnvironmentId === env.id} />
-                </button>
-              </div>
-            </div>
-          ))}
+                    <button
+                      className="delete-button"
+                      onClick={() => handleDeleteClick(env.id)}
+                      disabled={showAddForm || showEditForm || generatingLogin || deletingEnvironmentId === env.id}
+                      title="Delete environment"
+                    >
+                      <FontAwesomeIcon icon={deletingEnvironmentId === env.id ? faSpinner : faTrash} spin={deletingEnvironmentId === env.id} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
