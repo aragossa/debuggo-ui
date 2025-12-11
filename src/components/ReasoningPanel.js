@@ -16,7 +16,7 @@ import './ReasoningPanel.css';
 
 const ReasoningPanel = ({ testCaseId, isGenerating, API_URL, getAuthHeaders }) => {
   const [reasoning, setReasoning] = useState(null);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [pollingInterval, setPollingInterval] = useState(null);
 
   // Note: Removed auto-scroll to prevent page jumping during updates
@@ -62,18 +62,18 @@ const ReasoningPanel = ({ testCaseId, isGenerating, API_URL, getAuthHeaders }) =
   const renderPhaseStatus = (phase) => {
     if (!phase) return null;
 
-    const statusIcon = phase.status === 'completed' ? faCheckCircle : 
-                       phase.status === 'in_progress' ? faSpinner : 
-                       faExclamationCircle;
-    const statusClass = phase.status === 'completed' ? 'completed' : 
-                        phase.status === 'in_progress' ? 'in-progress' : 
-                        'pending';
+    const statusIcon = phase.status === 'completed' ? faCheckCircle :
+      phase.status === 'in_progress' ? faSpinner :
+        faExclamationCircle;
+    const statusClass = phase.status === 'completed' ? 'completed' :
+      phase.status === 'in_progress' ? 'in-progress' :
+        'pending';
 
     return (
       <div key={phase.name} className={`phase-item ${statusClass}`}>
         <div className="phase-header">
-          <FontAwesomeIcon 
-            icon={statusIcon} 
+          <FontAwesomeIcon
+            icon={statusIcon}
             className={`phase-icon ${phase.status === 'in_progress' ? 'spinning' : ''}`}
           />
           <span className="phase-name">{phase.name}</span>
@@ -142,8 +142,8 @@ const ReasoningPanel = ({ testCaseId, isGenerating, API_URL, getAuthHeaders }) =
             <div className="split-item">
               <span className="split-label">Progress:</span>
               <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
+                <div
+                  className="progress-fill"
                   style={{ width: `${(split.current_step_number / split.total_steps_planned) * 100}%` }}
                 />
               </div>
@@ -218,7 +218,7 @@ const ReasoningPanel = ({ testCaseId, isGenerating, API_URL, getAuthHeaders }) =
             </span>
           )}
         </div>
-        <FontAwesomeIcon 
+        <FontAwesomeIcon
           icon={isExpanded ? faChevronUp : faChevronDown}
           className="toggle-icon"
         />
@@ -283,8 +283,8 @@ const ReasoningPanel = ({ testCaseId, isGenerating, API_URL, getAuthHeaders }) =
                       </div>
                     </div>
                     <div className="progress-bar-large">
-                      <div 
-                        className="progress-fill-large" 
+                      <div
+                        className="progress-fill-large"
                         style={{
                           width: `${(reasoning.test_split.current_step_number / Math.max(reasoning.test_split.total_steps_planned, 1)) * 100}%`
                         }}

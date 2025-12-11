@@ -15,7 +15,7 @@ const StateMachinePanel = ({ testCaseId, isVisible = true, API_URL, getAuthHeade
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({
-    current: true,
+    current: false,
     history: false,
     stats: false
   });
@@ -32,7 +32,7 @@ const StateMachinePanel = ({ testCaseId, isVisible = true, API_URL, getAuthHeade
   const fetchStateMachineData = async () => {
     try {
       setLoading(true);
-      
+
       if (!API_URL || !getAuthHeaders) {
         setError('API configuration missing');
         setLoading(false);
@@ -45,7 +45,7 @@ const StateMachinePanel = ({ testCaseId, isVisible = true, API_URL, getAuthHeade
           headers: getAuthHeaders()
         }
       );
-      
+
       if (response.ok) {
         const data = await response.json();
         setStateMachineData(data);
@@ -159,8 +159,8 @@ const StateMachinePanel = ({ testCaseId, isVisible = true, API_URL, getAuthHeade
             </span>
           )}
         </div>
-        <FontAwesomeIcon 
-          icon={faChevronUp} 
+        <FontAwesomeIcon
+          icon={faChevronUp}
           className="toggle-icon"
           style={{ transform: expandedSections.current ? 'rotate(0deg)' : 'rotate(180deg)' }}
         />
@@ -168,7 +168,7 @@ const StateMachinePanel = ({ testCaseId, isVisible = true, API_URL, getAuthHeade
 
       {/* Current State Section */}
       <div className="section">
-        <div 
+        <div
           className="section-header"
           onClick={() => toggleSection('current')}
         >
@@ -211,7 +211,7 @@ const StateMachinePanel = ({ testCaseId, isVisible = true, API_URL, getAuthHeade
                 <span className="value confidence">
                   {(confidence * 100).toFixed(0)}%
                   <div className="confidence-bar">
-                    <div 
+                    <div
                       className="confidence-fill"
                       style={{ width: `${confidence * 100}%` }}
                     ></div>
@@ -234,7 +234,7 @@ const StateMachinePanel = ({ testCaseId, isVisible = true, API_URL, getAuthHeade
       {/* State Transitions History */}
       {history && history.length > 0 && (
         <div className="section">
-          <div 
+          <div
             className="section-header"
             onClick={() => toggleSection('history')}
           >
@@ -250,7 +250,7 @@ const StateMachinePanel = ({ testCaseId, isVisible = true, API_URL, getAuthHeade
                 {history.map((transition, index) => (
                   <div key={index} className="timeline-item">
                     <div className="timeline-marker">
-                      <div 
+                      <div
                         className="marker-dot"
                         style={{ backgroundColor: getStateColor(transition.from_state) }}
                       ></div>
@@ -284,7 +284,7 @@ const StateMachinePanel = ({ testCaseId, isVisible = true, API_URL, getAuthHeade
 
       {/* Statistics Section */}
       <div className="section">
-        <div 
+        <div
           className="section-header"
           onClick={() => toggleSection('stats')}
         >

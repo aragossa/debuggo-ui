@@ -1438,7 +1438,7 @@ const TestCaseSteps = ({
       await refreshTestCase();
 
       // Step 3: Complete the quick run after test finishes (async, don't wait)
-      if (quickRunId && (result.status === 'completed' || result.status === 'failure' || result.status === 'error')) {
+      if (quickRunId && (result.status === 'completed' || result.status === 'passed' || result.status === 'failure' || result.status === 'error')) {
         fetch(`${API_URL}/api/quick-run/complete`, {
           method: 'POST',
           headers: {
@@ -1447,7 +1447,7 @@ const TestCaseSteps = ({
           },
           body: JSON.stringify({
             run_id: quickRunId,
-            status: result.status === 'completed' ? 'completed' : 'failed'
+            status: (result.status === 'completed' || result.status === 'passed') ? 'passed' : 'failed'
           })
         }).catch(err => console.warn('Failed to complete quick run:', err));
       }
@@ -2547,33 +2547,7 @@ const TestCaseSteps = ({
               </div>
             )}
 
-            {/* State Machine Panel - shows current state and transitions */}
-            <StateMachinePanel
-              testCaseId={testCaseId}
-              isVisible={isGeneratingSteps}
-              API_URL={API_URL}
-              getAuthHeaders={getAuthHeaders}
-            />
 
-            {/* AI Reasoning Panel - for UI tests */}
-            {test_type !== 'api' && test_type !== 'api_test' && test_type !== 'api_group' && (
-              <ReasoningPanel
-                testCaseId={testCaseId}
-                isGenerating={isGeneratingSteps}
-                API_URL={API_URL}
-                getAuthHeaders={getAuthHeaders}
-              />
-            )}
-
-            {/* AI Planning & Reasoning Visualization Panel - for API tests */}
-            {(test_type === 'api' || test_type === 'api_test' || test_type === 'api_group') && (
-              <PlanningPanel
-                testCaseId={testCaseId}
-                isGenerating={isGeneratingSteps}
-                API_URL={API_URL}
-                getAuthHeaders={getAuthHeaders}
-              />
-            )}
 
             <div className="test-steps-table-container">
               <table className="test-steps-table">
@@ -2785,6 +2759,34 @@ const TestCaseSteps = ({
                 </tbody>
               </table>
             </div>
+
+            {/* State Machine Panel - Moved to bottom */}
+            <StateMachinePanel
+              testCaseId={testCaseId}
+              isVisible={isGeneratingSteps}
+              API_URL={API_URL}
+              getAuthHeaders={getAuthHeaders}
+            />
+
+            {/* AI Reasoning Panel - Moved to bottom */}
+            {test_type !== 'api' && test_type !== 'api_test' && test_type !== 'api_group' && (
+              <ReasoningPanel
+                testCaseId={testCaseId}
+                isGenerating={isGeneratingSteps}
+                API_URL={API_URL}
+                getAuthHeaders={getAuthHeaders}
+              />
+            )}
+
+            {/* AI Planning Panel - Moved to bottom */}
+            {(test_type === 'api' || test_type === 'api_test' || test_type === 'api_group') && (
+              <PlanningPanel
+                testCaseId={testCaseId}
+                isGenerating={isGeneratingSteps}
+                API_URL={API_URL}
+                getAuthHeaders={getAuthHeaders}
+              />
+            )}
           </div>
         )}
 
