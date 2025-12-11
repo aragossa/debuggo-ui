@@ -398,7 +398,7 @@ const Dashboard = () => {
           {activeTab === 'testCases' ? (
             <div className="dashboard-main">
               {isTreeVisible && (
-                <div className="tree-container">
+                <div className={`tree-container ${isTreeVisible ? 'visible' : ''}`}>
                   {treeError && treeError !== 'Project not found' ? (
                     <div className="error-message">
                       {treeError}
@@ -406,7 +406,11 @@ const Dashboard = () => {
                   ) : (
                     <TestCaseTree
                       treeData={treeData}
-                      onNodeClick={handleNodeClick}
+                      onNodeClick={(id) => {
+                        handleNodeClick(id);
+                        // Auto-close tree on mobile after selection
+                        if (window.innerWidth <= 768) setIsTreeVisible(false);
+                      }}
                       selectedTestId={selectedTestId}
                       error={treeError}
                       onTestCaseDeleted={handleTestCaseDeleted}
@@ -416,6 +420,21 @@ const Dashboard = () => {
                     />
                   )}
                 </div>
+              )}
+              {isTreeVisible && window.innerWidth <= 768 && (
+                <div
+                  className="mobile-tree-overlay"
+                  onClick={() => setIsTreeVisible(false)}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    zIndex: 45
+                  }}
+                />
               )}
               <div className={`content-container ${!isTreeVisible ? 'full-width' : ''}`}>
                 {!isTreeVisible && (

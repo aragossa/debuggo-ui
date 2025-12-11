@@ -86,7 +86,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .phase4-tabs {
@@ -155,10 +157,9 @@
 }
 
 .metric-card {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
   padding: 20px;
   border-radius: 10px;
-  border-left: 4px solid #667eea;
   transition: all 0.3s ease;
 }
 
