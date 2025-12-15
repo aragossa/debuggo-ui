@@ -268,7 +268,7 @@ const ExecutionPlans = ({ projectId }) => {
   // Add suite to plan
   const handleAddSuite = async () => {
     if (!selectedSuiteToAdd || !selectedPlan) return;
-    
+
     try {
       const response = await fetch(`${API_BASE}/api/execution-plans/${selectedPlan.id}/suites`, {
         method: 'POST',
@@ -281,7 +281,7 @@ const ExecutionPlans = ({ projectId }) => {
           execution_order: parseInt(executionOrder, 10)
         })
       });
-      
+
       if (response.ok) {
         // Refresh suites list
         fetchPlanSuites(selectedPlan.id);
@@ -301,13 +301,13 @@ const ExecutionPlans = ({ projectId }) => {
   // Remove suite from plan
   const handleRemoveSuite = async (suiteId) => {
     if (!selectedPlan) return;
-    
+
     try {
       const response = await fetch(`${API_BASE}/api/execution-plans/${selectedPlan.id}/suites/${suiteId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
-      
+
       if (response.ok) {
         fetchPlanSuites(selectedPlan.id);
       } else {
@@ -328,7 +328,7 @@ const ExecutionPlans = ({ projectId }) => {
     e.preventDefault();
     try {
       setLoading(true);
-      
+
       // Get client_id from user object
       const clientId = user?.client_id;
       if (!clientId) {
@@ -378,7 +378,7 @@ const ExecutionPlans = ({ projectId }) => {
         setError(null);
       } else {
         const errorData = await response.json();
-        
+
         // Handle validation errors
         if (errorData.detail && Array.isArray(errorData.detail)) {
           const errorMessages = errorData.detail
@@ -460,8 +460,11 @@ const ExecutionPlans = ({ projectId }) => {
     fetchTestResults(run.id);
   };
 
-  const formatDuration = (seconds) => {
-    if (!seconds) return '-';
+  const formatDuration = (val) => {
+    if (!val) return '-';
+    const seconds = parseFloat(val);
+    if (isNaN(seconds)) return '-';
+
     if (seconds < 60) return `${seconds.toFixed(1)}s`;
     const mins = Math.floor(seconds / 60);
     const secs = (seconds % 60).toFixed(0);
@@ -477,7 +480,7 @@ const ExecutionPlans = ({ projectId }) => {
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'passed': return 'status-badge passed';
-      case 'failed': 
+      case 'failed':
       case 'error': return 'status-badge failed';
       case 'running': return 'status-badge running';
       case 'skipped': return 'status-badge skipped';
@@ -487,16 +490,16 @@ const ExecutionPlans = ({ projectId }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Convert to appropriate type
     let convertedValue = value;
-    if (name === 'max_parallel_suites' || 
-        name === 'max_retries' || 
-        name === 'retry_delay_seconds' || 
-        name === 'timeout_seconds') {
+    if (name === 'max_parallel_suites' ||
+      name === 'max_retries' ||
+      name === 'retry_delay_seconds' ||
+      name === 'timeout_seconds') {
       convertedValue = parseInt(value, 10) || 0;
     }
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: convertedValue
@@ -507,7 +510,7 @@ const ExecutionPlans = ({ projectId }) => {
     <div className="execution-plans-container">
       <div className="plans-header">
         <h2>📋 Execution Plans</h2>
-        <button 
+        <button
           className="btn-primary"
           onClick={() => setShowCreateForm(!showCreateForm)}
         >
@@ -645,8 +648,8 @@ const ExecutionPlans = ({ projectId }) => {
               <button type="submit" className="btn-primary" disabled={loading}>
                 {loading ? 'Creating...' : 'Create Plan'}
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn-secondary"
                 onClick={() => setShowCreateForm(false)}
               >
@@ -676,7 +679,7 @@ const ExecutionPlans = ({ projectId }) => {
                     <h4>{plan.name}</h4>
                     <span className={`plan-type ${plan.plan_type}`}>{plan.plan_type}</span>
                   </div>
-                  
+
                   <div className="plan-description">
                     {plan.description || 'No description'}
                   </div>
@@ -726,7 +729,7 @@ const ExecutionPlans = ({ projectId }) => {
                 ⚙️ Settings
               </button>
             </div>
-            
+
             <div className="details-section">
               <h4>Configuration</h4>
               <div className="details-grid">
@@ -785,7 +788,7 @@ const ExecutionPlans = ({ projectId }) => {
                     <div key={suite.id} className="suite-item">
                       <span className="suite-name">{suite.suite_name || `Suite #${suite.test_suite_id}`}</span>
                       <span className="suite-order">Order: {suite.execution_order}</span>
-                      <button 
+                      <button
                         className="remove-suite-btn"
                         onClick={() => handleRemoveSuite(suite.test_suite_id)}
                       >
@@ -804,7 +807,7 @@ const ExecutionPlans = ({ projectId }) => {
                   <h3>Add Suite to Plan</h3>
                   <div className="form-group">
                     <label>Select Suite</label>
-                    <select 
+                    <select
                       value={selectedSuiteToAdd}
                       onChange={(e) => setSelectedSuiteToAdd(e.target.value)}
                     >
@@ -830,8 +833,8 @@ const ExecutionPlans = ({ projectId }) => {
                     <button className="cancel-btn" onClick={() => setShowAddSuiteModal(false)}>
                       Cancel
                     </button>
-                    <button 
-                      className="confirm-btn" 
+                    <button
+                      className="confirm-btn"
                       onClick={handleAddSuite}
                       disabled={!selectedSuiteToAdd}
                     >
@@ -846,7 +849,7 @@ const ExecutionPlans = ({ projectId }) => {
             <div className="details-section">
               <div className="section-header">
                 <h4>Execution History</h4>
-                <button 
+                <button
                   className="refresh-btn"
                   onClick={() => fetchPlanRuns(selectedPlan.id)}
                   title="Refresh"
@@ -861,8 +864,8 @@ const ExecutionPlans = ({ projectId }) => {
               ) : (
                 <div className="runs-list">
                   {runs.map(run => (
-                    <div 
-                      key={run.id} 
+                    <div
+                      key={run.id}
                       className={`run-item ${selectedRun?.id === run.id ? 'selected' : ''}`}
                       onClick={() => handleSelectRun(run)}
                     >
@@ -932,7 +935,7 @@ const ExecutionPlans = ({ projectId }) => {
           <div className="modal-overlay">
             <div className="modal-content settings-modal">
               <h3>Plan Settings</h3>
-              
+
               {/* Schedule Settings */}
               <div className="settings-section">
                 <h4>Schedule</h4>
@@ -940,20 +943,20 @@ const ExecutionPlans = ({ projectId }) => {
                   <label>Schedule Type</label>
                   <select
                     value={scheduleSettings.schedule_type}
-                    onChange={(e) => setScheduleSettings({...scheduleSettings, schedule_type: e.target.value})}
+                    onChange={(e) => setScheduleSettings({ ...scheduleSettings, schedule_type: e.target.value })}
                   >
                     <option value="manual">Manual</option>
                     <option value="recurring">Recurring</option>
                     <option value="cron">Cron Expression</option>
                   </select>
                 </div>
-                
+
                 {scheduleSettings.schedule_type === 'recurring' && (
                   <div className="form-group">
                     <label>Recurrence Pattern</label>
                     <select
                       value={scheduleSettings.recurrence_pattern}
-                      onChange={(e) => setScheduleSettings({...scheduleSettings, recurrence_pattern: e.target.value})}
+                      onChange={(e) => setScheduleSettings({ ...scheduleSettings, recurrence_pattern: e.target.value })}
                     >
                       <option value="">-- Select Pattern --</option>
                       <option value="hourly">Every Hour</option>
@@ -965,21 +968,21 @@ const ExecutionPlans = ({ projectId }) => {
                     </select>
                   </div>
                 )}
-                
+
                 {scheduleSettings.schedule_type === 'cron' && (
                   <div className="form-group">
                     <label>Cron Expression</label>
                     <input
                       type="text"
                       value={scheduleSettings.cron_expression}
-                      onChange={(e) => setScheduleSettings({...scheduleSettings, cron_expression: e.target.value})}
+                      onChange={(e) => setScheduleSettings({ ...scheduleSettings, cron_expression: e.target.value })}
                       placeholder="0 2 * * * (2 AM daily)"
                     />
                     <small className="help-text">Format: minute hour day month weekday (e.g., "0 2 * * *" for 2 AM daily)</small>
                   </div>
                 )}
               </div>
-              
+
               {/* Notification Settings */}
               <div className="settings-section">
                 <h4>Notifications</h4>
@@ -988,7 +991,7 @@ const ExecutionPlans = ({ projectId }) => {
                     <input
                       type="checkbox"
                       checked={notificationSettings.notify_on_start}
-                      onChange={(e) => setNotificationSettings({...notificationSettings, notify_on_start: e.target.checked})}
+                      onChange={(e) => setNotificationSettings({ ...notificationSettings, notify_on_start: e.target.checked })}
                     />
                     Notify on start
                   </label>
@@ -996,7 +999,7 @@ const ExecutionPlans = ({ projectId }) => {
                     <input
                       type="checkbox"
                       checked={notificationSettings.notify_on_completion}
-                      onChange={(e) => setNotificationSettings({...notificationSettings, notify_on_completion: e.target.checked})}
+                      onChange={(e) => setNotificationSettings({ ...notificationSettings, notify_on_completion: e.target.checked })}
                     />
                     Notify on completion
                   </label>
@@ -1004,7 +1007,7 @@ const ExecutionPlans = ({ projectId }) => {
                     <input
                       type="checkbox"
                       checked={notificationSettings.notify_on_failure}
-                      onChange={(e) => setNotificationSettings({...notificationSettings, notify_on_failure: e.target.checked})}
+                      onChange={(e) => setNotificationSettings({ ...notificationSettings, notify_on_failure: e.target.checked })}
                     />
                     Notify on failure
                   </label>
@@ -1012,35 +1015,35 @@ const ExecutionPlans = ({ projectId }) => {
                     <input
                       type="checkbox"
                       checked={notificationSettings.notify_on_retry}
-                      onChange={(e) => setNotificationSettings({...notificationSettings, notify_on_retry: e.target.checked})}
+                      onChange={(e) => setNotificationSettings({ ...notificationSettings, notify_on_retry: e.target.checked })}
                     />
                     Notify on retry
                   </label>
                 </div>
-                
+
                 <div className="form-group">
                   <label>Email Recipients</label>
                   <input
                     type="text"
                     value={notificationSettings.email_recipients}
-                    onChange={(e) => setNotificationSettings({...notificationSettings, email_recipients: e.target.value})}
+                    onChange={(e) => setNotificationSettings({ ...notificationSettings, email_recipients: e.target.value })}
                     placeholder="email1@example.com, email2@example.com"
                   />
                   <small className="help-text">Comma-separated email addresses</small>
                 </div>
-                
+
                 <div className="form-group">
                   <label>Slack Webhook URLs</label>
                   <input
                     type="text"
                     value={notificationSettings.slack_channels}
-                    onChange={(e) => setNotificationSettings({...notificationSettings, slack_channels: e.target.value})}
+                    onChange={(e) => setNotificationSettings({ ...notificationSettings, slack_channels: e.target.value })}
                     placeholder="https://hooks.slack.com/services/..."
                   />
                   <small className="help-text">Comma-separated Slack webhook URLs</small>
                 </div>
               </div>
-              
+
               <div className="modal-actions">
                 <button className="cancel-btn" onClick={() => setShowSettingsModal(false)}>
                   Cancel

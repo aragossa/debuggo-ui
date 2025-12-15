@@ -35,7 +35,9 @@ const Dashboard = () => {
     return localStorage.getItem('selectedProjectId') || null;
   });
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
-  const [activeTab, setActiveTab] = useState('testCases');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('dashboardActiveTab') || 'testCases';
+  });
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [isTreeVisible, setIsTreeVisible] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -60,6 +62,10 @@ const Dashboard = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('dashboardActiveTab', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     // Only fetch tree data when selectedProject changes from user interaction
