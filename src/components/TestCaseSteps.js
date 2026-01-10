@@ -28,6 +28,7 @@ import {
   CheckSquare,
   Scroll,
   Eraser,
+  Folder,
   FileJson,
   X
 } from 'lucide-react';
@@ -163,6 +164,79 @@ const TestCaseSteps = ({
     const token = localStorage.getItem('token');
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   }, []);
+
+  // Test Suite State
+  const [associatedSuites, setAssociatedSuites] = useState([]);
+  const [availableSuites, setAvailableSuites] = useState([]);
+  const [selectedSuiteToAdd, setSelectedSuiteToAdd] = useState("");
+  const [isAddingToSuite, setIsAddingToSuite] = useState(false);
+
+  const fetchAvailableSuites = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/suites`, {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableSuites(data);
+      }
+    } catch (error) {
+      console.error('Error fetching suites:', error);
+    }
+  }, [API_URL, getAuthHeaders]);
+
+  const handleAddToSuite = async () => {
+    if (!selectedSuiteToAdd || !testCaseId) return;
+    setIsAddingToSuite(true);
+    try {
+      const response = await fetch(`${API_URL}/api/suites/${selectedSuiteToAdd}/tests`, {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          test_case_id: parseInt(testCaseId),
+          execution_order: 0
+        })
+      });
+
+      if (response.ok) {
+        // Refresh test case to get updated associated suites
+        await refreshTestCase();
+        setSelectedSuiteToAdd("");
+      } else {
+        alert('Failed to add test case to suite');
+      }
+    } catch (error) {
+      console.error('Error adding to suite:', error);
+      alert('Error adding to suite');
+    } finally {
+      setIsAddingToSuite(false);
+    }
+  };
+
+  const handleRemoveFromSuite = async (suiteId) => {
+    if (!suiteId || !testCaseId) return;
+    try {
+      const response = await fetch(`${API_URL}/api/suites/${suiteId}/tests/${testCaseId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (response.ok) {
+        await refreshTestCase();
+      } else {
+        alert('Failed to remove test case from suite');
+      }
+    } catch (error) {
+      console.error('Error removing from suite:', error);
+      alert('Error removing from suite');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'test-suites') {
+      fetchAvailableSuites();
+    }
+  }, [activeTab, fetchAvailableSuites]);
 
   // --- Initial Data Fetching ---
   useEffect(() => {
@@ -534,6 +608,12 @@ const TestCaseSteps = ({
       setCurrentTestName(tName);
       setCurrentTestDescription(tDesc);
 
+      if (data.data && data.data.test_suites) {
+        setAssociatedSuites(data.data.test_suites);
+      } else {
+        setAssociatedSuites([]);
+      }
+
       if (typeof onTestCaseUpdate === 'function') {
         onTestCaseUpdate(tName, tDesc, tUpdated);
       }
@@ -883,10 +963,71 @@ const TestCaseSteps = ({
       {/* Tabs */}
       <div className="test-case-tab-navigation">
         <button className={`test-case-tab-button ${activeTab === 'description' ? 'active' : ''}`} onClick={() => setActiveTab('description')}>Description</button>
+        <button className={`test-case-tab-button ${activeTab === 'test-suites' ? 'active' : ''}`} onClick={() => setActiveTab('test-suites')}>Test Suites</button>
         <button className={`test-case-tab-button ${activeTab === 'results' ? 'active' : ''}`} onClick={() => setActiveTab('results')}>Test Results</button>
       </div>
 
       <div className="test-case-tab-content">
+        {activeTab === 'test-suites' && (
+          <div className="test-suites-tab-content">
+
+            <div className="suites-header">
+              <h3 className="section-main-title">Test Suites</h3>
+              <p className="section-subtitle">Organize this test case into logical groups.</p>
+            </div>
+
+            <div className="suites-list">
+              {associatedSuites.length > 0 ? (
+                associatedSuites.map(suite => (
+                  <div key={suite.id} className="suite-badge">
+                    <Folder size={14} strokeWidth={2} />
+                    <span>{suite.name}</span>
+                    <button
+                      className="suite-remove-btn"
+                      onClick={() => handleRemoveFromSuite(suite.id)}
+                      title="Remove from suite"
+                    >
+                      <X size={12} strokeWidth={3} />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="no-suites-text" style={{ paddingLeft: '4px' }}>
+                  No associated suites.
+                </div>
+              )}
+            </div>
+
+            <div className="add-suite-container">
+              <label className="add-suite-label">Add to another suite</label>
+              <div className="add-suite-control-row">
+                <select
+                  value={selectedSuiteToAdd}
+                  onChange={(e) => setSelectedSuiteToAdd(e.target.value)}
+                  className="suite-select"
+                >
+                  <option value="" disabled>Select a suite to link...</option>
+                  {availableSuites
+                    .filter(s => !associatedSuites.some(as => as.id === s.id))
+                    .map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))
+                  }
+                </select>
+                <button
+                  className="add-suite-btn"
+                  onClick={handleAddToSuite}
+                  disabled={!selectedSuiteToAdd || isAddingToSuite}
+                >
+                  {isAddingToSuite ? <Loader size={14} className="animate-spin" /> : <Plus size={14} strokeWidth={2.5} />}
+                  Add
+                </button>
+              </div>
+            </div>
+
+          </div>
+        )}
+
         {activeTab === 'description' && (
           <div className="description-tab">
             {isGeneratingSteps && (

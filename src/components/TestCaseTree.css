@@ -88,7 +88,7 @@
 
 .icon-button.primary:hover {
   background-color: #e0e7ff;
-  color: #4338ca;
+  color: #34d399;
 }
 
 .test-case-tree {
@@ -332,7 +332,7 @@
 .modal-button.confirm:hover,
 .modal-button.create:hover,
 .modal-button.update:hover {
-  background-color: #4338ca;
+  background-color: #34d399;
 }
 
 .modal-button.delete {

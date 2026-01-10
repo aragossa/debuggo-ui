@@ -804,3 +804,163 @@
   max-height: 100%;
   object-fit: contain;
 }
+
+/* --- Test Suites Tab --- */
+/* Общий контейнер - даем воздух */
+.test-suites-tab-content {
+  padding: 24px;
+  max-width: 600px;
+  /* Ограничиваем ширину для читаемости */
+}
+
+/* Заголовок и подзаголовок */
+.suites-header {
+  margin-bottom: 24px;
+  border-bottom: none;
+  /* User requested removing borders/containers */
+}
+
+.section-main-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.section-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  /* Gray-500 */
+  margin: 0;
+}
+
+/* Список добавленных сьютов (Pill/Chip Design) */
+.suites-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.suite-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: #f3f4f6;
+  /* Gray-100 */
+  border: 1px solid #e5e7eb;
+  /* Gray-200 */
+  border-radius: 9999px;
+  /* Полное скругление */
+  color: #374151;
+  /* Gray-700 */
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.suite-badge:hover {
+  background-color: #e5e7eb;
+  /* Gray-200 */
+  border-color: #d1d5db;
+}
+
+.suite-badge svg {
+  color: #6b7280;
+  width: 14px;
+  height: 14px;
+}
+
+.suite-remove-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #9ca3af;
+  margin-left: 4px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.suite-remove-btn:hover {
+  color: #ef4444;
+  /* Red-500 on hover */
+}
+
+/* Секция добавления (Input Group) */
+.add-suite-container {
+  padding-top: 20px;
+  border-top: 1px solid #f3f4f6;
+  /* Тонкий разделитель сверху */
+}
+
+.add-suite-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.add-suite-control-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Стилизация Select как Input */
+.suite-select {
+  flex: 1;
+  /* Занимает всё доступное место */
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  /* Убираем стандартную стрелку браузера */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
+.suite-select:focus {
+  border-color: #34d399;
+  /* Indigo-600 */
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Кнопка "Add" */
+.add-suite-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: #34d399;
+  /* Brand Color */
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-suite-btn:hover:not(:disabled) {
+  background-color: #34d399;
+  /* Indigo-700 */
+}
+
+.add-suite-btn:disabled {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
