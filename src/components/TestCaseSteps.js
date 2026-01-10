@@ -881,12 +881,12 @@ const TestCaseSteps = ({
       </div>
 
       {/* Tabs */}
-      <div className="tab-navigation">
-        <button className={`tab-button ${activeTab === 'description' ? 'active' : ''}`} onClick={() => setActiveTab('description')}>Description</button>
-        <button className={`tab-button ${activeTab === 'results' ? 'active' : ''}`} onClick={() => setActiveTab('results')}>Test Results</button>
+      <div className="test-case-tab-navigation">
+        <button className={`test-case-tab-button ${activeTab === 'description' ? 'active' : ''}`} onClick={() => setActiveTab('description')}>Description</button>
+        <button className={`test-case-tab-button ${activeTab === 'results' ? 'active' : ''}`} onClick={() => setActiveTab('results')}>Test Results</button>
       </div>
 
-      <div className="tab-content">
+      <div className="test-case-tab-content">
         {activeTab === 'description' && (
           <div className="description-tab">
             {isGeneratingSteps && (

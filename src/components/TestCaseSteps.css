@@ -211,40 +211,45 @@
 }
 
 /* --- Tab Navigation --- */
-.tab-navigation {
+.test-case-tab-navigation {
   display: flex;
+  gap: 24px;
   padding: 0 24px;
   border-bottom: 1px solid #e5e7eb;
-  gap: 24px;
+  background-color: #ffffff;
+  margin-bottom: 0px;
 }
 
-.tab-button {
-  background: none;
+.test-case-tab-button {
+  background: transparent;
   border: none;
-  padding: 12px 0;
-  font-size: 14px;
-  color: #6b7280;
+  outline: none;
   cursor: pointer;
-  position: relative;
-}
 
-.tab-button.active {
-  color: #111827;
+  font-family: inherit;
+  font-size: 14px;
   font-weight: 500;
+  color: #6b7280;
+
+  padding: 12px 4px;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+
+  transition: all 0.2s ease;
 }
 
-.tab-button.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #111827;
+.test-case-tab-button:hover:not(.active) {
+  color: #374151;
+  border-bottom-color: #d1d5db;
+}
+
+.test-case-tab-button.active {
+  color: #4f46e5;
+  border-bottom: 2px solid #4f46e5;
 }
 
 /* --- Steps List --- */
-.tab-content {
+.test-case-tab-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -449,6 +454,14 @@
 .step-btn-icon.delete:hover {
   background: #fee2e2;
   color: #ef4444;
+}
+
+.step-btn-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2px;
+  display: block;
 }
 
 /* --- Edit Mode Panel --- */
