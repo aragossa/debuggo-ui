@@ -127,37 +127,33 @@ const AIModelSelector = ({ onModelSelect, selectedModelId, onVlmChange }) => {
 
   return (
     <div className="ai-model-selector-container">
-      <div className="ai-model-selector">
-        <div className="ai-model-selector-label">AI Model:</div>
-        <div className="ai-model-dropdown">
-          <div
-            className="ai-model-selected"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
-            <FontAwesomeIcon icon={faRobot} className="ai-icon" />
-            <span>{selectedModel ? selectedModel.name : (isLoading ? 'Loading...' : 'Select AI Model')}</span>
-            <FontAwesomeIcon
-              icon={isDropdownOpen ? faChevronUp : faChevronDown}
-              className="dropdown-icon"
-            />
-          </div>
+      <div
+        className="ai-model-selector"
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        title="Select AI Model"
+      >
+        <FontAwesomeIcon icon={faRobot} className="ai-icon" />
+        <span>{selectedModel ? selectedModel.name : (isLoading ? 'Loading...' : 'Select AI Model')}</span>
+        <FontAwesomeIcon
+          icon={isDropdownOpen ? faChevronUp : faChevronDown}
+          className="dropdown-icon"
+        />
 
-          {isDropdownOpen && (
-            <div className="ai-model-options">
-              {aiModels.map(model => (
-                <div
-                  key={model.id}
-                  className={`ai-model-option ${selectedModel && selectedModel.id === model.id ? 'selected' : ''}`}
-                  onClick={() => handleModelSelect(model)}
-                >
-                  <div className="model-name">{model.name}</div>
-                  <div className="model-description">{model.description}</div>
-                  {model.is_default && <div className="model-tag default">Default</div>}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {isDropdownOpen && (
+          <div className="ai-model-dropdown-menu">
+            {aiModels.map(model => (
+              <div
+                key={model.id}
+                className={`ai-model-option ${selectedModel && selectedModel.id === model.id ? 'selected' : ''}`}
+                onClick={(e) => { e.stopPropagation(); handleModelSelect(model); }}
+              >
+                <div className="model-name">{model.name}</div>
+                {model.description && <div className="model-description">{model.description}</div>}
+                {model.is_default && <div className="model-tag default">Default</div>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="vlm-toggle-container">
