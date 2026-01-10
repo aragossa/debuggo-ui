@@ -123,11 +123,14 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .project-selector-container {
   position: relative;
   flex: 1;
+  min-width: 0;
 }
 
 .project-selector-button {
@@ -206,6 +209,8 @@
   cursor: pointer;
   color: #9ca3af;
   transition: all 0.2s;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .context-header-collapse-btn:hover {
