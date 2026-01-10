@@ -13,6 +13,7 @@ import {
   MoreHorizontal,
   CloudDownload
 } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import './TestCaseTree.css';
 import JiraImportModal from './JiraImportModal';
 
@@ -320,6 +321,52 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     } catch (e) { alert(e.message); }
   };
 
+  const onDragEnd = async (result) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) {
+      return;
+    }
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const testCaseId = parseInt(draggableId);
+    let targetGroupId = null;
+
+    // droppableId will be 'group-ROOT' or 'group-{id}'
+    if (destination.droppableId.startsWith('group-')) {
+      const groupIdStr = destination.droppableId.replace('group-', '');
+      if (groupIdStr !== 'ROOT') {
+        targetGroupId = parseInt(groupIdStr);
+      }
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/test_cases/move`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_case_id: testCaseId, target_group_id: targetGroupId })
+      });
+
+      if (!response.ok) {
+        throw new Error((await response.json()).detail || 'Failed to move');
+      }
+
+      // Refresh tree
+      if (onTestCaseDeleted) onTestCaseDeleted(null);
+
+    } catch (error) {
+      console.error("Drag and drop failed:", error);
+      alert(error.message);
+    }
+  };
+
   // Search Logic
   const filterTreeData = (nodes, term) => {
     if (!term) return nodes;
@@ -351,14 +398,21 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   }, [searchTerm, filteredTreeData]);
 
   // Render Logic
-  const renderNode = (node) => {
+  const renderNode = (node, index) => {
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = expandedNodes[node.id];
     const isSelected = selectedTestId === node.id;
     const isGroup = node.type === 'group' || node.type === 'type_group';
 
-    return (
-      <div key={node.id} className="tree-node">
+    // Test cases are draggable
+    const isDraggable = node.type === 'test' || node.type === 'api_test';
+
+    // Groups are droppable (we render a Droppable area inside them if expanded)
+
+    const content = (
+      <div
+        className={`tree-node ${isDraggable ? 'draggable-item' : ''}`}
+      >
         <div
           className={`node-content ${isSelected ? 'selected' : ''}`}
           data-type={node.type}
@@ -418,6 +472,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                 <button className="tree-action-button" onClick={(e) => handleEditTestCaseClick(e, node)} title="Edit">
                   <Edit2 size={14} />
                 </button>
+                {/* Keep Move button as alternative */}
                 <button className="tree-action-button" onClick={(e) => handleMoveTestCaseClick(e, node)} title="Move">
                   <ArrowRightLeft size={14} />
                 </button>
@@ -428,13 +483,51 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
             )}
           </div>
         </div>
-        {hasChildren && isExpanded && (
+
+        {/* Render Children (Droppable Zone for Groups) */}
+        {((hasChildren && isExpanded) || (isGroup && isExpanded)) && (
           <div className="node-children">
-            {node.children.map(child => renderNode(child))}
+            {(node.type === 'group' || node.type === 'type_group') ? (
+              <Droppable droppableId={`group-${node.id}`} type="TEST_CASE">
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={`droppable-area ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                    style={{ minHeight: '5px' }} // Ensure there's a drop target even if empty
+                  >
+                    {node.children && node.children.map((child, idx) => renderNode(child, idx))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            ) : (
+              // Non-droppable children (if any logic allowed that, though test cases shouldn't have children)
+              node.children && node.children.map((child, idx) => renderNode(child, idx))
+            )}
           </div>
         )}
       </div>
     );
+
+    if (isDraggable) {
+      return (
+        <Draggable key={node.id} draggableId={String(node.id)} index={index}>
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.draggableProps}
+              {...provided.dragHandleProps}
+              style={{ ...provided.draggableProps.style }}
+            >
+              {content}
+            </div>
+          )}
+        </Draggable>
+      );
+    }
+
+    return <div key={node.id}>{content}</div>;
   };
 
   if (error) return <div className="tree-error">{error}</div>;
@@ -471,11 +564,25 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       </div>
 
       <div className="test-case-tree">
-        {filteredTreeData.length === 0 ? (
-          <div className="tree-empty">No test cases</div>
-        ) : (
-          filteredTreeData.map(node => renderNode(node))
-        )}
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="group-ROOT" type="TEST_CASE">
+            {(provided, snapshot) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className={`tree-root-droppable ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                style={{ minHeight: '100px' }}
+              >
+                {filteredTreeData.length === 0 ? (
+                  <div className="tree-empty">No test cases</div>
+                ) : (
+                  filteredTreeData.map((node, index) => renderNode(node, index))
+                )}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </div>
 
       {/* Modals remain mostly unchanged in logic, just re-rendered if needed by state */}

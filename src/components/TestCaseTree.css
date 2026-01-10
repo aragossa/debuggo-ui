@@ -233,9 +233,7 @@
 }
 
 /* Special Case: Root level nodes don't need excessive indentation shift */
-.tree-node>.node-content {
-  /* Base padding */
-}
+/* .tree-node>.node-content { } - removed empty rule */
 
 /* Modals - Match Dashboard theme but cleaner */
 .modal-overlay {
@@ -338,6 +336,25 @@
 .modal-button.delete {
   background-color: #ef4444;
   color: white;
+}
+
+/* Drag and Drop Styles */
+.draggable-item {
+  cursor: grab;
+}
+
+.droppable-area.dragging-over {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+}
+
+.tree-root-droppable {
+  min-height: 100px;
+  padding-bottom: 20px;
+}
+
+.tree-root-droppable.dragging-over {
+  background-color: rgba(59, 130, 246, 0.05);
 }
 
 .modal-button.delete:hover {
