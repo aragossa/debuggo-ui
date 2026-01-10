@@ -465,19 +465,31 @@ const Dashboard = () => {
             )}
           </div>
         ) : activeTab === 'environments' ? (
-          <Environments projectId={selectedProject} />
+          <div className="tab-scrollable-container">
+            <Environments projectId={selectedProject} />
+          </div>
         ) : activeTab === 'apiSchemas' ? (
-          <ApiSchemaUpload projectId={selectedProject} />
+          <div className="tab-scrollable-container">
+            <ApiSchemaUpload projectId={selectedProject} />
+          </div>
         ) : activeTab === 'suites' ? (
-          <TestSuites projectId={selectedProject} />
+          <div className="tab-scrollable-container">
+            <TestSuites projectId={selectedProject} />
+          </div>
         ) : activeTab === 'conflicts' ? (
           <ConflictNotifications />
         ) : activeTab === 'executionPlans' ? (
-          <ExecutionPlans projectId={selectedProject} />
+          <div className="tab-scrollable-container">
+            <ExecutionPlans projectId={selectedProject} />
+          </div>
         ) : activeTab === 'metrics' ? (
-          <MetricsDashboard />
+          <div className="tab-scrollable-container">
+            <MetricsDashboard />
+          </div>
         ) : activeTab === 'requirements' ? (
-          <Requirements projectId={selectedProject} />
+          <div className="tab-scrollable-container">
+            <Requirements projectId={selectedProject} />
+          </div>
         ) : activeTab === 'help' ? (
           <PlaceholderHelp />
         ) : null}

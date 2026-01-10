@@ -16,6 +16,7 @@ const Requirements = ({ projectId }) => {
   const [coverageType, setCoverageType] = useState('full');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   const [formData, setFormData] = useState({
     requirement_id: '',
@@ -41,7 +42,7 @@ const Requirements = ({ projectId }) => {
       let url = `${API_BASE}/api/requirements?client_id=${user.client_id}&project_id=${projectId}`;
       if (filterStatus) url += `&status=${filterStatus}`;
       if (filterPriority) url += `&priority=${filterPriority}`;
-      
+
       const response = await fetch(url, { headers: getAuthHeaders() });
       if (response.ok) {
         const data = await response.json();
@@ -154,7 +155,8 @@ const Requirements = ({ projectId }) => {
     }
   };
 
-  const handleUpdateRequirement = async () => {
+  const handleUpdateRequirement = async (e) => {
+    e.preventDefault();
     if (!selectedRequirement) return;
     try {
       const response = await fetch(`${API_BASE}/api/requirements/${selectedRequirement.id}`, {
@@ -164,6 +166,7 @@ const Requirements = ({ projectId }) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          requirement_id: formData.requirement_id,
           title: formData.title,
           description: formData.description,
           requirement_type: formData.requirement_type,
@@ -174,11 +177,25 @@ const Requirements = ({ projectId }) => {
 
       if (response.ok) {
         fetchRequirements();
-        setSelectedRequirement(null);
+        // Update selected requirement locally to reflect changes immediately
+        setSelectedRequirement({
+          ...selectedRequirement,
+          requirement_id: formData.requirement_id,
+          title: formData.title,
+          description: formData.description,
+          requirement_type: formData.requirement_type,
+          priority: formData.priority,
+          status: formData.status
+        });
+        setShowCreateForm(false);
         resetForm();
+      } else {
+        const error = await response.json();
+        setError(error.detail || 'Failed to update requirement');
       }
     } catch (err) {
       console.error('Error updating requirement:', err);
+      setError('Error updating requirement');
     }
   };
 
@@ -264,6 +281,7 @@ const Requirements = ({ projectId }) => {
       priority: 'medium',
       status: 'draft'
     });
+    setIsEditing(false);
   };
 
   const handleInputChange = (e) => {
@@ -296,7 +314,10 @@ const Requirements = ({ projectId }) => {
     <div className="requirements-container">
       <div className="requirements-header">
         <h2>Requirements Traceability</h2>
-        <button className="create-btn" onClick={() => setShowCreateForm(true)}>
+        <button className="create-btn" onClick={() => {
+          resetForm();
+          setShowCreateForm(true);
+        }}>
           + New Requirement
         </button>
       </div>
@@ -389,6 +410,8 @@ const Requirements = ({ projectId }) => {
                     priority: selectedRequirement.priority,
                     status: selectedRequirement.status
                   });
+                  setIsEditing(true);
+                  setShowCreateForm(true);
                 }}>
                   ✏️ Edit
                 </button>
@@ -454,12 +477,12 @@ const Requirements = ({ projectId }) => {
         )}
       </div>
 
-      {/* Create Requirement Modal */}
+      {/* Create/Edit Requirement Modal */}
       {showCreateForm && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Create New Requirement</h3>
-            <form onSubmit={handleCreateRequirement}>
+            <h3>{isEditing ? 'Edit Requirement' : 'Create New Requirement'}</h3>
+            <form onSubmit={isEditing ? handleUpdateRequirement : handleCreateRequirement}>
               <div className="form-group">
                 <label>Requirement ID *</label>
                 <input
@@ -530,7 +553,7 @@ const Requirements = ({ projectId }) => {
                 }}>
                   Cancel
                 </button>
-                <button type="submit" className="submit-btn">Create Requirement</button>
+                <button type="submit" className="submit-btn">{isEditing ? 'Update Requirement' : 'Create Requirement'}</button>
               </div>
             </form>
           </div>

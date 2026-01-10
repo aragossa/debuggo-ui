@@ -471,7 +471,8 @@
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 12px;
   margin-top: 1.5rem;
 }
 
@@ -526,7 +527,7 @@
   .requirements-content {
     grid-template-columns: 1fr;
   }
-  
+
   .coverage-summary {
     grid-template-columns: repeat(2, 1fr);
   }

@@ -265,6 +265,14 @@
   position: relative;
 }
 
+.tab-scrollable-container {
+  flex: 1;
+  overflow-y: auto;
+  height: 100%;
+  padding: 24px;
+  /* Add some padding for better aesthetics */
+}
+
 /* Error/Empty States */
 .error-message {
   color: #dc2626;

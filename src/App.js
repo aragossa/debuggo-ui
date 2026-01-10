@@ -22,77 +22,22 @@ import MetricsDashboard from './components/MetricsDashboard';
 import StatusBar from './components/StatusBar';
 import './App.css';
 
-const AdminMenu = () => {
-  const { user } = useAuth();
-  
-  return useMemo(() => {
-    if (!user || user.role !== 'admin') {
-      return null;
-    }
-
-    return (
-      <div className="admin-menu">
-        <Link to="/clients" className="admin-menu-item">Clients</Link>
-        <Link to="/users" className="admin-menu-item">Users</Link>
-        <Link to="/ai-models" className="admin-menu-item">AI Models</Link>
-        <Link to="/contact-requests" className="admin-menu-item">Contact Requests</Link>
-        <Link to="/admin-requests" className="admin-menu-item">User Requests</Link>
-        <Link to="/monitoring" className="admin-menu-item">📊 Monitoring</Link>
-        <Link to="/phase4" className="admin-menu-item">🚀 Phase 4</Link>
-        <Link to="/cost-analytics" className="admin-menu-item">💰 Cost Analytics</Link>
-      </div>
-    );
-  }, [user]);
-};
-
-const MainMenu = () => {
-  const { isAuthenticated } = useAuth();
-
-  return useMemo(() => {
-    if (!isAuthenticated) {
-      return null;
-    }
-
-    return (
-      <div className="main-menu">
-        <Link to="/dashboard" className="menu-item">Dashboard</Link>
-        <Link to="/projects" className="menu-item">Projects</Link>
-        <Link to="/my-requests" className="menu-item">My Requests</Link>
-      </div>
-    );
-  }, [isAuthenticated]);
-};
-
-const NavAuth = () => {
-  const { isAuthenticated } = useAuth();
-
-  return useMemo(() => {
-    if (isAuthenticated) {
-      return <UserMenu />;
-    }
-
-    return (
-      <div className="nav-auth">
-        <Link to="/login">Login</Link>
-      </div>
-    );
-  }, [isAuthenticated]);
-};
+import Navbar from './components/Navbar';
 
 // Component to handle token detection and redirection
 const TokenHandler = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get('token');
-    
+
     if (token) {
       // Remove the token from URL to prevent it from being visible
       window.history.replaceState({}, document.title, window.location.pathname);
-      
+
       // Login with the token
       const handleTokenLogin = async () => {
         try {
@@ -104,23 +49,23 @@ const TokenHandler = () => {
           navigate('/login');
         }
       };
-      
+
       handleTokenLogin();
     }
   }, [location, login, navigate]);
-  
+
   return null; // This component doesn't render anything
 };
 
 const ConditionalStatusBar = () => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
-  
+
   // Only render StatusBar if user is authenticated and not on landing page or login page
   if (isAuthenticated && location.pathname !== '/' && location.pathname !== '/login') {
     return <StatusBar />;
   }
-  
+
   return null;
 };
 
@@ -133,20 +78,7 @@ function App() {
           <Routes>
             <Route path="/" element={null} />
             <Route path="/login" element={null} />
-            <Route path="*" element={
-              <nav className="top-nav">
-                <div className="nav-brand">
-                  <Link to="/">
-                    <img src="/debuggo-logo.svg" alt="Debuggo" className="nav-logo" />
-                  </Link>
-                </div>
-                <div className="nav-menu">
-                  <MainMenu />
-                  <AdminMenu />
-                </div>
-                <NavAuth />
-              </nav>
-            } />
+            <Route path="*" element={<Navbar />} />
           </Routes>
           <Routes>
             <Route path="/" element={<LandingPage />} />
