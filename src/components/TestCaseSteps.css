@@ -45,15 +45,21 @@
   border-bottom: 1px solid #e5e7eb;
   background: white;
   display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.header-top-section {
+  display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 24px;
-  flex-shrink: 0;
 }
 
 .header-main-info {
   flex: 1;
-  /* min-width: 50px; */
+  min-width: 250px;
 }
 
 .title-row {
@@ -97,7 +103,7 @@
   color: #9ca3af;
   /* gray-400 */
   font-size: 13px;
-  margin-bottom: 8px;
+  margin-bottom: 0px;
 }
 
 .updated-at,
@@ -109,11 +115,10 @@
   color: #4b5563;
   /* gray-600 */
   font-size: 14px;
-  margin: 0;
+  margin: 12px 0 0 0;
   line-height: 1.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
 }
 
 /* --- Toolbar & Controls --- */

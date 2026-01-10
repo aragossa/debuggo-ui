@@ -765,111 +765,117 @@ const TestCaseSteps = ({
     <div className="test-steps-container">
       {/* Header */}
       <div className="test-case-header-unified">
-        <div className="header-main-info">
-          <div className="title-row">
-            <h2
-              className="editable-title"
-              onClick={() => {
-                setEditedTestCase({ name: currentTestName, description: currentTestDescription });
-                setShowEditTestCaseModal(true);
-              }}
-            >
-              {currentTestName}
-            </h2>
-            {test_type && (
-              <div className={`test-type-badge-detail ${test_type === 'test' ? 'ui' : test_type}`}>
-                {test_type === 'test' ? 'UI' : test_type.toUpperCase()}
-              </div>
-            )}
-          </div>
-
-          <div className="meta-row">
-            <span className="test-case-id">#{testCaseId}</span>
-            <span className="separator">•</span>
-            <span className="updated-at">{formatDate(updated_at)}</span>
-            {generationDuration && (
-              <>
-                <span className="separator">•</span>
-                <span className="generation-duration">{generationDuration}</span>
-              </>
-            )}
-          </div>
-
-          <p className="test-description">{currentTestDescription}</p>
-        </div>
-
-        <div className="header-controls-area">
-          <div className="steps-toolbar">
-            <button
-              className="toolbar-btn ghost"
-              onClick={() => setShowAddStepModal(true)}
-              disabled={isGeneratingSteps || isRunning}
-            >
-              <Plus size={16} />
-              <span>Add Step</span>
-            </button>
-
-            <div className="toolbar-divider"></div>
-
-            <button
-              className={`toolbar-btn ghost ${isGeneratingSteps ? 'generating' : ''}`}
-              onClick={handleGenerateSteps}
-              disabled={isGeneratingSteps || !projectId || isRunning}
-            >
-              {isGeneratingSteps ? <Loader size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              <span>Generate</span>
-            </button>
-
-            <button
-              className="toolbar-btn primary"
-              onClick={!isRunning ? handleRunClick : handleStopExecution}
-              disabled={!isRunning && (!steps.length || isGeneratingSteps)}
-            >
-              {!isRunning ? <Play size={16} /> : <Square size={16} fill="currentColor" />}
-              <span>{!isRunning ? 'Run Test' : 'Stop'}</span>
-            </button>
-          </div>
-
-          <div className="selectors-group">
-            <div className="environment-selector-container">
-              <div
-                className="environment-selector-button"
-                onClick={() => setShowEnvironmentDropdown(!showEnvironmentDropdown)}
+        <div className="header-top-section">
+          <div className="header-main-info">
+            <div className="title-row">
+              <h2
+                className="editable-title"
+                onClick={() => {
+                  setEditedTestCase({ name: currentTestName, description: currentTestDescription });
+                  setShowEditTestCaseModal(true);
+                }}
               >
-                {selectedEnvironment
-                  ? environments.find(e => e.id.toString() === selectedEnvironment)?.name || 'Select Environment'
-                  : 'Select Environment'}
-                {showEnvironmentDropdown ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </div>
-              {showEnvironmentDropdown && (
-                <div className="environment-dropdown" ref={environmentDropdownRef}>
-                  {environments.map(env => (
-                    <div
-                      key={env.id}
-                      className={`environment-option ${selectedEnvironment === env.id.toString() ? 'selected' : ''}`}
-                      onClick={() => handleEnvironmentChange(env.id.toString())}
-                    >
-                      <span>{env.name}</span>
-                      <button className="edit-environment-button" onClick={(e) => {
-                        e.stopPropagation(); setEditingEnvironment(env); setShowEditEnvironmentModal(true);
-                      }}>
-                        <Edit2 size={12} />
-                      </button>
-                    </div>
-                  ))}
-                  <div className="environment-option add-environment" onClick={() => {
-                    setNewEnvironment({ name: '', base_url: '', login: '', password: '', custom_variables: [] });
-                    setShowAddEnvironmentModal(true);
-                    setShowEnvironmentDropdown(false);
-                  }}>
-                    <Plus size={12} /> Add New Environment
-                  </div>
+                {currentTestName}
+              </h2>
+              {test_type && (
+                <div className={`test-type-badge-detail ${test_type === 'test' ? 'ui' : test_type}`}>
+                  {test_type === 'test' ? 'UI' : test_type.toUpperCase()}
                 </div>
               )}
             </div>
-            <AIModelSelector onModelSelect={setSelectedAIModel} selectedModelId={selectedAIModel} />
+
+            <div className="meta-row">
+              <span className="test-case-id">#{testCaseId}</span>
+              <span className="separator">•</span>
+              <span className="updated-at">{formatDate(updated_at)}</span>
+              {generationDuration && (
+                <>
+                  <span className="separator">•</span>
+                  <span className="generation-duration">{generationDuration}</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="header-controls-area">
+            <div className="steps-toolbar">
+              <button
+                className="toolbar-btn ghost"
+                onClick={() => setShowAddStepModal(true)}
+                disabled={isGeneratingSteps || isRunning}
+              >
+                <Plus size={16} />
+                <span>Add Step</span>
+              </button>
+
+              <div className="toolbar-divider"></div>
+
+              <button
+                className={`toolbar-btn ghost ${isGeneratingSteps ? 'generating' : ''}`}
+                onClick={handleGenerateSteps}
+                disabled={isGeneratingSteps || !projectId || isRunning}
+              >
+                {isGeneratingSteps ? <Loader size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                <span>Generate</span>
+              </button>
+
+              <button
+                className="toolbar-btn primary"
+                onClick={!isRunning ? handleRunClick : handleStopExecution}
+                disabled={!isRunning && (!steps.length || isGeneratingSteps)}
+              >
+                {!isRunning ? <Play size={16} /> : <Square size={16} fill="currentColor" />}
+                <span>{!isRunning ? 'Run Test' : 'Stop'}</span>
+              </button>
+            </div>
+
+            <div className="selectors-group">
+              <div className="environment-selector-container">
+                <div
+                  className="environment-selector-button"
+                  onClick={() => setShowEnvironmentDropdown(!showEnvironmentDropdown)}
+                >
+                  {selectedEnvironment
+                    ? environments.find(e => e.id.toString() === selectedEnvironment)?.name || 'Select Environment'
+                    : 'Select Environment'}
+                  {showEnvironmentDropdown ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </div>
+                {showEnvironmentDropdown && (
+                  <div className="environment-dropdown" ref={environmentDropdownRef}>
+                    {environments.map(env => (
+                      <div
+                        key={env.id}
+                        className={`environment-option ${selectedEnvironment === env.id.toString() ? 'selected' : ''}`}
+                        onClick={() => handleEnvironmentChange(env.id.toString())}
+                      >
+                        <span>{env.name}</span>
+                        <button className="edit-environment-button" onClick={(e) => {
+                          e.stopPropagation(); setEditingEnvironment(env); setShowEditEnvironmentModal(true);
+                        }}>
+                          <Edit2 size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    <div className="environment-option add-environment" onClick={() => {
+                      setNewEnvironment({ name: '', base_url: '', login: '', password: '', custom_variables: [] });
+                      setShowAddEnvironmentModal(true);
+                      setShowEnvironmentDropdown(false);
+                    }}>
+                      <Plus size={12} /> Add New Environment
+                    </div>
+                  </div>
+                )}
+              </div>
+              <AIModelSelector onModelSelect={setSelectedAIModel} selectedModelId={selectedAIModel} />
+            </div>
+
+            <div className="vlm-toggle-container">
+              {/* Simplified VLM toggle for alignment if needed, usually handled inside AIModelSelector or separately if it existed in the block before */}
+            </div>
           </div>
         </div>
+
+        <p className="test-description">{currentTestDescription}</p>
 
         <RunningTestIndicator testCaseId={testCaseId} onRunningStateChange={setIsRunning} />
       </div>
