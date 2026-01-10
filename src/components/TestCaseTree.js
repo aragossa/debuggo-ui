@@ -10,9 +10,11 @@ import {
   FileText, // FileAlt replacement
   FileInput, // FileImport replacement
   Search,
-  MoreHorizontal
+  MoreHorizontal,
+  CloudDownload
 } from 'lucide-react';
 import './TestCaseTree.css';
+import JiraImportModal from './JiraImportModal';
 
 const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCaseDeleted, projectId, onToggleVisibility, onGenerateFromFile }) => {
   // Load expanded state from localStorage on mount
@@ -32,6 +34,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   const [showRenameGroupModal, setShowRenameGroupModal] = useState(false);
   const [showMoveTestCaseModal, setShowMoveTestCaseModal] = useState(false);
   const [showCreateTestCaseModal, setShowCreateTestCaseModal] = useState(false);
+  const [showJiraImportModal, setShowJiraImportModal] = useState(false);
   const [showEditTestCaseModal, setShowEditTestCaseModal] = useState(false);
   const [testCaseToEdit, setTestCaseToEdit] = useState(null);
   const [newGroupName, setNewGroupName] = useState('');
@@ -457,8 +460,12 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
           <button className="icon-button primary" onClick={() => handleCreateTestCaseClick(null)} title="New Test Case">
             <Plus size={16} />
           </button>
-          <button className="icon-button" onClick={onGenerateFromFile} title="Import">
+          <button className="icon-button" onClick={onGenerateFromFile} title="Import from File">
             <FileInput size={16} />
+          </button>
+          <button className="icon-button" onClick={() => setShowJiraImportModal(true)} title="Import from Jira">
+            {/* Using a different icon or same style */}
+            Jira
           </button>
         </div>
       </div>
@@ -609,6 +616,19 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
             </div>
           </div>
         </div>
+      )}
+
+      {showJiraImportModal && (
+        <JiraImportModal
+          onClose={() => setShowJiraImportModal(false)}
+          onImport={(result) => {
+            alert(`Successfully imported ${result.imported_count} issues!`);
+            if (onTestCaseDeleted) onTestCaseDeleted(null); // Trigger refresh
+          }}
+          targetGroupId={null} // Or selected parent ID if we want to allow importing into specific folder
+          projectId={projectId}
+          availableProjects={availableProjects}
+        />
       )}
 
     </div>
