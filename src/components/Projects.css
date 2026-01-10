@@ -5,7 +5,10 @@
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--gray-50);
-  min-height: 100vh;
+  /* Fix layout */
+  flex: 1;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 /* Header Styling */

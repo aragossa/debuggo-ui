@@ -19,18 +19,7 @@ body.status-bar-active {
   }
 }
 
-.top-nav {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 2rem;
-  background-color: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(8px);
-  color: var(--gray-800);
-  border-bottom: 1px solid var(--gray-200);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
+
 
 .nav-brand {
   margin-right: 2rem;
