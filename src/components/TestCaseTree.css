@@ -82,7 +82,7 @@
 }
 
 .icon-button.primary {
-  color: #4f46e5;
+  color: #34d399;
   background-color: #eef2ff;
 }
 
@@ -125,7 +125,7 @@
 .node-content.selected {
   background-color: #eef2ff;
   /* Indigo-50 */
-  color: #4f46e5;
+  color: #34d399;
   /* Indigo-600 */
 }
 
@@ -145,7 +145,7 @@
 }
 
 .node-content.selected .node-icon-area {
-  color: #4f46e5;
+  color: #34d399;
 }
 
 .expand-icon {
@@ -291,7 +291,7 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: #34d399;
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
@@ -325,7 +325,7 @@
 .modal-button.confirm,
 .modal-button.create,
 .modal-button.update {
-  background-color: #4f46e5;
+  background-color: #34d399;
   color: white;
 }
 
