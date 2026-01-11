@@ -857,6 +857,17 @@ const TestCaseSteps = ({
               >
                 {currentTestName}
               </h2>
+              <button
+                className="edit-header-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditedTestCase({ name: currentTestName, description: currentTestDescription });
+                  setShowEditTestCaseModal(true);
+                }}
+                title="Edit Test Case"
+              >
+                <Edit2 size={14} />
+              </button>
               {test_type && (
                 <div className={`test-type-badge-detail ${test_type === 'test' ? 'ui' : test_type}`}>
                   {test_type === 'test' ? 'UI' : test_type.toUpperCase()}
