@@ -322,6 +322,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   };
 
   const onDragEnd = async (result) => {
+    console.log('[DnD] Full Result:', JSON.stringify(result, null, 2));
     const { destination, source, draggableId } = result;
 
     if (!destination) {
@@ -338,15 +339,24 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     const testCaseId = parseInt(draggableId);
     let targetGroupId = null;
 
-    // droppableId will be 'group-ROOT' or 'group-{id}'
-    if (destination.droppableId.startsWith('group-')) {
+    // Handle "Drop on Header" (Hybrid Strategy)
+    if (destination.droppableId.startsWith('target-group-')) {
+      const groupIdStr = destination.droppableId.replace('target-group-', '');
+      targetGroupId = parseInt(groupIdStr);
+      console.log(`[DnD] Dropped ON Header of Group ${targetGroupId}`);
+    }
+    // Handle dropping into a list (standard reorder/move)
+    else if (destination.droppableId.startsWith('group-')) {
       const groupIdStr = destination.droppableId.replace('group-', '');
       if (groupIdStr !== 'ROOT') {
         targetGroupId = parseInt(groupIdStr);
       }
+    } else {
+      return;
     }
 
     try {
+      console.log(`[DnD] Moving Test Case ${testCaseId} to Group ${targetGroupId} (droppableId: ${destination.droppableId}). Destination Index: ${destination.index}`);
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/api/test_cases/move`, {
         method: 'POST',
@@ -404,137 +414,191 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     const isSelected = selectedTestId === node.id;
     const isGroup = node.type === 'group' || node.type === 'type_group';
 
-    // Test cases are draggable
+    // Test cases are always draggable. Groups are wrapped in Draggable to allow "Combine" (drop on header) to work,
+    // but we can disable the actual dragging of groups if we don't want reordering yet.
+    // For now, let's allow dragging groups too (why not?) or just keep them fixed. 
+    // Let's set isDragDisabled={true} for groups so they are just drop targets.
     const isDraggable = node.type === 'test' || node.type === 'api_test';
+    // We want the Group to be a Draggable so it can be a "Combine" target.
+    // However, only 'group' type should be a target. 'type_group' (like "UI Tests") might not be a valid target or source.
+    // Allows 'group' and 'type_group' to be targets for combine
+    const canBeCombineTarget = node.type === 'group' || node.type === 'type_group';
 
-    // Groups are droppable (we render a Droppable area inside them if expanded)
+    const wrapInHeaderDroppable = (content) => {
+      // Hybrid Strategy:
+      // The Group is a Draggable (to keep indexes correct), but we wrap the header content 
+      // in a Droppable (to create a reliable drop target).
+      if (!canBeCombineTarget) return content;
 
-    const content = (
+      return (
+        <Droppable droppableId={`target-group-${node.id}`} type="TEST_CASE">
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              style={{
+                backgroundColor: snapshot.isDraggingOver ? '#e0e7ff' : 'transparent',
+                boxShadow: snapshot.isDraggingOver ? '0 0 0 2px #3b82f6 inset' : 'none',
+                borderRadius: '4px',
+                transition: 'all 0.1s'
+              }}
+            >
+              {content}
+              {/* Hide placeholder entirely to avoid expansion */}
+              <div style={{ display: 'none' }}>{provided.placeholder}</div>
+            </div>
+          )}
+        </Droppable>
+      );
+    };
+
+    const headerContent = (
       <div
         className={`tree-node ${isDraggable ? 'draggable-item' : ''}`}
       >
-        <div
-          className={`node-content ${isSelected ? 'selected' : ''}`}
-          data-type={node.type}
-          onClick={() => {
-            if (hasChildren || isGroup) toggleNode(node.id); // Toggle groups even if empty
-            if (node.type === 'test' || node.type === 'api_test') onNodeClick(node.id);
-          }}
-        >
-          {/* Chevron for Groups - acts as Main Icon now */}
-          <div className="node-icon-area">
-            {(hasChildren || isGroup) ? (
-              <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
-                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </span>
-            ) : (
-              <span className="node-spacer" />
-            )}
+        {wrapInHeaderDroppable(
+          <div
+            className={`node-content ${isSelected ? 'selected' : ''}`}
+            data-type={node.type}
+            onClick={() => {
+              if (hasChildren || isGroup) toggleNode(node.id); // Toggle groups even if empty
+              if (node.type === 'test' || node.type === 'api_test') onNodeClick(node.id);
+            }}
+          >
+            {/* Chevron for Groups - acts as Main Icon now */}
+            <div className="node-icon-area">
+              {(hasChildren || isGroup) ? (
+                <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
+                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </span>
+              ) : (
+                <span className="node-spacer" />
+              )}
 
-            {/* File Icon only for Tests */}
-            {!isGroup && <FileText size={14} className="file-icon" />}
-          </div>
+              {/* File Icon only for Tests */}
+              {!isGroup && <FileText size={14} className="file-icon" />}
+            </div>
 
-          <div className="node-content-text">
-            <span className="node-name">{node.name}</span>
-          </div>
+            <div className="node-content-text">
+              <span className="node-name">{node.name}</span>
+            </div>
 
-          <div className="node-actions">
-            {/* Group actions */}
-            {(node.type === 'group' || node.type === 'api_group') && (
-              <>
-                <button className="tree-action-button" onClick={(e) => { e.stopPropagation(); handleCreateGroupClick(node.id); }} title="Add subgroup">
-                  <FolderPlus size={14} />
-                </button>
-                <button className="tree-action-button" onClick={(e) => handleRenameGroupClick(e, node)} title="Rename">
-                  <Edit2 size={14} />
-                </button>
-                <button className="tree-action-button" onClick={(e) => handleDeleteClick(e, node)} title="Delete">
-                  <Trash2 size={14} />
-                </button>
-              </>
-            )}
+            <div className="node-actions">
+              {/* Group actions */}
+              {(node.type === 'group' || node.type === 'api_group') && (
+                <>
+                  <button className="tree-action-button" onClick={(e) => { e.stopPropagation(); handleCreateGroupClick(node.id); }} title="Add subgroup">
+                    <FolderPlus size={14} />
+                  </button>
+                  <button className="tree-action-button" onClick={(e) => handleRenameGroupClick(e, node)} title="Rename">
+                    <Edit2 size={14} />
+                  </button>
+                  <button className="tree-action-button" onClick={(e) => handleDeleteClick(e, node)} title="Delete">
+                    <Trash2 size={14} />
+                  </button>
+                </>
+              )}
 
-            {/* Type group actions - Simplified */}
-            {node.type === 'type_group' && (
-              <button className="tree-action-button" onClick={(e) => {
-                e.stopPropagation();
-                setNewTestCase(prev => ({ ...prev, parent_id: null, test_type: node.test_type }));
-                handleCreateTestCaseClick();
-              }} title="Add Test">
-                <Plus size={14} />
-              </button>
-            )}
+              {/* Type group actions - Simplified */}
+              {node.type === 'type_group' && (
+                <button className="tree-action-button" onClick={(e) => {
+                  e.stopPropagation();
+                  setNewTestCase(prev => ({ ...prev, parent_id: null, test_type: node.test_type }));
+                  handleCreateTestCaseClick();
+                }} title="Add Test">
+                  <Plus size={14} />
+                </button>
+              )}
 
-            {/* Test case actions */}
-            {(node.type === 'test' || node.type === 'api_test') && (
-              <>
-                <button className="tree-action-button" onClick={(e) => handleEditTestCaseClick(e, node)} title="Edit">
-                  <Edit2 size={14} />
-                </button>
-                {/* Keep Move button as alternative */}
-                <button className="tree-action-button" onClick={(e) => handleMoveTestCaseClick(e, node)} title="Move">
-                  <ArrowRightLeft size={14} />
-                </button>
-                <button className="tree-action-button" onClick={(e) => handleDeleteClick(e, node)} title="Delete">
-                  <Trash2 size={14} />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Render Children (Droppable Zone for Groups) */}
-        {((hasChildren && isExpanded) || (isGroup && isExpanded)) && (
-          <div className="node-children">
-            {(node.type === 'group' || node.type === 'type_group') ? (
-              <Droppable droppableId={`group-${node.id}`} type="TEST_CASE">
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={`droppable-area ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
-                    style={{ minHeight: '5px' }} // Ensure there's a drop target even if empty
-                  >
-                    {node.children && node.children.map((child, idx) => renderNode(child, idx))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            ) : (
-              // Non-droppable children (if any logic allowed that, though test cases shouldn't have children)
-              node.children && node.children.map((child, idx) => renderNode(child, idx))
-            )}
+              {/* Test case actions */}
+              {(node.type === 'test' || node.type === 'api_test') && (
+                <>
+                  <button className="tree-action-button" onClick={(e) => handleEditTestCaseClick(e, node)} title="Edit">
+                    <Edit2 size={14} />
+                  </button>
+                  {/* Keep Move button as alternative */}
+                  <button className="tree-action-button" onClick={(e) => handleMoveTestCaseClick(e, node)} title="Move">
+                    <ArrowRightLeft size={14} />
+                  </button>
+                  <button className="tree-action-button" onClick={(e) => handleDeleteClick(e, node)} title="Delete">
+                    <Trash2 size={14} />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>
     );
 
-    if (isDraggable) {
-      return (
-        <Draggable key={node.id} draggableId={String(node.id)} index={index}>
+    const childrenContent = ((hasChildren && isExpanded) || (isGroup && isExpanded)) ? (
+      <div className="node-children">
+        {(node.type === 'group' || node.type === 'type_group') ? (
+          <Droppable droppableId={`group-${node.id}`} type="TEST_CASE" isCombineEnabled={false}>
+            {(provided, snapshot) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className={`droppable-area ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                style={{
+                  minHeight: '40px',
+                  padding: '10px 0',
+                  backgroundColor: snapshot.isDraggingOver ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
+                  border: snapshot.isDraggingOver ? '1px dashed #3b82f6' : '1px dashed transparent',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {(!node.children || node.children.length === 0) && snapshot.isDraggingOver && (
+                  <div style={{ padding: '8px', color: '#6b7280', fontSize: '12px', textAlign: 'center' }}>
+                    Drop into {node.name}
+                  </div>
+                )}
+                {node.children && node.children.map((child, idx) => renderNode(child, idx))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        ) : (
+          node.children && node.children.map((child, idx) => renderNode(child, idx))
+        )}
+      </div>
+    ) : null;
+
+    // Use Draggable for ALL nodes to maintain index continuity (fixing the warning).
+    // Disable drag for groups, but allow them to be "combine" targets.
+    // Wrap ONLY the header in the Draggable so dragging OVER the header triggers combine.
+    return (
+      <div key={node.id}>
+        <Draggable
+          key={node.id}
+          draggableId={String(node.id)}
+          index={index}
+          isDragDisabled={!isDraggable}
+        >
           {(provided, snapshot) => (
             <div
               ref={provided.innerRef}
               {...provided.draggableProps}
               {...provided.dragHandleProps}
-              style={{ ...provided.draggableProps.style }}
+              style={{
+                ...provided.draggableProps.style,
+                // No special styling here, handled by the internal Droppable
+                borderRadius: '4px'
+              }}
             >
-              {content}
+              {headerContent}
             </div>
           )}
         </Draggable>
-      );
-    }
-
-    return <div key={node.id}>{content}</div>;
+        {childrenContent}
+      </div>
+    );
   };
 
   if (error) return <div className="tree-error">{error}</div>;
 
   return (
     <div className="test-case-tree-container">
-      {/* Header controls, minimized search */}
       <div className="test-case-tree-header">
         <div className="search-bar-container">
           <Search className="search-icon" size={14} />
@@ -557,7 +621,6 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
             <FileInput size={16} />
           </button>
           <button className="icon-button" onClick={() => setShowJiraImportModal(true)} title="Import from Jira">
-            {/* Using a different icon or same style */}
             Jira
           </button>
         </div>
@@ -565,7 +628,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
 
       <div className="test-case-tree">
         <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="group-ROOT" type="TEST_CASE">
+          <Droppable droppableId="group-ROOT" type="TEST_CASE" isCombineEnabled={false}>
             {(provided, snapshot) => (
               <div
                 ref={provided.innerRef}

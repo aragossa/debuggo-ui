@@ -1444,7 +1444,7 @@ const TestCaseSteps = ({
               <button className="modal-button update" onClick={async () => {
                 setIsUpdatingTestCase(true);
                 try {
-                  await fetch(`${API_URL}/api/update_test_case/${testCaseId}`, {
+                  await fetch(`${API_URL}/api/test_cases/${testCaseId}`, {
                     method: 'PUT',
                     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                     body: JSON.stringify(editedTestCase)
