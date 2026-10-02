@@ -76,6 +76,34 @@ const Login = () => {
     <div className="login-form">
       <h2>Welcome To Debuggo.app</h2>
       {error && <div className="error-message">{error}</div>}
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
+            autoComplete="username"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+            autoComplete="current-password"
+            required
+          />
+        </div>
+        <button type="submit">Sign In</button>
+      </form>
+      <div className="login-divider"><span>or</span></div>
       <GoogleLoginButton />
     </div>
   );
