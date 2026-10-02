@@ -2,6 +2,11 @@
   padding: 20px;
   width: 100%;
   margin: 0;
+  /* .app is a 100vh flex column with overflow hidden, so the page scrolls itself */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .ai-models-header {
