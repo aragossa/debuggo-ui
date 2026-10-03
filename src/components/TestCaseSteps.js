@@ -39,10 +39,18 @@ import AIModelSelector from './AIModelSelector';
 import RunningTestIndicator from './RunningTestIndicator';
 import './TestCaseSteps.css';
 
-const STEP_ACTIONS = [
-  'click', 'type', 'navigate', 'assert', 'wait', 'scroll', 'hover',
-  'press_key', 'screenshot', 'select', 'javascript', 'api_request'
-];
+// The action list comes from GET /api/step_actions (source of truth: TestRunner.execute_step
+// in the backend). Until it loads, or if it fails, only the actions of the current steps
+// are offered, so an existing step can still be shown and edited.
+const ACTION_GROUP_ORDER = ['Interaction', 'Navigation', 'Wait', 'Assertion', 'Alert', 'API'];
+
+const groupActions = (actions) => {
+  const groups = {};
+  actions.forEach(a => { (groups[a.group] = groups[a.group] || []).push(a); });
+  return Object.keys(groups)
+    .sort((a, b) => ACTION_GROUP_ORDER.indexOf(a) - ACTION_GROUP_ORDER.indexOf(b))
+    .map(name => ({ name, actions: groups[name] }));
+};
 
 const TestCaseSteps = ({
   testCaseId,
@@ -164,6 +172,49 @@ const TestCaseSteps = ({
     const token = localStorage.getItem('token');
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   }, []);
+
+  // Step actions and what each needs (locator, value, value format), from the backend
+  const [stepActions, setStepActions] = useState([]);
+  const [stepActionsError, setStepActionsError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/step_actions`, { headers: getAuthHeaders() });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (!cancelled) setStepActions(data);
+      } catch (error) {
+        console.error('Error fetching step actions:', error);
+        if (!cancelled) setStepActionsError('Could not load the action list from the server');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [API_URL, getAuthHeaders]);
+
+  const actionMeta = useCallback((name) => {
+    const meta = stepActions.find(a => a.name === name);
+    // Unknown action (list not loaded, or a legacy step): keep every field visible
+    return meta || { name, label: name, group: 'Other', needs_locator: true, needs_value: 'optional', value_hint: '', test_types: ['ui', 'api'] };
+  }, [stepActions]);
+
+  // Actions offered in dropdowns: those for this test type, plus whatever the current steps already use
+  const offeredActions = React.useMemo(() => {
+    const wanted = test_type === 'api' ? 'api' : 'ui';
+    const offered = stepActions.filter(a => a.test_types.includes(wanted));
+    const known = new Set(offered.map(a => a.name));
+    steps.forEach(step => {
+      if (step.action && !known.has(step.action)) { known.add(step.action); offered.push(actionMeta(step.action)); }
+    });
+    return groupActions(offered);
+  }, [stepActions, steps, test_type, actionMeta]);
+
+  const renderActionOptions = () => offeredActions.map(group => (
+    <optgroup key={group.name} label={group.name}>
+      {group.actions.map(a => <option key={a.name} value={a.name} title={a.description}>{a.label}</option>)}
+    </optgroup>
+  ));
 
   // Test Suite State
   const [associatedSuites, setAssociatedSuites] = useState([]);
@@ -1057,7 +1108,9 @@ const TestCaseSteps = ({
                   <div className="test-steps-list-container" {...provided.droppableProps} ref={provided.innerRef}>
                     {steps.map((step, index) => {
                       const isEditing = actionDropdownStepId === step.id;
-                      const showTarget = !['wait', 'navigate', 'press_key'].includes(step.action);
+                      const meta = actionMeta(step.action);
+                      const showTarget = meta.needs_locator;
+                      const showValue = meta.needs_value !== 'none';
 
                       return (
                         <Draggable key={step.id} draggableId={step.id.toString()} index={index} isDragDisabled={isGeneratingSteps || isRunning}>
@@ -1077,8 +1130,8 @@ const TestCaseSteps = ({
 
                               {!isEditing ? (
                                 <div className="step-content">
-                                  <span className="step-action-text" data-action={step.action}>
-                                    {step.action.replace('_', ' ')}
+                                  <span className="step-action-text" data-action={step.action} title={meta.description}>
+                                    {step.action.replace(/_/g, ' ')}
                                   </span>
 
                                   {showTarget && (
@@ -1102,18 +1155,27 @@ const TestCaseSteps = ({
                                     <div className="edit-group">
                                       <span className="edit-label">Action</span>
                                       <select value={step.action} onChange={(e) => handleActionChange(step.id, e.target.value)} onKeyDown={handleEditKeyDown}>
-                                        {STEP_ACTIONS.map(a => <option key={a} value={a}>{a}</option>)}
+                                        {renderActionOptions()}
                                       </select>
                                     </div>
-                                    <div className="edit-group">
-                                      <span className="edit-label">Value</span>
-                                      <input value={stepValues[step.id] || step.value || ''} onChange={e => handleValueChange(step.id, e.target.value, step.action)} onKeyDown={handleEditKeyDown} />
-                                    </div>
+                                    {showValue && (
+                                      <div className="edit-group">
+                                        <span className="edit-label">Value{meta.needs_value === 'optional' ? ' (optional)' : ''}</span>
+                                        {meta.value_options ? (
+                                          <select value={stepValues[step.id] || step.value || ''} onChange={e => handleValueChange(step.id, e.target.value, step.action)} onKeyDown={handleEditKeyDown}>
+                                            <option value="">Select file</option>
+                                            {meta.value_options.map(v => <option key={v} value={v}>{v}</option>)}
+                                          </select>
+                                        ) : (
+                                          <input placeholder={meta.value_hint || ''} title={meta.value_hint || ''} value={stepValues[step.id] || step.value || ''} onChange={e => handleValueChange(step.id, e.target.value, step.action)} onKeyDown={handleEditKeyDown} />
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                   {showTarget && (
                                     <div className="edit-row">
-                                      <input placeholder="CSS Selector" value={step.css_selector || ''} onChange={e => handleSelectorChange(step.id, 'css_selector', e.target.value)} onKeyDown={handleEditKeyDown} />
-                                      <input placeholder="XPath" value={step.element_path || ''} onChange={e => handleSelectorChange(step.id, 'element_path', e.target.value)} onKeyDown={handleEditKeyDown} />
+                                      <input placeholder="XPath (primary locator)" value={step.element_path || ''} onChange={e => handleSelectorChange(step.id, 'element_path', e.target.value)} onKeyDown={handleEditKeyDown} />
+                                      <input placeholder="CSS selector (fallback for clicks)" value={step.css_selector || ''} onChange={e => handleSelectorChange(step.id, 'css_selector', e.target.value)} onKeyDown={handleEditKeyDown} />
                                     </div>
                                   )}
                                   <div className="edit-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -1332,74 +1394,104 @@ const TestCaseSteps = ({
       )}
 
       {/* Add Step Modal */}
-      {showAddStepModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Add New Step</h3>
-            <div className="form-group">
-              <label>Action</label>
-              <select
-                value={newStep.action}
-                onChange={(e) => setNewStep({ ...newStep, action: e.target.value })}
-              >
-                <option value="">Select Action</option>
-                {STEP_ACTIONS.map(action => (
-                  <option key={action} value={action}>{action}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Description</label>
-              <input
-                type="text"
-                placeholder="Description"
-                value={newStep.description}
-                onChange={(e) => setNewStep({ ...newStep, description: e.target.value })}
-              />
-            </div>
-            {['type', 'select', 'open', 'assert', 'wait'].includes(newStep.action) && (
+      {showAddStepModal && (() => {
+        const meta = newStep.action ? actionMeta(newStep.action) : null;
+        const showValue = meta && meta.needs_value !== 'none';
+        const canAdd = meta
+          && (!meta.needs_locator || newStep.element_path.trim())
+          && (meta.needs_value !== 'required' || newStep.value.trim());
+        const resetNewStep = () => setNewStep({ description: '', action: '', element_path: '', value: '', path_type: 'xpath', expected_result: '' });
+        const addStep = async () => {
+          try {
+            const response = await fetch(`${API_URL}/api/create_test_step`, {
+              method: 'POST',
+              headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                test_case_id: testCaseId,
+                action: newStep.action,
+                description: newStep.description.trim() || meta.label,
+                element_path: meta.needs_locator ? newStep.element_path.trim() : null,
+                value: showValue && newStep.value.trim() ? newStep.value.trim() : null,
+                path_type: 'xpath',
+                expected_result: newStep.expected_result || null
+              })
+            });
+            if (!response.ok) {
+              let detail = `HTTP ${response.status}`;
+              try { detail = (await response.json()).detail || detail; } catch (e) { /* not JSON */ }
+              throw new Error(detail);
+            }
+            await refreshTestCase();
+            setShowAddStepModal(false);
+            resetNewStep();
+          } catch (e) {
+            console.error(e);
+            alert(`Failed to add step: ${e.message}`);
+          }
+        };
+        return (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Add New Step</h3>
               <div className="form-group">
-                <label>Value</label>
+                <label>Action</label>
+                <select
+                  value={newStep.action}
+                  onChange={(e) => setNewStep({ ...newStep, action: e.target.value, value: '' })}
+                >
+                  <option value="">Select Action</option>
+                  {renderActionOptions()}
+                </select>
+                {stepActionsError && <div className="form-hint form-hint-error">{stepActionsError}</div>}
+                {meta && <div className="form-hint">{meta.description}</div>}
+              </div>
+              <div className="form-group">
+                <label>Description</label>
                 <input
                   type="text"
-                  placeholder="Value"
-                  value={newStep.value}
-                  onChange={(e) => setNewStep({ ...newStep, value: e.target.value })}
+                  placeholder="Description"
+                  value={newStep.description}
+                  onChange={(e) => setNewStep({ ...newStep, description: e.target.value })}
                 />
               </div>
-            )}
-            {!['wait', 'navigate', 'press_key'].includes(newStep.action) && (
-              <div className="form-group">
-                <label>Target (CSS Selector or XPath)</label>
-                <input
-                  type="text"
-                  placeholder="Target"
-                  value={newStep.element_path}
-                  onChange={(e) => setNewStep({ ...newStep, element_path: e.target.value })}
-                />
+              {showValue && (
+                <div className="form-group">
+                  <label>Value{meta.needs_value === 'optional' ? ' (optional)' : ''}</label>
+                  {meta.value_options ? (
+                    <select value={newStep.value} onChange={(e) => setNewStep({ ...newStep, value: e.target.value })}>
+                      <option value="">Select file</option>
+                      {meta.value_options.map(v => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder={meta.value_hint || 'Value'}
+                      value={newStep.value}
+                      onChange={(e) => setNewStep({ ...newStep, value: e.target.value })}
+                    />
+                  )}
+                  {meta.value_hint && !meta.value_options && <div className="form-hint">{meta.value_hint}</div>}
+                </div>
+              )}
+              {meta && meta.needs_locator && (
+                <div className="form-group">
+                  <label>Target element (XPath)</label>
+                  <input
+                    type="text"
+                    placeholder="//button[@id='submit']"
+                    value={newStep.element_path}
+                    onChange={(e) => setNewStep({ ...newStep, element_path: e.target.value })}
+                  />
+                </div>
+              )}
+              <div className="modal-actions">
+                <button className="modal-button cancel" onClick={() => { setShowAddStepModal(false); resetNewStep(); }}>Cancel</button>
+                <button className="modal-button create" disabled={!canAdd} onClick={addStep}>Add Step</button>
               </div>
-            )}
-            <div className="modal-actions">
-              <button className="modal-button cancel" onClick={() => setShowAddStepModal(false)}>Cancel</button>
-              <button className="modal-button create" onClick={async () => {
-                try {
-                  await fetch(`${API_URL}/api/add_test_step/${testCaseId}`, {
-                    method: 'POST',
-                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newStep)
-                  });
-                  await refreshTestCase();
-                  setShowAddStepModal(false);
-                  setNewStep({ description: '', action: '', element_path: '', value: '', path_type: 'xpath', expected_result: '' });
-                } catch (e) {
-                  console.error(e);
-                  alert('Failed to add step');
-                }
-              }}>Add Step</button>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Confirm Generation Modal */}
       {showConfirmModal && (
@@ -1444,8 +1536,8 @@ const TestCaseSteps = ({
             </div>
             <div className="form-group">
               <label>Description</label>
-              <input
-                type="text"
+              <textarea
+                rows={8}
                 value={editedTestCase.description}
                 onChange={(e) => setEditedTestCase({ ...editedTestCase, description: e.target.value })}
               />

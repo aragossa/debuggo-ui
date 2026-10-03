@@ -990,3 +990,18 @@
   color: #9ca3af;
   cursor: not-allowed;
 }
+/* Hints under the fields of the add-step form */
+.form-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.form-hint-error {
+  color: #b91c1c;
+}
+
+.modal-button.create:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
