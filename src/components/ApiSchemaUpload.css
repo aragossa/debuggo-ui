@@ -310,3 +310,127 @@
   max-height: 260px;
   overflow: auto;
 }
+
+/* Scenario ideas suggested by AI */
+.schema-ideas-button {
+  background: #6d28d9;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  width: 100%;
+  margin-bottom: 8px;
+  transition: background 0.2s;
+}
+
+.schema-ideas-button:hover:not(:disabled) {
+  background: #5b21b6;
+}
+
+.schema-ideas-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.schema-ideas {
+  margin-top: 25px;
+  padding: 15px;
+  border: 1px solid #ddd6fe;
+  border-radius: 6px;
+  background: #faf8ff;
+  font-size: 14px;
+  color: #333;
+}
+
+.schema-ideas h4 {
+  margin: 0 0 6px;
+  color: #555;
+}
+
+.schema-ideas-hint {
+  margin: 0 0 12px;
+  color: #666;
+  font-size: 13px;
+}
+
+.schema-ideas-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.schema-ideas-list li {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: white;
+  opacity: 0.6;
+}
+
+.schema-ideas-list li.checked {
+  opacity: 1;
+  border-color: #c4b5fd;
+}
+
+.schema-ideas-list label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.schema-idea-name {
+  font-weight: 600;
+}
+
+.schema-idea-kind {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #ede9fe;
+  color: #5b21b6;
+  text-transform: uppercase;
+}
+
+.schema-idea-kind.kind-negative {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.schema-idea-kind.kind-rule {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.schema-idea-description {
+  margin: 6px 0 0 24px;
+  color: #555;
+  font-size: 13px;
+  white-space: pre-line;
+}
+
+.schema-ideas-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.schema-ideas-actions select {
+  padding: 4px 6px;
+}
+
+.schema-ideas-actions .schema-ideas-create,
+.schema-ideas-actions .schema-ideas-cancel {
+  width: auto;
+  margin: 0;
+}
+
+.schema-ideas-warning {
+  color: #b45309;
+  font-size: 13px;
+}
