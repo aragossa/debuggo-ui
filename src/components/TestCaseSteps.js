@@ -115,6 +115,8 @@ const TestCaseSteps = ({
   const [activeTab, setActiveTab] = useState('description');
   const [localTestRuns, setLocalTestRuns] = useState([]);
   const [expandedRuns, setExpandedRuns] = useState({});
+  // Why the last step generation of this test case stopped (AI quota, no environment, a failing step)
+  const [generationError, setGenerationError] = useState(null);
   // Step messages (an error, or the response of an API step) are clamped to a few lines until clicked
   const [expandedStepMessages, setExpandedStepMessages] = useState({});
   const [draggedStep, setDraggedStep] = useState(null);
@@ -538,6 +540,13 @@ const TestCaseSteps = ({
         setIsGeneratingSteps(true);
         startPollingForUpdates();
       }
+
+      // A generation that failed while the test was not open: show why
+      setGenerationError(null);
+      fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, { headers: getAuthHeaders() })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => { if (data && !data.is_generating && data.error) setGenerationError(data.error); })
+        .catch(() => { });
     }
 
     return () => {
@@ -596,6 +605,7 @@ const TestCaseSteps = ({
         }
 
         if (!statusData.is_generating) {
+          setGenerationError(statusData.error || null);
           setIsGeneratingSteps(false);
           setGeneratingTestCases(prev => {
             const updated = { ...prev };
@@ -802,6 +812,7 @@ const TestCaseSteps = ({
 
   const generateSteps = async (confirm) => {
     if (!testCaseId || isGeneratingSteps) return;
+    setGenerationError(null);
     setIsGeneratingSteps(true);
     setGeneratingTestCases(prev => ({ ...prev, [testCaseId]: true }));
 
@@ -826,14 +837,18 @@ const TestCaseSteps = ({
         body: JSON.stringify(body)
       });
 
-      if (!res.ok) throw new Error('Failed to generate steps');
+      if (!res.ok) {
+        let detail = `The server answered ${res.status}`;
+        try { detail = (await res.json()).detail || detail; } catch (parseError) { /* not JSON */ }
+        throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+      }
 
       // The same status endpoint reports the generation of API tests
       startPollingForUpdates();
 
     } catch (e) {
       console.error(e);
-      alert(e.message);
+      setGenerationError(`The generation could not start: ${e.message}`);
       setIsGeneratingSteps(false);
       setGeneratingTestCases(prev => {
         const u = { ...prev }; delete u[testCaseId]; return u;
@@ -1074,6 +1089,27 @@ const TestCaseSteps = ({
         <p className="test-description">{currentTestDescription}</p>
 
         <RunningTestIndicator testCaseId={testCaseId} onRunningStateChange={setIsRunning} />
+
+        {generationError && !isGeneratingSteps && (
+          <div className="generation-error-banner" role="alert">
+            <AlertTriangle size={16} className="generation-error-icon" />
+            <div className="generation-error-text">
+              <strong>Step generation stopped</strong>
+              <span>{generationError}</span>
+            </div>
+            <button
+              className="generation-error-dismiss"
+              title="Dismiss"
+              onClick={() => {
+                setGenerationError(null);
+                fetch(`${API_URL}/api/test_case_generation_error/${testCaseId}`, { method: 'DELETE', headers: getAuthHeaders() })
+                  .catch(() => { });
+              }}
+            >
+              <XCircle size={16} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
