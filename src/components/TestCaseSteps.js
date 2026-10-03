@@ -115,6 +115,8 @@ const TestCaseSteps = ({
   const [activeTab, setActiveTab] = useState('description');
   const [localTestRuns, setLocalTestRuns] = useState([]);
   const [expandedRuns, setExpandedRuns] = useState({});
+  // Step messages (an error, or the response of an API step) are clamped to a few lines until clicked
+  const [expandedStepMessages, setExpandedStepMessages] = useState({});
   const [draggedStep, setDraggedStep] = useState(null);
   const [stepExecutionResults, setStepExecutionResults] = useState({});
 
@@ -1301,11 +1303,11 @@ const TestCaseSteps = ({
               <table className="test-results-table">
                 <thead>
                   <tr>
-                    <th className="w-20">Run ID</th>
+                    <th style={{ width: '90px' }}>Run ID</th>
                     <th>Date</th>
-                    <th>Duration</th>
-                    <th>Status</th>
-                    <th className="w-10"></th>
+                    <th style={{ width: '110px' }}>Duration</th>
+                    <th style={{ width: '120px' }}>Status</th>
+                    <th style={{ width: '48px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1348,7 +1350,7 @@ const TestCaseSteps = ({
                                     <tr>
                                       <th style={{ width: '40px' }}>#</th>
                                       <th>Action</th>
-                                      <th>Status</th>
+                                      <th style={{ width: '60px' }}>Status</th>
                                       <th style={{ width: '60px' }}>Shot</th>
                                     </tr>
                                   </thead>
@@ -1357,16 +1359,21 @@ const TestCaseSteps = ({
                                       <tr key={res.id}>
                                         <td className="text-center text-gray-400">{res.step_order}</td>
                                         <td>
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-medium text-gray-700 uppercase text-xs px-2 py-0.5 rounded bg-gray-100">
-                                              {res.action}
-                                            </span>
-                                            {res.error_message && (
-                                              <span className="text-red-500 text-xs truncate max-w-xs" title={res.error_message}>
-                                                {res.error_message}
-                                              </span>
-                                            )}
-                                          </div>
+                                          <span className="font-medium text-gray-700 uppercase text-xs px-2 py-0.5 rounded bg-gray-100">
+                                            {res.action}
+                                          </span>
+                                          {res.error_message && (
+                                            <div
+                                              className={`step-result-message ${res.status === 'failed' ? 'failed' : ''} ${expandedStepMessages[res.id] ? 'expanded' : ''}`}
+                                              title={expandedStepMessages[res.id] ? 'Click to collapse' : 'Click to show all'}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setExpandedStepMessages(p => ({ ...p, [res.id]: !p[res.id] }));
+                                              }}
+                                            >
+                                              {res.error_message}
+                                            </div>
+                                          )}
                                         </td>
                                         <td>
                                           {res.status === 'passed' && <CheckCircle size={14} className="text-green-500" />}

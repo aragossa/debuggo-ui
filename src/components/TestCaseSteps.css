@@ -673,6 +673,8 @@
 
 .test-results-table {
   width: 100%;
+  /* Fixed columns: a long step message wraps inside its cell instead of pushing Status off the screen */
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -752,7 +754,35 @@
 
 .step-execution-table {
   width: 100%;
+  table-layout: fixed;
   font-size: 13px;
+}
+
+/* The message of a step: an error, or the status and response of an API step */
+.step-result-message {
+  margin-top: 4px;
+  font-size: 12px;
+  font-family: monospace;
+  color: #6b7280;
+  /* Collapsed: one flowing text, so the three lines show the start of the response, not blank lines */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.step-result-message.failed {
+  color: #ef4444;
+}
+
+.step-result-message.expanded {
+  display: block;
+  white-space: pre-wrap;
+  max-height: 320px;
+  overflow: auto;
 }
 
 .step-execution-table th {
