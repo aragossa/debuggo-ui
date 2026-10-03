@@ -10,6 +10,11 @@ const ApiSchemaUpload = ({ projectId }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [schemaName, setSchemaName] = useState('');
   const [schemaDescription, setSchemaDescription] = useState('');
+  // Library of API calls built from a schema: shown for one schema at a time
+  const [openSchemaId, setOpenSchemaId] = useState(null);
+  const [operations, setOperations] = useState([]);
+  const [loadingOperations, setLoadingOperations] = useState(false);
+  const [operationFilter, setOperationFilter] = useState('');
   const { getAuthHeaders } = useAuth();
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -31,6 +36,30 @@ const ApiSchemaUpload = ({ projectId }) => {
       }
     } catch (error) {
       console.error('Error fetching schemas:', error);
+    }
+  };
+
+  const toggleOperations = async (schemaId) => {
+    if (openSchemaId === schemaId) {
+      setOpenSchemaId(null);
+      return;
+    }
+    setOpenSchemaId(schemaId);
+    setOperations([]);
+    setOperationFilter('');
+    setLoadingOperations(true);
+    try {
+      const response = await fetch(`${API_URL}/api/projects/${projectId}/api-operations?schema_id=${schemaId}`, {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setOperations(data.operations || []);
+      }
+    } catch (error) {
+      console.error('Error fetching API calls:', error);
+    } finally {
+      setLoadingOperations(false);
     }
   };
 
@@ -67,7 +96,8 @@ const ApiSchemaUpload = ({ projectId }) => {
 
       if (response.ok) {
         const data = await response.json();
-        alert(`Schema "${schemaName}" uploaded successfully!`);
+        alert(`Schema "${schemaName}" ${data.updated ? 'updated' : 'uploaded'}: ${data.operations_count} API calls found.`);
+        setOpenSchemaId(null);
         
         // Reset form
         setSelectedFile(null);
@@ -106,6 +136,7 @@ const ApiSchemaUpload = ({ projectId }) => {
 
       if (response.ok) {
         alert('Schema deleted successfully');
+        if (openSchemaId === schemaId) setOpenSchemaId(null);
         fetchSchemas();
       } else {
         alert('Failed to delete schema');
@@ -194,6 +225,12 @@ const ApiSchemaUpload = ({ projectId }) => {
                   </span>
                 </div>
                 <button
+                  className="schema-calls-button"
+                  onClick={() => toggleOperations(schema.id)}
+                >
+                  {openSchemaId === schema.id ? 'Hide API calls' : `Show API calls (${schema.operations_count ?? 0})`}
+                </button>
+                <button
                   className="delete-schema-button"
                   onClick={() => handleDelete(schema.id)}
                 >
@@ -204,6 +241,60 @@ const ApiSchemaUpload = ({ projectId }) => {
           </div>
         )}
       </div>
+
+      {openSchemaId && (
+        <div className="schema-operations">
+          <h4>API calls of "{(schemas.find(s => s.id === openSchemaId) || {}).name}"</h4>
+          {loadingOperations ? (
+            <p className="no-schemas">Loading...</p>
+          ) : operations.length === 0 ? (
+            <p className="no-schemas">No API calls found in this schema. Only OpenAPI and Swagger schemas in JSON are parsed.</p>
+          ) : (
+            <>
+              <input
+                type="text"
+                className="operations-filter"
+                value={operationFilter}
+                onChange={(e) => setOperationFilter(e.target.value)}
+                placeholder={`Filter ${operations.length} calls by path, name or resource`}
+              />
+              <div className="operations-table-container">
+                <table className="operations-table">
+                  <thead>
+                    <tr>
+                      <th>Method</th>
+                      <th>Path</th>
+                      <th>Name</th>
+                      <th>Resource</th>
+                      <th>Auth</th>
+                      <th>Status</th>
+                      <th>Response</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {operations
+                      .filter(op => {
+                        const needle = operationFilter.trim().toLowerCase();
+                        return !needle || `${op.method} ${op.path} ${op.name} ${op.resource}`.toLowerCase().includes(needle);
+                      })
+                      .map(op => (
+                        <tr key={op.id} title={op.summary || ''}>
+                          <td><span className={`operation-method method-${op.method.toLowerCase()}`}>{op.method}</span></td>
+                          <td className="operation-path">{op.path}</td>
+                          <td>{op.name}</td>
+                          <td>{op.resource}</td>
+                          <td>{op.requires_auth ? 'yes' : '-'}</td>
+                          <td>{op.expected_status}</td>
+                          <td>{op.response.kind === 'none' ? '-' : op.response.kind}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };

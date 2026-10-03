@@ -13,6 +13,7 @@ const Environments = ({ projectId }) => {
   const [formData, setFormData] = useState({
     name: '',
     base_url: '',
+    api_url: '',
     login: '',
     password: ''
   });
@@ -68,6 +69,7 @@ const Environments = ({ projectId }) => {
     setFormData({
       name: '',
       base_url: '',
+      api_url: '',
       login: '',
       password: ''
     });
@@ -84,6 +86,7 @@ const Environments = ({ projectId }) => {
     setFormData({
       name: environment.name,
       base_url: environment.base_url,
+      api_url: environment.api_url || '',
       login: environment.login || '',
       password: environment.password || ''
     });
@@ -253,6 +256,21 @@ const Environments = ({ projectId }) => {
             </div>
 
             <div className="form-group">
+              <label htmlFor="api_url">API URL</label>
+              <input
+                type="text"
+                id="api_url"
+                name="api_url"
+                value={formData.api_url}
+                onChange={handleInputChange}
+                placeholder="https://api.example.com (empty = same as Base URL)"
+              />
+              <small className="help-text">
+                Where API requests of this environment go. They are sent by the Debuggo server, not by the test browser. Use it in steps as %api_url%.
+              </small>
+            </div>
+
+            <div className="form-group">
               <label htmlFor="login">Login</label>
               <input
                 type="text"
@@ -306,6 +324,7 @@ const Environments = ({ projectId }) => {
               <tr>
                 <th>Name</th>
                 <th>Base URL</th>
+                <th>API URL</th>
                 <th>Login</th>
                 <th>Password</th>
                 <th className="actions-header">Actions</th>
@@ -316,6 +335,7 @@ const Environments = ({ projectId }) => {
                 <tr key={env.id}>
                   <td className="env-name">{env.name}</td>
                   <td className="env-url">{env.base_url}</td>
+                  <td className="env-url">{env.api_url || <span className="text-muted">-</span>}</td>
                   <td>{env.login || <span className="text-muted">-</span>}</td>
                   <td>{env.password ? '••••••••' : <span className="text-muted">-</span>}</td>
                   <td className="actions-cell">

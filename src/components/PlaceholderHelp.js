@@ -39,6 +39,10 @@ const PlaceholderHelp = () => {
                 <td>https://app.example.com</td>
               </tr>
               <tr>
+                <td><code>%api_url%</code></td>
+                <td>https://api.example.com (the environment's API URL; Base URL when it is empty)</td>
+              </tr>
+              <tr>
                 <td><code>%login%</code></td>
                 <td>admin@example.com</td>
               </tr>

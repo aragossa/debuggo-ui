@@ -193,6 +193,37 @@ const TestCaseSteps = ({
     return () => { cancelled = true; };
   }, [API_URL, getAuthHeaders]);
 
+  // API calls of the project (built from its uploaded schemas): an api_request step can be filled from one
+  const [apiOperations, setApiOperations] = useState([]);
+
+  useEffect(() => {
+    if (!projectId || projectId === 'all') { setApiOperations([]); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/projects/${projectId}/api-operations`, { headers: getAuthHeaders() });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (!cancelled) setApiOperations(data.operations || []);
+      } catch (error) {
+        console.error('Error fetching API calls:', error);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [API_URL, getAuthHeaders, projectId]);
+
+  const renderApiOperationOptions = () => {
+    const byResource = {};
+    apiOperations.forEach(op => { (byResource[op.resource || 'Other'] = byResource[op.resource || 'Other'] || []).push(op); });
+    return Object.keys(byResource).sort().map(resource => (
+      <optgroup key={resource} label={resource}>
+        {byResource[resource].map(op => (
+          <option key={op.id} value={op.id}>{op.method} {op.path}{op.requires_auth ? ' (auth)' : ''}</option>
+        ))}
+      </optgroup>
+    ));
+  };
+
   const actionMeta = useCallback((name) => {
     const meta = stepActions.find(a => a.name === name);
     // Unknown action (list not loaded, or a legacy step): keep every field visible
@@ -1158,6 +1189,18 @@ const TestCaseSteps = ({
                                         {renderActionOptions()}
                                       </select>
                                     </div>
+                                    {step.action === 'api_request' && apiOperations.length > 0 && (
+                                      <div className="edit-group">
+                                        <span className="edit-label">API call</span>
+                                        <select value="" onChange={e => {
+                                          const op = apiOperations.find(o => String(o.id) === e.target.value);
+                                          if (op) handleValueChange(step.id, JSON.stringify(op.step_request), step.action);
+                                        }} onKeyDown={handleEditKeyDown}>
+                                          <option value="">Replace with a call from the library</option>
+                                          {renderApiOperationOptions()}
+                                        </select>
+                                      </div>
+                                    )}
                                     {showValue && (
                                       <div className="edit-group">
                                         <span className="edit-label">Value{meta.needs_value === 'optional' ? ' (optional)' : ''}</span>
@@ -1454,10 +1497,35 @@ const TestCaseSteps = ({
                   onChange={(e) => setNewStep({ ...newStep, description: e.target.value })}
                 />
               </div>
+              {newStep.action === 'api_request' && apiOperations.length > 0 && (
+                <div className="form-group">
+                  <label>API call</label>
+                  <select value="" onChange={(e) => {
+                    const op = apiOperations.find(o => String(o.id) === e.target.value);
+                    if (op) setNewStep({
+                      ...newStep,
+                      value: JSON.stringify(op.step_request, null, 2),
+                      description: newStep.description.trim() || op.summary || `${op.method} ${op.path}`
+                    });
+                  }}>
+                    <option value="">Fill from the project's API library</option>
+                    {renderApiOperationOptions()}
+                  </select>
+                  <div className="form-hint">The request is copied into the step; edit it below. A relative endpoint goes to the environment's API URL.</div>
+                </div>
+              )}
               {showValue && (
                 <div className="form-group">
                   <label>Value{meta.needs_value === 'optional' ? ' (optional)' : ''}</label>
-                  {meta.value_options ? (
+                  {newStep.action === 'api_request' ? (
+                    <textarea
+                      rows={8}
+                      style={{ fontFamily: 'monospace', fontSize: '12px' }}
+                      placeholder={meta.value_hint || 'Request as JSON'}
+                      value={newStep.value}
+                      onChange={(e) => setNewStep({ ...newStep, value: e.target.value })}
+                    />
+                  ) : meta.value_options ? (
                     <select value={newStep.value} onChange={(e) => setNewStep({ ...newStep, value: e.target.value })}>
                       <option value="">Select file</option>
                       {meta.value_options.map(v => <option key={v} value={v}>{v}</option>)}
