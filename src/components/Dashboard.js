@@ -6,6 +6,7 @@ import UploadPopup from './UploadPopup';
 import TestResultPopup from './TestResultPopup';
 import Environments from './Environments';
 import ApiSchemaUpload from './ApiSchemaUpload';
+import ApiCoverage from './ApiCoverage';
 import ConflictNotifications from './ConflictNotifications';
 import ConflictPopup from './ConflictPopup';
 import PlaceholderHelp from './PlaceholderHelp';
@@ -17,6 +18,7 @@ import {
   FlaskConical,
   Settings,
   FileJson,
+  Grid3x3,
   Folder,
   AlertTriangle,
   ClipboardList,
@@ -184,6 +186,12 @@ const Dashboard = () => {
     fetchTestCase(id);
   };
 
+  // A test picked on the API Coverage page: show it on the Test Cases page
+  const openTestFromCoverage = (id) => {
+    setActiveTab('testCases');
+    handleNodeClick(id);
+  };
+
   const fetchTestCase = async (id) => {
     try {
       const response = await fetch(`${API_URL}/api/get_test_cases/${id}`, {
@@ -301,6 +309,14 @@ const Dashboard = () => {
           >
             <FileJson className="nav-icon" size={18} />
             {!isSidebarCollapsed && <span>API Schemas</span>}
+          </button>
+          <button
+            className={`nav-item ${activeTab === 'apiCoverage' ? 'active' : ''}`}
+            onClick={() => setActiveTab('apiCoverage')}
+            title="API Coverage"
+          >
+            <Grid3x3 className="nav-icon" size={18} />
+            {!isSidebarCollapsed && <span>API Coverage</span>}
           </button>
           <button
             className={`nav-item ${activeTab === 'suites' ? 'active' : ''}`}
@@ -487,6 +503,10 @@ const Dashboard = () => {
         ) : activeTab === 'apiSchemas' ? (
           <div className="tab-scrollable-container dash-page">
             <ApiSchemaUpload projectId={selectedProject} onTestsGenerated={() => fetchTreeDataForProject(selectedProject)} />
+          </div>
+        ) : activeTab === 'apiCoverage' ? (
+          <div className="tab-scrollable-container dash-page">
+            <ApiCoverage projectId={selectedProject} onOpenTest={openTestFromCoverage} />
           </div>
         ) : activeTab === 'suites' ? (
           <div className="tab-scrollable-container dash-page">
