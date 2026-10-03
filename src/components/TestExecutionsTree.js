@@ -8,6 +8,10 @@ import {
 import { useAuth } from '../context/AuthContext';
 import './TestExecutionsTree.css';
 
+// API steps do not work on the page: they have no screenshot and no button for one
+const API_ACTIONS = ['api_request', 'api_auth', 'api_get', 'api_post', 'api_put', 'api_delete', 'api_patch', 'response_validation', 'validation'];
+const isApiAction = (action) => API_ACTIONS.includes(action);
+
 const TestExecutionsTree = ({ selectedProjectId }) => {
     const API_URL = process.env.REACT_APP_API_URL;
     const [executions, setExecutions] = useState([]);
@@ -429,7 +433,7 @@ const TestExecutionsTree = ({ selectedProjectId }) => {
                                                                                     </span>
                                                                                 </div>
                                                                             </div>
-                                                                            {(step.screenshot_path || step.screenshot_base64) && (
+                                                                            {(step.screenshot_path || step.screenshot_base64) && !isApiAction(step.action) && (
                                                                                 <div className="tree-node-actions">
                                                                                     <button
                                                                                         className="screenshot-btn"

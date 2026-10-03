@@ -45,6 +45,10 @@ import './TestCaseSteps.css';
 // are offered, so an existing step can still be shown and edited.
 const ACTION_GROUP_ORDER = ['Interaction', 'Navigation', 'Wait', 'Assertion', 'Alert', 'API'];
 
+// API steps do not work on the page: they have no screenshot and no button for one
+const API_ACTIONS = ['api_request', 'api_auth', 'api_get', 'api_post', 'api_put', 'api_delete', 'api_patch', 'response_validation', 'validation'];
+const isApiAction = (action) => API_ACTIONS.includes(action);
+
 const groupActions = (actions) => {
   const groups = {};
   actions.forEach(a => { (groups[a.group] = groups[a.group] || []).push(a); });
@@ -1282,7 +1286,7 @@ const TestCaseSteps = ({
                                   )}
                                   <div className="edit-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                                     <div>
-                                      <button
+                                      {!isApiAction(step.action) && <button
                                         className="view-screenshot-btn"
                                         style={{
                                           display: 'flex',
@@ -1299,7 +1303,7 @@ const TestCaseSteps = ({
                                         onClick={(e) => { e.stopPropagation(); openStepScreenshot(step.id); }}
                                       >
                                         <Camera size={14} /> View Screenshot
-                                      </button>
+                                      </button>}
                                     </div>
                                     <button onClick={() => setActionDropdownStepId(null)} className="done-btn">Done</button>
                                   </div>
@@ -1308,9 +1312,11 @@ const TestCaseSteps = ({
 
                               {!isEditing && (
                                 <div className="step-hover-actions">
-                                  <button className="step-btn-icon" onClick={(e) => { e.stopPropagation(); openStepScreenshot(step.id); }}>
-                                    <Camera size={14} />
-                                  </button>
+                                  {!isApiAction(step.action) && (
+                                    <button className="step-btn-icon" onClick={(e) => { e.stopPropagation(); openStepScreenshot(step.id); }}>
+                                      <Camera size={14} />
+                                    </button>
+                                  )}
                                   <button className="step-btn-icon delete" onClick={(e) => { e.stopPropagation(); handleDeleteStepClick(step); }}>
                                     <Trash2 size={14} />
                                   </button>
@@ -1417,7 +1423,7 @@ const TestCaseSteps = ({
                                           {res.status === 'skipped' && <MinusCircle size={14} className="text-gray-400" />}
                                         </td>
                                         <td className="text-center">
-                                          {res.has_screenshot && (
+                                          {res.has_screenshot && !isApiAction(res.action) && (
                                             <button
                                               className="p-1 hover:bg-gray-100 rounded text-gray-500 hover:text-indigo-600 transition-colors"
                                               onClick={(e) => {
