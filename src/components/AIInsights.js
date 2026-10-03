@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './Phase4Dashboard.css';
+import './AIInsights.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine, faDatabase, faCog, faCheckCircle, faExclamationCircle, faSync } from '@fortawesome/free-solid-svg-icons';
 
-const Phase4Dashboard = () => {
+const AIInsights = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -57,7 +57,7 @@ const Phase4Dashboard = () => {
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000';
 
-  const fetchPhase4Data = async () => {
+  const fetchInsightsData = async () => {
     try {
       setError('');
       const token = localStorage.getItem('token');
@@ -108,8 +108,8 @@ const Phase4Dashboard = () => {
       if (errorRes?.data?.data) setErrorCategories(errorRes.data.data);
       if (planRes?.data?.data) setPlanningAccuracy(planRes.data.data);
     } catch (err) {
-      setError(err.message || 'Failed to fetch Phase 4 data');
-      console.error('Error fetching Phase 4 data:', err);
+      setError(err.message || 'Failed to fetch AI insights data');
+      console.error('Error fetching AI insights data:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -117,17 +117,17 @@ const Phase4Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchPhase4Data();
+    fetchInsightsData();
     // Auto-refresh every 60 seconds
     const interval = setInterval(() => {
-      fetchPhase4Data();
+      fetchInsightsData();
     }, 60000);
     return () => clearInterval(interval);
   }, []);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchPhase4Data();
+    fetchInsightsData();
   };
 
   const handleRunABTest = async () => {
@@ -159,7 +159,7 @@ const Phase4Dashboard = () => {
           sample_size: 10
         });
         // Refresh data to show new test
-        fetchPhase4Data();
+        fetchInsightsData();
         alert(`✅ A/B Test created successfully! Test ID: ${response.data.test_id}`);
       }
     } catch (err) {
@@ -280,7 +280,7 @@ const Phase4Dashboard = () => {
         setAvailableRunsA([]);
         setAvailableRunsB([]);
         // Refresh data
-        fetchPhase4Data();
+        fetchInsightsData();
         alert(`✅ Successfully linked ${response.data.linked.total_linked} test runs!`);
       }
     } catch (err) {
@@ -292,22 +292,22 @@ const Phase4Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="phase4-container">
+      <div className="ai-insights">
         <div className="loading-spinner">
           <div className="spinner"></div>
-          <p>Loading Phase 4 Dashboard...</p>
+          <p>Loading AI Insights...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="phase4-container">
+    <div className="ai-insights">
       {/* Header */}
-      <div className="phase4-header">
+      <div className="ai-header">
         <div>
-          <h1>🚀 Phase 4 Optimization Dashboard</h1>
-          <p>Performance Optimization, Fine-Tuning & Continuous Improvement</p>
+          <h1>AI Insights</h1>
+          <p>Cache and queries, model fine-tuning, failure analysis and A/B tests</p>
         </div>
         <button
           onClick={handleRefresh}
@@ -326,7 +326,7 @@ const Phase4Dashboard = () => {
       )}
 
       {/* Tabs */}
-      <div className="phase4-tabs">
+      <div className="ai-tabs">
         <button
           className={`tab-button ${activeTab === 'performance' ? 'active' : ''}`}
           onClick={() => setActiveTab('performance')}
@@ -350,7 +350,7 @@ const Phase4Dashboard = () => {
       {/* Performance Optimizer Tab */}
       {activeTab === 'performance' && (
         <div className="tab-content">
-          <div className="section-title">Cache Performance</div>
+          <div className="ai-section-title">Cache Performance</div>
           {cacheStats && (
             <div className="metrics-grid">
               <div className="metric-card">
@@ -372,7 +372,7 @@ const Phase4Dashboard = () => {
             </div>
           )}
 
-          <div className="section-title">Query Performance</div>
+          <div className="ai-section-title">Query Performance</div>
           {queryLogs && (
             <div className="metrics-grid">
               <div className="metric-card">
@@ -386,7 +386,7 @@ const Phase4Dashboard = () => {
             </div>
           )}
 
-          <div className="section-title">Optimization Recommendations</div>
+          <div className="ai-section-title">Optimization Recommendations</div>
           {optimizationRecs && optimizationRecs.recommendations && (
             <div className="recommendations-list">
               {optimizationRecs.recommendations.slice(0, 5).map((rec, idx) => (
@@ -403,7 +403,7 @@ const Phase4Dashboard = () => {
             </div>
           )}
 
-          <div className="section-title">Index Analysis</div>
+          <div className="ai-section-title">Index Analysis</div>
           {indexAnalysis && (
             <div className="index-analysis">
               <div className="index-section">
@@ -430,7 +430,7 @@ const Phase4Dashboard = () => {
       {/* Fine-Tuning Tab */}
       {activeTab === 'finetuning' && (
         <div className="tab-content">
-          <div className="section-title">Successful Tests for Training</div>
+          <div className="ai-section-title">Successful Tests for Training</div>
           {successfulTests && (
             <div className="metrics-grid">
               <div className="metric-card">
@@ -440,7 +440,7 @@ const Phase4Dashboard = () => {
             </div>
           )}
 
-          <div className="section-title">Fine-Tuning Job History</div>
+          <div className="ai-section-title">Fine-Tuning Job History</div>
           {jobHistory && jobHistory.data && (
             <div className="jobs-list">
               {jobHistory.data.slice(0, 10).map((job, idx) => (
@@ -463,7 +463,7 @@ const Phase4Dashboard = () => {
       {/* Continuous Improvement Tab */}
       {activeTab === 'improvement' && (
         <div className="tab-content">
-          <div className="section-title">Failure Analysis (Last 7 Days)</div>
+          <div className="ai-section-title">Failure Analysis (Last 7 Days)</div>
           {failureAnalysis && (
             <div className="metrics-grid">
               <div className="metric-card">
@@ -473,7 +473,7 @@ const Phase4Dashboard = () => {
             </div>
           )}
 
-          <div className="section-title">Confidence Calibration</div>
+          <div className="ai-section-title">Confidence Calibration</div>
           {confidenceCalibration && (
             <div className="metrics-grid">
               <div className="metric-card">
@@ -483,7 +483,7 @@ const Phase4Dashboard = () => {
             </div>
           )}
 
-          <div className="section-title">Tool Usage Analysis</div>
+          <div className="ai-section-title">Tool Usage Analysis</div>
           {toolUsage && toolUsage.tools && (
             <div className="tools-grid">
               {toolUsage.tools.slice(0, 6).map((tool, idx) => (
@@ -497,7 +497,7 @@ const Phase4Dashboard = () => {
           )}
 
           <div className="section-title-with-button">
-            <div className="section-title">A/B Test Results</div>
+            <div className="ai-section-title">A/B Test Results</div>
             <div className="button-group">
               <button 
                 className="run-ab-test-btn"
@@ -567,7 +567,7 @@ const Phase4Dashboard = () => {
             </>
           )}
 
-          <div className="section-title">Ensemble Performance</div>
+          <div className="ai-section-title">Ensemble Performance</div>
           {ensemblePerformance && (
             <div className="metrics-grid">
               <div className="metric-card">
@@ -581,7 +581,7 @@ const Phase4Dashboard = () => {
             </div>
           )}
 
-          <div className="section-title">Error Categories</div>
+          <div className="ai-section-title">Error Categories</div>
           {errorCategories && errorCategories.error_categories && (
             <div className="categories-grid">
               {Object.entries(errorCategories.error_categories).slice(0, 6).map(([category, count], idx) => (
@@ -593,7 +593,7 @@ const Phase4Dashboard = () => {
             </div>
           )}
 
-          <div className="section-title">Planning Accuracy</div>
+          <div className="ai-section-title">Planning Accuracy</div>
           {planningAccuracy && (
             <div className="metrics-grid">
               <div className="metric-card">
@@ -859,4 +859,4 @@ const Phase4Dashboard = () => {
   );
 };
 
-export default Phase4Dashboard;
+export default AIInsights;

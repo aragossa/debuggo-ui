@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './components/Dashboard';
@@ -16,7 +16,7 @@ import ContactRequests from './components/ContactRequests';
 import UserRequests from './components/UserRequests';
 import AdminRequests from './components/AdminRequests';
 import MonitoringDashboard from './components/MonitoringDashboard';
-import Phase4Dashboard from './components/Phase4Dashboard';
+import AIInsights from './components/AIInsights';
 import GenerationCostAnalytics from './components/GenerationCostAnalytics';
 import MetricsDashboard from './components/MetricsDashboard';
 import StatusBar from './components/StatusBar';
@@ -172,13 +172,14 @@ function App() {
               }
             />
             <Route
-              path="/phase4"
+              path="/ai-insights"
               element={
                 <ProtectedRoute adminOnly>
-                  <Phase4Dashboard />
+                  <AIInsights />
                 </ProtectedRoute>
               }
             />
+            <Route path="/phase4" element={<Navigate to="/ai-insights" replace />} />
             <Route
               path="/cost-analytics"
               element={

@@ -5,11 +5,9 @@ import {
     ChevronDown,
     Users,
     Settings,
-    Activity,
     MessageSquare,
     FileText,
     BarChart,
-    Layout,
     Code,
     LayoutDashboard,
     Folder,
@@ -50,7 +48,7 @@ const Navbar = () => {
     }
 
     const isAdmin = user?.role === 'admin';
-    const isAdminActive = location.pathname.match(/^\/(clients|users|ai-models|contact-requests|admin-requests|monitoring|phase4|cost-analytics)/);
+    const isAdminActive = location.pathname.match(/^\/(clients|users|ai-models|contact-requests|admin-requests|monitoring|ai-insights|phase4|cost-analytics)/);
 
     return (
         <nav className="top-nav">
@@ -88,12 +86,7 @@ const Navbar = () => {
                             <Link to="/admin-requests" className="dropdown-item">
                                 <FileText size={16} /> User Requests
                             </Link>
-                            <Link to="/monitoring" className="dropdown-item">
-                                <Activity size={16} /> Monitoring
-                            </Link>
-                            <Link to="/phase4" className="dropdown-item">
-                                <Layout size={16} /> Phase 4
-                            </Link>
+                            {/* Monitoring and AI Insights are hidden from the menu for now; the pages stay reachable at /monitoring and /ai-insights */}
                             <Link to="/cost-analytics" className="dropdown-item">
                                 <BarChart size={16} /> Cost Analytics
                             </Link>

@@ -86,237 +86,179 @@ const MonitoringDashboard = () => {
     }
   };
 
+  const metricRows = (rows) =>
+    rows.map(([label, value]) => (
+      <div className="mon-row" key={label}>
+        <span>{label}</span>
+        <span>{value}</span>
+      </div>
+    ));
+
+  const header = (
+    <div className="mon-card mon-header">
+      <div>
+        <h1>Monitoring</h1>
+        <p>AI agent metrics for the selected period (validation, confidence, errors, retries)</p>
+      </div>
+      <div className="mon-controls">
+        <select
+          value={timeRange}
+          onChange={(e) => setTimeRange(Number(e.target.value))}
+          className="mon-select"
+        >
+          <option value={1}>Last 1 Hour</option>
+          <option value={24}>Last 24 Hours</option>
+          <option value={168}>Last 7 Days</option>
+          <option value={720}>Last 30 Days</option>
+        </select>
+        <button onClick={handleRefresh} disabled={refreshing} className="mon-btn">
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
-      <div className="monitoring-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading monitoring dashboard...</p>
-        </div>
+      <div className="monitoring-page">
+        {header}
+        <div className="mon-loading">Loading monitoring data...</div>
       </div>
     );
   }
 
   return (
-    <div className="monitoring-container">
-      {/* Header */}
-      <div className="monitoring-header">
-        <div>
-          <h1>Monitoring Dashboard</h1>
-          <p>Real-time metrics for AI Agent services</p>
-        </div>
-        <div className="header-controls">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(Number(e.target.value))}
-            className="time-range-select"
-          >
-            <option value={1}>Last 1 Hour</option>
-            <option value={24}>Last 24 Hours</option>
-            <option value={168}>Last 7 Days</option>
-            <option value={720}>Last 30 Days</option>
-          </select>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="refresh-button"
-          >
-            {refreshing ? '⟳ Refreshing...' : '⟳ Refresh'}
-          </button>
-        </div>
-      </div>
+    <div className="monitoring-page">
+      {header}
 
-      {/* Error Alert */}
-      {error && (
-        <div className="error-alert">
-          <span>⚠️ {error}</span>
-        </div>
-      )}
+      {error && <div className="mon-error">{error}</div>}
 
-      {/* Health Status */}
       {health && (
-        <div className="health-card">
-          <div className="health-header">
-            <h2>System Health</h2>
-            <div className="health-status">
-              <span
-                className="status-indicator"
-                style={{ backgroundColor: getStatusColor(health.overall_status) }}
-              ></span>
-              <span className="status-text">{health.overall_status.toUpperCase()}</span>
+        <div className="mon-card">
+          <div className="mon-health-head">
+            <h2 className="mon-section-title">System Health</h2>
+            <div className="mon-status">
+              <span className="mon-dot" style={{ backgroundColor: getStatusColor(health.overall_status) }}></span>
+              {(health.overall_status || '').toUpperCase()}
             </div>
           </div>
+          <p className="mon-hint">
+            Status is "warning" when there were no validations in the last hour. Table counts cover all time.
+          </p>
 
-          {/* Tables Status */}
-          <div className="tables-grid">
+          <div className="mon-grid">
             {Object.entries(health.tables || {}).map(([tableName, tableData]) => (
-              <div key={tableName} className="table-status">
-                <div className="table-header">
-                  <span className="table-name">{tableName}</span>
+              <div key={tableName} className="mon-tile">
+                <div className="mon-tile-label">
+                  <span>{tableName}</span>
                   <span
-                    className="table-indicator"
-                    style={{
-                      backgroundColor:
-                        tableData.status === 'healthy' ? '#10b981' : '#f59e0b',
-                    }}
+                    className="mon-dot"
+                    style={{ backgroundColor: tableData.status === 'healthy' ? '#10b981' : '#f59e0b' }}
                   ></span>
                 </div>
-                <div className="table-count">{tableData.record_count}</div>
-                <div className="table-label">records</div>
+                <div className="mon-tile-value">{tableData.record_count}</div>
+                <div className="mon-tile-sub">records</div>
               </div>
             ))}
           </div>
 
-          {/* Recent Activity */}
           {health.recent_activity && (
-            <div className="recent-activity">
-              <h3>Recent Activity (1h)</h3>
-              <div className="activity-grid">
-                <div className="activity-item">
-                  <div className="activity-value">{health.recent_activity.validations_1h}</div>
-                  <div className="activity-label">Validations</div>
+            <>
+              <div className="mon-subtitle">Recent Activity (1h)</div>
+              <div className="mon-grid">
+                <div className="mon-tile">
+                  <div className="mon-tile-label">Validations</div>
+                  <div className="mon-tile-value">{health.recent_activity.validations_1h}</div>
                 </div>
-                <div className="activity-item">
-                  <div className="activity-value">{health.recent_activity.failures_1h}</div>
-                  <div className="activity-label">Failures</div>
+                <div className="mon-tile">
+                  <div className="mon-tile-label">Failures</div>
+                  <div className="mon-tile-value">{health.recent_activity.failures_1h}</div>
                 </div>
-                <div className="activity-item">
-                  <div className="activity-value">{health.recent_activity.retries_1h}</div>
-                  <div className="activity-label">Retries</div>
+                <div className="mon-tile">
+                  <div className="mon-tile-label">Retries</div>
+                  <div className="mon-tile-value">{health.recent_activity.retries_1h}</div>
                 </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       )}
 
-      {/* Metrics Grid */}
-      {metrics && (
-        <div className="metrics-section">
-          <h2>Key Metrics</h2>
-          <div className="metrics-grid">
-            {/* Validation Metrics */}
-            {metrics.validation && (
-              <div className="metric-card">
-                <h3>Validation</h3>
-                <div className="metric-item">
-                  <span className="metric-label">Success Rate</span>
-                  <span className="metric-value">{metrics.validation.success_rate}%</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-label">Avg Confidence</span>
-                  <span className="metric-value">{metrics.validation.avg_confidence}%</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-label">Total Validations</span>
-                  <span className="metric-value">{metrics.validation.total_validations}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Confidence Metrics */}
-            {metrics.confidence && (
-              <div className="metric-card">
-                <h3>Confidence Scoring</h3>
-                <div className="metric-item">
-                  <span className="metric-label">Avg Confidence</span>
-                  <span className="metric-value">{metrics.confidence.avg_confidence}%</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-label">Low Risk</span>
-                  <span className="metric-value">{metrics.confidence.low_risk_percentage}%</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-label">High Risk</span>
-                  <span className="metric-value">{metrics.confidence.high_risk_percentage}%</span>
-                </div>
-              </div>
-            )}
-
-            {/* Feedback Metrics */}
-            {metrics.feedback && (
-              <div className="metric-card">
-                <h3>Execution Feedback</h3>
-                <div className="metric-item">
-                  <span className="metric-label">Total Failures</span>
-                  <span className="metric-value">{metrics.feedback.total_failures}</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-label">Error Types</span>
-                  <span className="metric-value">{metrics.feedback.unique_error_types}</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-label">Most Common</span>
-                  <span className="metric-value">
-                    {metrics.feedback.most_common_errors?.[0]?.count || 0}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Retry Metrics */}
-            {metrics.retry && (
-              <div className="metric-card">
-                <h3>Retry Attempts</h3>
-                <div className="metric-item">
-                  <span className="metric-label">Success Rate</span>
-                  <span className="metric-value">{metrics.retry.retry_success_rate}%</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-label">Total Retries</span>
-                  <span className="metric-value">{metrics.retry.total_retry_attempts}</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-label">Avg Attempts</span>
-                  <span className="metric-value">{metrics.retry.avg_attempts_per_step}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Alerts Panel */}
       {alerts && alerts.alerts && alerts.alerts.length > 0 && (
-        <div className="alerts-section">
-          <h2>Active Alerts ({alerts.alert_count})</h2>
-          <div className="alerts-list">
-            {alerts.alerts.map((alert, index) => (
-              <div
-                key={index}
-                className="alert-item"
-                style={{
-                  borderLeftColor: getAlertSeverityColor(alert.severity),
-                }}
-              >
-                <div className="alert-header">
-                  <span className="alert-severity">{alert.severity.toUpperCase()}</span>
-                  <span className="alert-type">{alert.type}</span>
-                </div>
-                <div className="alert-message">{alert.message}</div>
+        <div className="mon-card">
+          <h2 className="mon-section-title">Active Alerts ({alerts.alert_count})</h2>
+          {alerts.alerts.map((alert, index) => (
+            <div key={index} className="mon-alert" style={{ borderLeftColor: getAlertSeverityColor(alert.severity) }}>
+              <div className="mon-alert-head">
+                <span>{alert.severity.toUpperCase()}</span>
+                <span className="mon-alert-type">{alert.type}</span>
               </div>
-            ))}
+              <div className="mon-alert-msg">{alert.message}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {alerts && alerts.alerts && alerts.alerts.length === 0 && (
+        <div className="mon-ok">No active alerts</div>
+      )}
+
+      {metrics && (
+        <div className="mon-card">
+          <h2 className="mon-section-title">Key Metrics</h2>
+          <div className="mon-grid">
+            {metrics.validation && (
+              <div className="mon-tile mon-metric-group">
+                <h3>Validation</h3>
+                {metricRows([
+                  ['Success Rate', `${metrics.validation.success_rate}%`],
+                  ['Avg Confidence', `${metrics.validation.avg_confidence}%`],
+                  ['Total Validations', metrics.validation.total_validations],
+                ])}
+              </div>
+            )}
+            {metrics.confidence && (
+              <div className="mon-tile mon-metric-group">
+                <h3>Confidence Scoring</h3>
+                {metricRows([
+                  ['Avg Confidence', `${metrics.confidence.avg_confidence}%`],
+                  ['Low Risk', `${metrics.confidence.low_risk_percentage}%`],
+                  ['High Risk', `${metrics.confidence.high_risk_percentage}%`],
+                ])}
+              </div>
+            )}
+            {metrics.feedback && (
+              <div className="mon-tile mon-metric-group">
+                <h3>Execution Feedback</h3>
+                {metricRows([
+                  ['Total Failures', metrics.feedback.total_failures],
+                  ['Error Types', metrics.feedback.unique_error_types],
+                  ['Most Common', metrics.feedback.most_common_errors?.[0]?.count || 0],
+                ])}
+              </div>
+            )}
+            {metrics.retry && (
+              <div className="mon-tile mon-metric-group">
+                <h3>Retry Attempts</h3>
+                {metricRows([
+                  ['Success Rate', `${metrics.retry.retry_success_rate}%`],
+                  ['Total Retries', metrics.retry.total_retry_attempts],
+                  ['Avg Attempts', metrics.retry.avg_attempts_per_step],
+                ])}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* No Alerts */}
-      {alerts && alerts.alerts && alerts.alerts.length === 0 && (
-        <div className="no-alerts">
-          <span>✓ No active alerts</span>
-        </div>
-      )}
-
-      {/* Error Categories */}
-      {metrics?.feedback?.error_categories && (
-        <div className="error-categories">
-          <h2>Error Categories</h2>
-          <div className="categories-grid">
+      {metrics?.feedback?.error_categories && Object.keys(metrics.feedback.error_categories).length > 0 && (
+        <div className="mon-card">
+          <h2 className="mon-section-title">Error Categories</h2>
+          <div className="mon-chip-list">
             {Object.entries(metrics.feedback.error_categories).map(([category, count]) => (
-              <div key={category} className="category-item">
-                <span className="category-name">{category}</span>
-                <span className="category-count">{count}</span>
-              </div>
+              <span key={category} className="mon-chip">
+                {category} <b>{count}</b>
+              </span>
             ))}
           </div>
         </div>

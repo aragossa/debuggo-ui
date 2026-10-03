@@ -1,18 +1,16 @@
-/* Modern Projects Page Styling */
 .projects-container {
   padding: 2rem;
   width: 100%;
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--gray-50);
-  /* Fix layout */
+  
   flex: 1;
   overflow-y: auto;
   box-sizing: border-box;
 }
 
-/* Header Styling */
-.projects-header {
+.projects-container .projects-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -20,7 +18,7 @@
   padding-bottom: 0;
 }
 
-.projects-header h1 {
+.projects-container .projects-header h1 {
   font-size: 24px;
   font-weight: 600;
   color: var(--gray-900);
@@ -31,13 +29,13 @@
   letter-spacing: -0.02em;
 }
 
-.header-icon {
+.projects-container .header-icon {
   color: var(--primary);
   display: none;
-  /* Cleaner look without the big icon */
+  
 }
 
-.create-project-button {
+.projects-container .create-project-button {
   background-color: var(--primary);
   color: white;
   padding: 8px 16px;
@@ -53,17 +51,16 @@
   box-shadow: var(--shadow-sm);
 }
 
-.create-project-button:hover {
+.projects-container .create-project-button:hover {
   background-color: var(--primary-light);
   transform: translateY(-1px);
 }
 
-.create-project-button:active {
+.projects-container .create-project-button:active {
   transform: translateY(0);
 }
 
-/* Error Container */
-.error-container {
+.projects-container .error-container {
   background-color: #FEF2F2;
   color: #991B1B;
   padding: 12px 16px;
@@ -76,8 +73,7 @@
   font-size: 14px;
 }
 
-/* Loading State */
-.loading-container {
+.projects-container .loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -87,13 +83,12 @@
   color: var(--gray-500);
 }
 
-.loading-icon {
+.projects-container .loading-icon {
   font-size: 24px;
   color: var(--primary);
 }
 
-/* Search and Controls */
-.projects-controls {
+.projects-container .projects-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
@@ -101,13 +96,13 @@
   align-items: center;
 }
 
-.search-container {
+.projects-container .search-container {
   position: relative;
   flex: 1;
   min-width: 280px;
 }
 
-.search-icon {
+.projects-container .search-icon {
   position: absolute;
   left: 12px;
   top: 50%;
@@ -116,7 +111,7 @@
   font-size: 14px;
 }
 
-.search-input {
+.projects-container .search-input {
   width: 100%;
   padding: 10px 16px 10px 36px;
   border: 1px solid var(--gray-200);
@@ -128,19 +123,19 @@
   box-sizing: border-box;
 }
 
-.search-input:focus {
+.projects-container .search-input:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-subtle);
 }
 
-.filter-container {
+.projects-container .filter-container {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.filter-container label {
+.projects-container .filter-container label {
   font-weight: 500;
   color: var(--gray-600);
   font-size: 14px;
@@ -150,7 +145,7 @@
   white-space: nowrap;
 }
 
-.filter-select {
+.projects-container .filter-select {
   padding: 8px 12px;
   border: 1px solid var(--gray-200);
   border-radius: 6px;
@@ -162,14 +157,13 @@
   cursor: pointer;
 }
 
-.filter-select:focus {
+.projects-container .filter-select:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-subtle);
 }
 
-/* Project Form */
-.project-form-container {
+.projects-container .project-form-container {
   background-color: white;
   padding: 24px;
   border-radius: 8px;
@@ -178,7 +172,7 @@
   border: 1px solid var(--gray-200);
 }
 
-.project-form-container h2 {
+.projects-container .project-form-container h2 {
   margin-top: 0;
   margin-bottom: 20px;
   color: var(--gray-900);
@@ -189,14 +183,14 @@
   gap: 8px;
 }
 
-.project-form {
+.projects-container .project-form {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
   max-width: 600px;
 }
 
-.form-group label {
+.projects-container .form-group label {
   display: block;
   margin-bottom: 6px;
   font-weight: 500;
@@ -204,9 +198,9 @@
   font-size: 14px;
 }
 
-.form-group input,
-.form-group textarea,
-.form-group select {
+.projects-container .form-group input,
+.projects-container .form-group textarea,
+.projects-container .form-group select {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--gray-300);
@@ -216,26 +210,26 @@
   box-sizing: border-box;
 }
 
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+.projects-container .form-group input:focus,
+.projects-container .form-group textarea:focus,
+.projects-container .form-group select:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-subtle);
 }
 
-.form-group textarea {
+.projects-container .form-group textarea {
   min-height: 80px;
   resize: vertical;
 }
 
-.form-actions {
+.projects-container .form-actions {
   display: flex;
   gap: 12px;
   margin-top: 8px;
 }
 
-.submit-button {
+.projects-container .submit-button {
   background-color: var(--primary);
   color: white;
   border: none;
@@ -250,11 +244,11 @@
   transition: all 0.2s ease;
 }
 
-.submit-button:hover {
+.projects-container .submit-button:hover {
   background-color: var(--primary-light);
 }
 
-.cancel-button {
+.projects-container .cancel-button {
   background-color: white;
   color: var(--gray-700);
   border: 1px solid var(--gray-300);
@@ -269,19 +263,18 @@
   transition: all 0.2s ease;
 }
 
-.cancel-button:hover {
+.projects-container .cancel-button:hover {
   background-color: var(--gray-50);
   border-color: var(--gray-400);
 }
 
-/* Projects List */
-.projects-list {
+.projects-container .projects-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
 
-.project-card {
+.projects-container .project-card {
   background-color: white;
   border-radius: 8px;
   border: 1px solid var(--gray-200);
@@ -291,37 +284,37 @@
   flex-direction: column;
 }
 
-.project-card:hover {
+.projects-container .project-card:hover {
   border-color: var(--primary-light);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 
-.project-card-header {
+.projects-container .project-card-header {
   padding: 16px 16px 12px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 }
 
-.project-card-header h3 {
+.projects-container .project-card-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--gray-900);
   line-height: 1.4;
   word-break: break-word;
-  /* Allow long names to wrap */
+  
 }
 
-.project-actions {
+.projects-container .project-actions {
   display: flex;
   gap: 4px;
   margin-left: 8px;
   flex-shrink: 0;
 }
 
-.action-button {
+.projects-container .action-button {
   background: none;
   border: none;
   cursor: pointer;
@@ -336,24 +329,24 @@
   font-size: 14px;
 }
 
-.action-button:hover {
+.projects-container .action-button:hover {
   color: var(--gray-700);
   background-color: var(--gray-100);
 }
 
-.action-button.delete:hover {
+.projects-container .action-button.delete:hover {
   color: var(--danger);
   background-color: #FEF2F2;
 }
 
-.project-card-body {
+.projects-container .project-card-body {
   padding: 0 16px 16px;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
 }
 
-.project-description {
+.projects-container .project-description {
   color: var(--gray-600);
   margin-top: 4px;
   margin-bottom: 16px;
@@ -362,7 +355,7 @@
   flex-grow: 1;
 }
 
-.project-client {
+.projects-container .project-client {
   color: var(--gray-500);
   margin: 0;
   font-size: 12px;
@@ -374,13 +367,12 @@
   border-top: 1px solid var(--gray-100);
 }
 
-.client-icon {
+.projects-container .client-icon {
   color: var(--gray-400);
   font-size: 12px;
 }
 
-/* No Projects State */
-.no-projects {
+.projects-container .no-projects {
   text-align: center;
   padding: 48px;
   background-color: white;
@@ -393,42 +385,154 @@
   gap: 16px;
 }
 
-.no-projects-icon {
+.projects-container .no-projects-icon {
   font-size: 32px;
   color: var(--gray-300);
 }
 
-.no-projects p {
+.projects-container .no-projects p {
   margin: 0;
   font-size: 14px;
-}
-
-/* Responsive Adjustments */
-@media (max-width: 640px) {
-  .projects-container {
+}@media (max-width: 640px) {.projects-container {
     padding: 16px;
   }
 
-  .projects-header {
+.projects-container .projects-header {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
   }
 
-  .projects-controls {
+.projects-container .projects-controls {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .filter-container {
+.projects-container .filter-container {
     justify-content: space-between;
   }
 
-  .filter-select {
+.projects-container .filter-select {
     flex: 1;
   }
 
-  .projects-list {
+.projects-container .projects-list {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- Dashboard look: flat, no animation ---- */
+.projects-container {
+  background: #f9fafb;
+  color: #1f2937;
+}
+.projects-container *,
+.projects-container *::before,
+.projects-container *::after {
+  animation: none !important;
+  transition: none !important;
+}
+.projects-container .projects-header h1 { font-size: 20px; color: #111827; }
+.projects-container .create-project-button,
+.projects-container .submit-button {
+  background: #0A2540;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: none;
+  transform: none;
+  width: auto;
+  height: auto;
+}
+.projects-container .create-project-button:hover,
+.projects-container .submit-button:hover { background: #0A2540; transform: none; opacity: .92; }
+.projects-container .cancel-button {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  width: auto;
+  height: auto;
+  box-shadow: none;
+}
+.projects-container .cancel-button:hover { background: #f9fafb; }
+.projects-container .search-input,
+.projects-container .filter-select { border-color: #e5e7eb; border-radius: 6px; }
+.projects-container .project-form-container {
+  border: 1px solid #e5e7eb;
+  box-shadow: none;
+  border-radius: 8px;
+  padding: 20px;
+}
+.projects-container .project-form-container h2 { font-size: 16px; }
+.projects-container .project-form { max-width: 560px; gap: 14px; }
+.projects-container .form-group { margin: 0; padding: 0; width: auto; }
+.projects-container .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+.projects-container .form-group label svg { color: #9ca3af; margin-right: 4px; }
+.projects-container .form-group input,
+.projects-container .form-group textarea,
+.projects-container .form-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  box-shadow: none;
+}
+.projects-container .form-actions { display: flex; gap: 8px; margin: 4px 0 0; padding: 0; }
+.projects-container .projects-list { gap: 12px; }
+.projects-container .project-card {
+  border: 1px solid #e5e7eb;
+  box-shadow: none;
+  border-radius: 8px;
+}
+.projects-container .project-card:hover { transform: none; border-color: #34d399; box-shadow: none; }
+.projects-container .project-description {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #6b7280;
+  min-height: 0;
+}
+.projects-container .project-description p { margin: 0; }
+.projects-container .action-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  border-radius: 4px;
+}
+.projects-container .action-button:hover { background: #f3f4f6; color: #374151; }
+.projects-container .action-button.delete:hover { background: #fef2f2; color: #dc2626; }
+.projects-container .project-client { border-top: 1px solid #f3f4f6; }
+
+.projects-container .form-actions button {
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  align-items: center;
+  line-height: 1.4;
+}
+.projects-container button[type="submit"] { padding: 8px 14px; }
+.projects-container .submit-button { border: 1px solid #0A2540; }
