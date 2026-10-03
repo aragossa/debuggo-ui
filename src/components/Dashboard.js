@@ -470,7 +470,7 @@ const Dashboard = () => {
           </div>
         ) : activeTab === 'apiSchemas' ? (
           <div className="tab-scrollable-container">
-            <ApiSchemaUpload projectId={selectedProject} />
+            <ApiSchemaUpload projectId={selectedProject} onTestsGenerated={() => fetchTreeDataForProject(selectedProject)} />
           </div>
         ) : activeTab === 'suites' ? (
           <div className="tab-scrollable-container">

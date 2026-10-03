@@ -4,7 +4,7 @@ import { faUpload, faTrash, faFileCode, faCheckCircle } from '@fortawesome/free-
 import { useAuth } from '../context/AuthContext';
 import './ApiSchemaUpload.css';
 
-const ApiSchemaUpload = ({ projectId }) => {
+const ApiSchemaUpload = ({ projectId, onTestsGenerated }) => {
   const [schemas, setSchemas] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -15,6 +15,9 @@ const ApiSchemaUpload = ({ projectId }) => {
   const [operations, setOperations] = useState([]);
   const [loadingOperations, setLoadingOperations] = useState(false);
   const [operationFilter, setOperationFilter] = useState('');
+  // Baseline API tests: built on the server from the library of calls, no AI involved
+  const [generatingSchemaId, setGeneratingSchemaId] = useState(null);
+  const [generationResult, setGenerationResult] = useState(null);
   const { getAuthHeaders } = useAuth();
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -60,6 +63,27 @@ const ApiSchemaUpload = ({ projectId }) => {
       console.error('Error fetching API calls:', error);
     } finally {
       setLoadingOperations(false);
+    }
+  };
+
+  const handleGenerateTests = async (schema) => {
+    setGeneratingSchemaId(schema.id);
+    setGenerationResult(null);
+    try {
+      const response = await fetch(`${API_URL}/api/api-schemas/${schema.id}/baseline-tests`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+      setGenerationResult({ schemaId: schema.id, schemaName: schema.name, created: data.created, skipped: data.skipped });
+      fetchSchemas();
+      if (onTestsGenerated) onTestsGenerated();
+    } catch (error) {
+      console.error('Error generating API tests:', error);
+      alert(`Failed to generate API tests: ${error.message}`);
+    } finally {
+      setGeneratingSchemaId(null);
     }
   };
 
@@ -231,6 +255,15 @@ const ApiSchemaUpload = ({ projectId }) => {
                   {openSchemaId === schema.id ? 'Hide API calls' : `Show API calls (${schema.operations_count ?? 0})`}
                 </button>
                 <button
+                  className="schema-generate-button"
+                  onClick={() => handleGenerateTests(schema)}
+                  disabled={generatingSchemaId !== null || !schema.operations_count}
+                  title="Read checks for every GET and create-read-update-delete chains per resource, built from the schema without AI"
+                >
+                  <FontAwesomeIcon icon={faFileCode} />
+                  {generatingSchemaId === schema.id ? ' Generating...' : ' Generate API tests'}
+                </button>
+                <button
                   className="delete-schema-button"
                   onClick={() => handleDelete(schema.id)}
                 >
@@ -241,6 +274,25 @@ const ApiSchemaUpload = ({ projectId }) => {
           </div>
         )}
       </div>
+
+      {generationResult && (
+        <div className="schema-generation-result">
+          <h4>API tests of "{generationResult.schemaName}"</h4>
+          <p>
+            Created {generationResult.created.length} tests without AI
+            {generationResult.skipped.length > 0 ? `, ${generationResult.skipped.length} already existed and were left as they are` : ''}.
+            They are in Test Cases, under API Tests, in the group "{generationResult.schemaName}".
+            Run them on an environment whose API URL points to this API; calls that need authorization log in with the environment's login and password.
+          </p>
+          {generationResult.created.length > 0 && (
+            <ul>
+              {generationResult.created.map(test => (
+                <li key={test.id}>{test.name} ({test.steps} {test.steps === 1 ? 'step' : 'steps'})</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {openSchemaId && (
         <div className="schema-operations">

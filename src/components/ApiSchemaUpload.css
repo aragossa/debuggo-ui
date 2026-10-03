@@ -266,3 +266,47 @@
 .operation-method.method-put { background: #e08e0b; }
 .operation-method.method-patch { background: #8e6bbf; }
 .operation-method.method-delete { background: #dc3545; }
+
+.schema-generate-button {
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  width: 100%;
+  margin-bottom: 8px;
+  transition: background 0.2s;
+}
+
+.schema-generate-button:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+.schema-generate-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.schema-generation-result {
+  margin-top: 25px;
+  padding: 15px;
+  border: 1px solid #c8e6c9;
+  border-radius: 6px;
+  background: #f1f8f4;
+  font-size: 14px;
+  color: #333;
+}
+
+.schema-generation-result h4 {
+  margin: 0 0 10px;
+  color: #555;
+}
+
+.schema-generation-result ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  max-height: 260px;
+  overflow: auto;
+}
