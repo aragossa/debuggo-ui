@@ -138,7 +138,8 @@
   font-size: 14px;
   margin: 12px 0 0 0;
   line-height: 1.5;
-  white-space: normal;
+  /* keep the line breaks of the description, as the edit form shows them */
+  white-space: pre-line;
   overflow: visible;
 }
 
