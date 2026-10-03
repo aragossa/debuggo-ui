@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TestCaseTree from './TestCaseTree';
 import TestCaseSteps from './TestCaseSteps';
 import TestSuites from './TestSuites';
@@ -167,6 +167,16 @@ const Dashboard = () => {
     localStorage.removeItem('selectedTestId');
   };
 
+  // Stable identity: TestCaseSteps restarts its polling when this prop changes.
+  // localStorage always mirrors selectedTestId, so it tells whether the missing
+  // test is still the selected one.
+  const handleTestCaseNotFound = useCallback((missingTestId) => {
+    if (localStorage.getItem('selectedTestId') !== String(missingTestId)) return;
+    setSelectedTestId(null);
+    setTestCase(null);
+    localStorage.removeItem('selectedTestId');
+  }, []);
+
   const handleNodeClick = async (id) => {
     setSelectedTestId(id);
     localStorage.setItem('selectedTestId', id);
@@ -196,6 +206,10 @@ const Dashboard = () => {
           };
 
           setTestCase(formattedTestCase);
+        } else if (data.status === 'error') {
+          // The backend answers 200 with status "error" for a missing test case
+          setTestCase(null);
+          handleTestCaseNotFound(id);
         } else {
           setTestCase(data);
         }
@@ -241,7 +255,7 @@ const Dashboard = () => {
   };
 
   const handleTestCaseDeleted = (deletedTestId) => {
-    if (deletedTestId === selectedTestId) {
+    if (deletedTestId !== null && String(deletedTestId) === String(selectedTestId)) {
       setSelectedTestId(null);
       setTestCase(null);
       localStorage.removeItem('selectedTestId');
@@ -446,6 +460,7 @@ const Dashboard = () => {
                 steps_generation_start_time={testCase.steps_generation_start_time}
                 steps_generation_end_time={testCase.steps_generation_end_time}
                 onTestResult={setTestResult}
+                onTestCaseNotFound={handleTestCaseNotFound}
                 onTestCaseUpdate={(name, description, updated_at) => {
                   setTestCase(prev => ({
                     ...prev,

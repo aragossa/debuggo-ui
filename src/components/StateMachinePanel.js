@@ -8,6 +8,7 @@ import {
   faClock,
   faCircleCheck
 } from '@fortawesome/free-solid-svg-icons';
+import { pollWhileVisible } from '../utils/polling';
 import './StateMachinePanel.css';
 
 const StateMachinePanel = ({ testCaseId, isVisible = true, API_URL, getAuthHeaders }) => {
@@ -22,10 +23,8 @@ const StateMachinePanel = ({ testCaseId, isVisible = true, API_URL, getAuthHeade
 
   useEffect(() => {
     if (testCaseId && isVisible && API_URL && getAuthHeaders) {
-      fetchStateMachineData();
       // Poll for updates every 2 seconds
-      const interval = setInterval(fetchStateMachineData, 2000);
-      return () => clearInterval(interval);
+      return pollWhileVisible(fetchStateMachineData, 2000);
     }
   }, [testCaseId, isVisible, API_URL, getAuthHeaders]);
 

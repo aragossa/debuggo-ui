@@ -37,6 +37,7 @@ import PlanningPanel from './PlanningPanel';
 import ReasoningPanel from './ReasoningPanel';
 import AIModelSelector from './AIModelSelector';
 import RunningTestIndicator from './RunningTestIndicator';
+import { pollWhileVisible } from '../utils/polling';
 import './TestCaseSteps.css';
 
 // The action list comes from GET /api/step_actions (source of truth: TestRunner.execute_step
@@ -57,6 +58,7 @@ const TestCaseSteps = ({
   projectId,
   user,
   onTestCaseUpdate,
+  onTestCaseNotFound,
   generationDuration,
   updated_at,
   test_type
@@ -120,7 +122,6 @@ const TestCaseSteps = ({
   // Polling intervals
   const pollingIntervalRef = useRef(null);
   const [stepResultsPollingInterval, setStepResultsPollingInterval] = useState(null);
-  const [runningTestsPollingInterval, setRunningTestsPollingInterval] = useState(null);
 
   // UI state
   const [actionDropdownStepId, setActionDropdownStepId] = useState(null);
@@ -389,6 +390,11 @@ const TestCaseSteps = ({
       const response = await fetch(`${API_URL}/api/test_cases/${testCaseId}/runs`, {
         headers: getAuthHeaders()
       });
+      if (response.status === 404 && onTestCaseNotFound) {
+        // The test case was deleted: let the parent drop it, which stops this polling
+        onTestCaseNotFound(testCaseId);
+        return;
+      }
       if (!response.ok) return; // Silent fail for polling
 
       const runs = await response.json();
@@ -412,7 +418,7 @@ const TestCaseSteps = ({
     } catch (error) {
       console.error('Error fetching test runs:', error);
     }
-  }, [testCaseId, API_URL, stepResultsPollingInterval, getAuthHeaders]);
+  }, [testCaseId, API_URL, stepResultsPollingInterval, getAuthHeaders, onTestCaseNotFound]);
 
   const fetchStepExecutionResults = useCallback(async (runId) => {
     try {
@@ -548,7 +554,7 @@ const TestCaseSteps = ({
     if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
 
     pollingIntervalRef.current = setInterval(async () => {
-      if (!testCaseId) return;
+      if (!testCaseId || document.hidden) return;
 
       try {
         const statusResponse = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
@@ -609,6 +615,7 @@ const TestCaseSteps = ({
     if (stepResultsPollingInterval) clearInterval(stepResultsPollingInterval);
 
     const interval = setInterval(async () => {
+      if (document.hidden) return;
       if (!localTestRuns || localTestRuns.length === 0) return;
       try {
         const latestRun = localTestRuns[0];
@@ -624,12 +631,7 @@ const TestCaseSteps = ({
   };
 
   // Start polling for running tests
-  useEffect(() => {
-    fetchRunningTests();
-    const interval = setInterval(fetchRunningTests, 3000);
-    setRunningTestsPollingInterval(interval);
-    return () => clearInterval(interval);
-  }, [fetchRunningTests]);
+  useEffect(() => pollWhileVisible(fetchRunningTests, 3000), [fetchRunningTests]);
 
   const checkNewStepsForScreenshots = async (newSteps) => {
     if (!newSteps || newSteps.length === 0) return;

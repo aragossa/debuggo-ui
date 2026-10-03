@@ -22,6 +22,7 @@ import {
   faTasks,
   faChartLine
 } from '@fortawesome/free-solid-svg-icons';
+import { pollWhileVisible } from '../utils/polling';
 import './PlanningPanel.css';
 
 const PlanningPanel = ({ testCaseId, isGenerating, API_URL, getAuthHeaders }) => {
@@ -32,12 +33,10 @@ const PlanningPanel = ({ testCaseId, isGenerating, API_URL, getAuthHeaders }) =>
     reasoning: true,
     recovery: true
   });
-  const [pollingInterval, setPollingInterval] = useState(null);
 
   // Fetch planning data periodically while generating
   useEffect(() => {
     if (!isGenerating || !testCaseId) {
-      if (pollingInterval) clearInterval(pollingInterval);
       return;
     }
 
@@ -58,13 +57,7 @@ const PlanningPanel = ({ testCaseId, isGenerating, API_URL, getAuthHeaders }) =>
     };
 
     // Fetch immediately and then every 3 seconds (reduced from 2s to avoid overwhelming the frontend)
-    fetchPlanning();
-    const interval = setInterval(fetchPlanning, 3000);
-    setPollingInterval(interval);
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return pollWhileVisible(fetchPlanning, 3000);
   }, [isGenerating, testCaseId, API_URL, getAuthHeaders]);
 
   if (!planning && !isGenerating) {
