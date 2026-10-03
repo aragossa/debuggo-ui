@@ -509,7 +509,7 @@ const ExecutionPlans = ({ projectId }) => {
   return (
     <div className="execution-plans-container">
       <div className="plans-header">
-        <h2>📋 Execution Plans</h2>
+        <h2>Execution Plans</h2>
         <button
           className="btn-primary"
           onClick={() => setShowCreateForm(!showCreateForm)}
@@ -703,7 +703,7 @@ const ExecutionPlans = ({ projectId }) => {
                         handleExecutePlan(plan.id);
                       }}
                     >
-                      ▶️ Execute
+                      Execute
                     </button>
                     <button
                       className="btn-small btn-delete"
@@ -712,7 +712,7 @@ const ExecutionPlans = ({ projectId }) => {
                         handleDeletePlan(plan.id);
                       }}
                     >
-                      🗑️ Delete
+                      Delete
                     </button>
                   </div>
                 </div>
@@ -726,7 +726,7 @@ const ExecutionPlans = ({ projectId }) => {
             <div className="plan-details-header">
               <h3>Plan Details: {selectedPlan.name}</h3>
               <button className="settings-btn" onClick={openSettingsModal}>
-                ⚙️ Settings
+                Settings
               </button>
             </div>
 

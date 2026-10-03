@@ -422,7 +422,7 @@ const MetricsDashboard = () => {
   return (
     <div className="metrics-dashboard-container">
       <div className="metrics-header">
-        <h1>📊 Metrics & Analytics</h1>
+        <h1>Metrics & Analytics</h1>
         <p>Test execution metrics, trends, and performance analysis</p>
       </div>
 

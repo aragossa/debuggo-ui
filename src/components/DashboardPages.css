@@ -1,0 +1,918 @@
+/*
+ * One look for every page of the dashboard sidebar (Environments, API Schemas, Test Suites,
+ * Conflicts, Execution Plans, Metrics, Requirements, Help): the look of the test case view.
+ *
+ * White page, 18px title, 13-14px text, dark primary button, white bordered secondary button,
+ * flat cards with a 1px border, compact forms and tables. Each page keeps its own stylesheet for
+ * layout; the rules here are scoped by .dash-page and override its colours, sizes and buttons.
+ */
+
+.dash-page {
+  --dp-text: #111827;
+  --dp-text-2: #374151;
+  --dp-muted: #6b7280;
+  --dp-faint: #9ca3af;
+  --dp-border: #e5e7eb;
+  --dp-border-strong: #d1d5db;
+  --dp-surface: #f9fafb;
+  --dp-accent: #34d399;
+  --dp-danger: #dc2626;
+
+  background: #ffffff;
+  padding: 20px 24px 32px;
+  color: var(--dp-text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ---- Page containers: no own background, frame or centring ---- */
+.dash-page .environments-container,
+.dash-page .api-schema-upload,
+.dash-page .test-suites-container,
+.dash-page .conflict-notifications-container,
+.dash-page .execution-plans-container,
+.dash-page .metrics-dashboard-container,
+.dash-page .metrics-dashboard-full,
+.dash-page .requirements-container,
+.dash-page .placeholder-help,
+.dash-page .help-content {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  min-height: 0;
+  width: 100%;
+  height: auto;
+}
+
+/* ---- Page header: title on the left, actions on the right ---- */
+.dash-page .environments-header,
+.dash-page .suites-header,
+.dash-page .plans-header,
+.dash-page .requirements-header,
+.dash-page .conflict-notifications-header,
+.dash-page .metrics-header,
+.dash-page .help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0 0 16px;
+  text-align: left;
+}
+
+.dash-page .metrics-header,
+.dash-page .help-header {
+  display: block;
+}
+
+.dash-page h1,
+.dash-page h2,
+.dash-page .api-schema-upload > h3 {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--dp-text);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash-page .api-schema-upload > h3 {
+  margin-bottom: 16px;
+}
+
+.dash-page .metrics-header p,
+.dash-page .help-header p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--dp-muted);
+  text-align: left;
+}
+
+.dash-page h3,
+.dash-page h4,
+.dash-page h5 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dp-text);
+  margin: 0 0 12px;
+}
+
+.dash-page p {
+  font-size: 14px;
+}
+
+/* ---- Buttons ---- */
+.dash-page button {
+  font-family: inherit;
+}
+
+/* Primary: the dark button of "Run Test" */
+.dash-page .add-environment-button,
+.dash-page .add-first-environment-button,
+.dash-page .save-button,
+.dash-page .create-button,
+.dash-page .submit-button,
+.dash-page .submit-btn,
+.dash-page .create-btn,
+.dash-page .confirm-btn,
+.dash-page .btn-primary,
+.dash-page .btn-execute,
+.dash-page .btn-approve,
+.dash-page .upload-button,
+.dash-page .schema-generate-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  height: 32px;
+  min-height: 0;
+  padding: 0 12px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  color: #ffffff;
+  background: var(--dp-text);
+  background-image: none;
+  border: 1px solid var(--dp-text);
+  border-radius: 6px;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: 0;
+  transform: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dash-page .add-environment-button:hover:not(:disabled),
+.dash-page .add-first-environment-button:hover:not(:disabled),
+.dash-page .save-button:hover:not(:disabled),
+.dash-page .create-button:hover:not(:disabled),
+.dash-page .submit-button:hover:not(:disabled),
+.dash-page .submit-btn:hover:not(:disabled),
+.dash-page .create-btn:hover:not(:disabled),
+.dash-page .confirm-btn:hover:not(:disabled),
+.dash-page .btn-primary:hover:not(:disabled),
+.dash-page .btn-execute:hover:not(:disabled),
+.dash-page .btn-approve:hover:not(:disabled),
+.dash-page .upload-button:hover:not(:disabled),
+.dash-page .schema-generate-button:hover:not(:disabled) {
+  background: #000000;
+  background-image: none;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Secondary: white with a border */
+.dash-page .cancel-button,
+.dash-page .cancel-btn,
+.dash-page .btn-secondary,
+.dash-page .refresh-btn,
+.dash-page .settings-btn,
+.dash-page .add-suite-btn,
+.dash-page .edit-btn,
+.dash-page .link-test-btn,
+.dash-page .conflict-details-btn,
+.dash-page .schema-calls-button,
+.dash-page .action-button,
+.dash-page .expand-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  height: 32px;
+  min-height: 0;
+  padding: 0 12px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--dp-text-2);
+  background: #ffffff;
+  background-image: none;
+  border: 1px solid var(--dp-border);
+  border-radius: 6px;
+  box-shadow: none;
+  text-transform: none;
+  transform: none;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.dash-page .cancel-button:hover:not(:disabled),
+.dash-page .cancel-btn:hover:not(:disabled),
+.dash-page .btn-secondary:hover:not(:disabled),
+.dash-page .refresh-btn:hover:not(:disabled),
+.dash-page .settings-btn:hover:not(:disabled),
+.dash-page .add-suite-btn:hover:not(:disabled),
+.dash-page .edit-btn:hover:not(:disabled),
+.dash-page .link-test-btn:hover:not(:disabled),
+.dash-page .conflict-details-btn:hover:not(:disabled),
+.dash-page .schema-calls-button:hover:not(:disabled),
+.dash-page .action-button:hover:not(:disabled),
+.dash-page .expand-button:hover:not(:disabled) {
+  background: var(--dp-surface);
+  border-color: var(--dp-border-strong);
+  color: var(--dp-text);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Danger: white, red text */
+.dash-page .delete-btn,
+.dash-page .btn-delete,
+.dash-page .btn-reject,
+.dash-page .delete-schema-button,
+.dash-page .remove-suite-btn,
+.dash-page .remove-test-button,
+.dash-page .unlink-btn,
+.dash-page .action-button.delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  height: 32px;
+  min-height: 0;
+  padding: 0 12px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--dp-danger);
+  background: #ffffff;
+  background-image: none;
+  border: 1px solid var(--dp-border);
+  border-radius: 6px;
+  box-shadow: none;
+  transform: none;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.dash-page .delete-btn:hover:not(:disabled),
+.dash-page .btn-delete:hover:not(:disabled),
+.dash-page .btn-reject:hover:not(:disabled),
+.dash-page .delete-schema-button:hover:not(:disabled),
+.dash-page .remove-suite-btn:hover:not(:disabled),
+.dash-page .remove-test-button:hover:not(:disabled),
+.dash-page .unlink-btn:hover:not(:disabled),
+.dash-page .action-button.delete:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: var(--dp-danger);
+  transform: none;
+}
+
+.dash-page button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Small square icon buttons in table rows */
+.dash-page .edit-button,
+.dash-page .delete-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0 0 0 4px;
+  font-size: 13px;
+  color: var(--dp-muted);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.dash-page .edit-button:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: var(--dp-text);
+}
+
+.dash-page .delete-button:hover:not(:disabled) {
+  background: #fef2f2;
+  color: var(--dp-danger);
+}
+
+/* ---- Forms ---- */
+.dash-page .environment-form-container,
+.dash-page .upload-section,
+.dash-page .create-plan-form {
+  background: #ffffff;
+  border: 1px solid var(--dp-border);
+  border-radius: 8px;
+  box-shadow: none;
+  padding: 16px 20px;
+  margin: 0 0 20px;
+  max-width: 640px;
+}
+
+.dash-page .environment-form-container h3,
+.dash-page .upload-section h4,
+.dash-page .create-plan-form h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dp-text);
+  margin: 0 0 14px;
+}
+
+.dash-page .form-group {
+  margin: 0 0 14px;
+}
+
+.dash-page .form-row {
+  gap: 12px;
+}
+
+.dash-page .form-group label,
+.dash-page .plan-selector label,
+.dash-page .checkbox-label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--dp-text-2);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.dash-page .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.dash-page input[type="text"],
+.dash-page input[type="password"],
+.dash-page input[type="number"],
+.dash-page input[type="email"],
+.dash-page input[type="url"],
+.dash-page input[type="date"],
+.dash-page input[type="time"],
+.dash-page input[type="datetime-local"],
+.dash-page input[type="file"],
+.dash-page input:not([type]),
+.dash-page select,
+.dash-page textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--dp-text);
+  background: #ffffff;
+  border: 1px solid var(--dp-border-strong);
+  border-radius: 6px;
+  box-shadow: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.dash-page input[type="file"] {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.dash-page textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.dash-page input:focus,
+.dash-page select:focus,
+.dash-page textarea:focus {
+  outline: none;
+  border-color: var(--dp-accent);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15);
+}
+
+.dash-page input::placeholder,
+.dash-page textarea::placeholder {
+  color: var(--dp-faint);
+}
+
+.dash-page .help-text,
+.dash-page .form-hint,
+.dash-page small {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--dp-muted);
+}
+
+/* Actions under a form: to the right, natural width */
+.dash-page .form-actions,
+.dash-page .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  border: none;
+}
+
+.dash-page .form-actions button,
+.dash-page .modal-actions button {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+/* Filters in a row keep their natural width */
+.dash-page .filters-row select,
+.dash-page .plan-selector select,
+.dash-page .metrics-controls select {
+  width: auto;
+  min-width: 180px;
+}
+
+.dash-page .plan-selector,
+.dash-page .metrics-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+
+.dash-page .plan-selector label {
+  margin: 0;
+}
+
+/* ---- Tables ---- */
+.dash-page .environments-table-container,
+.dash-page .operations-table-container,
+.dash-page .metrics-table-container {
+  background: #ffffff;
+  border: 1px solid var(--dp-border);
+  border-radius: 8px;
+  box-shadow: none;
+  overflow: auto;
+}
+
+.dash-page table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dash-page th {
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dp-muted);
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  background: var(--dp-surface);
+  border: none;
+  border-bottom: 1px solid var(--dp-border);
+  white-space: nowrap;
+}
+
+.dash-page td {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--dp-text);
+  background: #ffffff;
+  border: none;
+  border-bottom: 1px solid var(--dp-border);
+  vertical-align: middle;
+}
+
+.dash-page tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dash-page tbody tr:hover td {
+  background: var(--dp-surface);
+}
+
+.dash-page .actions-header,
+.dash-page .actions-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dash-page .env-name {
+  font-weight: 500;
+}
+
+.dash-page .env-url,
+.dash-page .operation-path,
+.dash-page code {
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+/* ---- Cards ---- */
+.dash-page .schema-card,
+.dash-page .suite-item,
+.dash-page .plan-card,
+.dash-page .plans-list,
+.dash-page .plan-details,
+.dash-page .metric-card,
+.dash-page .coverage-card,
+.dash-page .requirements-list > *,
+.dash-page .requirement-details,
+.dash-page .conflict-notification-card,
+.dash-page .help-section,
+.dash-page .tip-card,
+.dash-page .failure-card,
+.dash-page .performance-section,
+.dash-page .dashboard-section,
+.dash-page .schema-generation-result {
+  background: #ffffff;
+  border: 1px solid var(--dp-border);
+  border-radius: 8px;
+  box-shadow: none;
+  transform: none;
+}
+
+.dash-page .schema-card:hover,
+.dash-page .suite-item:hover,
+.dash-page .plan-card:hover,
+.dash-page .metric-card:hover,
+.dash-page .coverage-card:hover,
+.dash-page .requirements-list > *:hover,
+.dash-page .tip-card:hover {
+  box-shadow: none;
+  transform: none;
+  border-color: var(--dp-border-strong);
+}
+
+/* ---- Empty, loading and message states ---- */
+.dash-page .no-environments-message,
+.dash-page .environments-message,
+.dash-page .no-schemas,
+.dash-page .no-project-message,
+.dash-page .empty-state,
+.dash-page .no-data,
+.dash-page .loading,
+.dash-page .loading-message,
+.dash-page .conflict-notifications-empty,
+.dash-page .conflict-notifications-loading {
+  background: #ffffff;
+  border: 1px dashed var(--dp-border-strong);
+  border-radius: 8px;
+  box-shadow: none;
+  padding: 32px 24px;
+  margin: 0;
+  max-width: none;
+  width: auto;
+  text-align: center;
+  font-size: 14px;
+  font-style: normal;
+  color: var(--dp-muted);
+}
+
+.dash-page .conflict-notifications-empty h3,
+.dash-page .empty-state h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dp-text);
+  margin: 0 0 4px;
+  justify-content: center;
+}
+
+.dash-page .conflict-notifications-empty p,
+.dash-page .empty-state p,
+.dash-page .no-environments-message p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--dp-muted);
+}
+
+.dash-page .conflict-notifications-empty p:last-child,
+.dash-page .empty-state p:last-child {
+  margin-bottom: 0;
+}
+
+.dash-page .error-message,
+.dash-page .success-message {
+  padding: 8px 12px;
+  margin: 0 0 16px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: var(--dp-danger);
+}
+
+.dash-page .success-message {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #047857;
+}
+
+/* ---- Badges ---- */
+.dash-page .schema-type,
+.dash-page .test-type,
+.dash-page .badge,
+.dash-page .conflict-count,
+.dash-page .conflict-step-badge,
+.dash-page .req-type,
+.dash-page .test-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--dp-muted);
+  background: #f3f4f6;
+  border: none;
+  border-radius: 4px;
+}
+
+/* ---- Tabs inside a page: the underline tabs of the test case view ---- */
+.dash-page .metrics-tabs {
+  display: flex;
+  justify-content: flex-start;
+  gap: 24px;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  border-bottom: 1px solid var(--dp-border);
+  border-radius: 0;
+  padding: 0;
+  margin: 0 0 20px;
+  width: 100%;
+}
+
+.dash-page .metrics-tabs button {
+  flex: 0 0 auto;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin: 0 0 -1px;
+  padding: 10px 2px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dp-muted);
+  cursor: pointer;
+}
+
+.dash-page .metrics-tabs button:hover {
+  color: var(--dp-text-2);
+  border-bottom-color: var(--dp-border-strong);
+}
+
+.dash-page .metrics-tabs button.active {
+  background: transparent;
+  color: var(--dp-accent);
+  border-bottom-color: var(--dp-accent);
+}
+
+/* ---- API Schemas ---- */
+.dash-page .schema-card {
+  padding: 14px 16px;
+}
+
+.dash-page .schema-card button {
+  margin: 8px 6px 0 0;
+}
+
+.dash-page .schemas-list h4,
+.dash-page .schema-operations h4 {
+  margin: 20px 0 10px;
+}
+
+/* ---- Execution Plans ---- */
+.dash-page .plans-content {
+  gap: 20px;
+  align-items: start;
+}
+
+.dash-page .plans-list,
+.dash-page .plan-details {
+  padding: 16px;
+}
+
+.dash-page .plans-grid {
+  gap: 8px;
+}
+
+.dash-page .plan-card {
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.dash-page .plan-card.selected {
+  border-color: var(--dp-accent);
+  background: #f0fdf9;
+  box-shadow: none;
+}
+
+.dash-page .plan-header {
+  margin: 0 0 4px;
+  gap: 8px;
+}
+
+.dash-page .plan-header h4,
+.dash-page .plan-details-header h3 {
+  margin: 0;
+}
+
+.dash-page .plan-details-header {
+  margin: 0 0 14px;
+}
+
+.dash-page .plan-description {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--dp-muted);
+}
+
+.dash-page .plan-meta {
+  display: flex;
+  gap: 24px;
+  margin: 0 0 10px;
+  padding: 0;
+  border: none;
+}
+
+.dash-page .meta-item,
+.dash-page .detail-item {
+  gap: 2px;
+}
+
+.dash-page .meta-item .label,
+.dash-page .detail-item .label,
+.dash-page .detail-label,
+.dash-page .metric-label,
+.dash-page .coverage-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dp-muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.dash-page .meta-item .value,
+.dash-page .detail-item .value,
+.dash-page .detail-value {
+  font-size: 13px;
+  color: var(--dp-text);
+}
+
+.dash-page .plan-type,
+.dash-page .plan-card .status,
+.dash-page .details-grid .status {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  width: auto;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--dp-muted);
+  background: #f3f4f6;
+  border: none;
+  border-radius: 4px;
+}
+
+.dash-page .plan-card .status.active,
+.dash-page .details-grid .status.active {
+  color: #059669;
+  background: #ecfdf5;
+}
+
+.dash-page .plan-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 0;
+}
+
+.dash-page .btn-small {
+  flex: 0 0 auto;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.dash-page .details-section {
+  margin: 0 0 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.dash-page .section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 10px;
+  padding: 0;
+  background: transparent;
+  background-image: none;
+  border: none;
+  border-radius: 0;
+  color: var(--dp-text);
+}
+
+.dash-page .section-header h4 {
+  margin: 0;
+  color: var(--dp-text);
+}
+
+/* ---- Metrics ---- */
+/* The icon font of these tiles is not loaded: without it they are empty coloured squares */
+.dash-page .metric-icon-bg {
+  display: none;
+}
+
+.dash-page .metric-card {
+  padding: 14px 16px;
+}
+
+.dash-page .metric-value,
+.dash-page .coverage-value {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.dash-page .metric-subtext {
+  font-size: 12px;
+  color: var(--dp-muted);
+}
+
+.dash-page .metrics-grid {
+  gap: 12px;
+}
+
+/* ---- Help ---- */
+.dash-page .help-section {
+  padding: 16px 20px;
+  margin: 0 0 16px;
+}
+
+.dash-page .help-section h2 {
+  font-size: 15px;
+  margin: 0 0 12px;
+}
+
+.dash-page .help-section h3 {
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+
+.dash-page .help-footer {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  font-size: 13px;
+  color: var(--dp-muted);
+  text-align: left;
+}
+
+/* ---- Conflicts ---- */
+.dash-page .conflict-notification-card {
+  padding: 16px 20px;
+  margin: 0 0 12px;
+}
+
+.dash-page .conflict-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

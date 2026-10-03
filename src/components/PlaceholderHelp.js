@@ -5,14 +5,14 @@ const PlaceholderHelp = () => {
   return (
     <div className="placeholder-help">
       <div className="help-header">
-        <h1>📚 Test Placeholders Guide</h1>
+        <h1>Test Placeholders Guide</h1>
         <p>Learn how to use dynamic placeholders in your tests</p>
       </div>
 
       <div className="help-content">
         {/* Quick Reference */}
         <section className="help-section">
-          <h2>🎯 Quick Reference</h2>
+          <h2>Quick Reference</h2>
           <div className="syntax-boxes">
             <div className="syntax-box">
               <strong>UI Tests:</strong> <code>%placeholder%</code>
@@ -25,7 +25,7 @@ const PlaceholderHelp = () => {
 
         {/* Environment Variables */}
         <section className="help-section">
-          <h2>🔑 Environment Variables</h2>
+          <h2>Environment Variables</h2>
           <table className="help-table">
             <thead>
               <tr>
@@ -56,9 +56,9 @@ const PlaceholderHelp = () => {
 
         {/* Unique Names */}
         <section className="help-section">
-          <h2>🏷️ Unique Identifiers (Cached)</h2>
+          <h2>Unique Identifiers (Cached)</h2>
           <div className="info-box">
-            <strong>💡 Special:</strong> These remember their value throughout the test - consistent within the same test run!
+            <strong>Special:</strong> These remember their value throughout the test - consistent within the same test run!
           </div>
           <table className="help-table">
             <thead>
@@ -110,7 +110,7 @@ const PlaceholderHelp = () => {
 
         {/* Personal Info */}
         <section className="help-section">
-          <h2>👤 Personal Information</h2>
+          <h2>Personal Information</h2>
           <table className="help-table">
             <thead>
               <tr>
@@ -149,7 +149,7 @@ const PlaceholderHelp = () => {
 
         {/* Location */}
         <section className="help-section">
-          <h2>📍 Location</h2>
+          <h2>Location</h2>
           <table className="help-table">
             <thead>
               <tr>
@@ -176,7 +176,7 @@ const PlaceholderHelp = () => {
 
         {/* Business */}
         <section className="help-section">
-          <h2>🏢 Business</h2>
+          <h2>Business</h2>
           <table className="help-table">
             <thead>
               <tr>
@@ -199,7 +199,7 @@ const PlaceholderHelp = () => {
 
         {/* Generic Data */}
         <section className="help-section">
-          <h2>🎲 Generic Data</h2>
+          <h2>Generic Data</h2>
           <table className="help-table">
             <thead>
               <tr>
@@ -280,7 +280,7 @@ const PlaceholderHelp = () => {
 
         {/* Special */}
         <section className="help-section">
-          <h2>⭐ Special</h2>
+          <h2>Special</h2>
           <table className="help-table">
             <thead>
               <tr>
@@ -298,13 +298,13 @@ const PlaceholderHelp = () => {
             </tbody>
           </table>
           <div className="info-box">
-            <strong>💡 Dropdown Selection:</strong> Use <code>%random_option%</code> in dropdown/select fields to automatically pick a valid option. Never hardcode dropdown IDs!
+            <strong>Dropdown Selection:</strong> Use <code>%random_option%</code> in dropdown/select fields to automatically pick a valid option. Never hardcode dropdown IDs!
           </div>
         </section>
 
         {/* Examples */}
         <section className="help-section">
-          <h2>📝 Common Examples</h2>
+          <h2>Common Examples</h2>
           
           <div className="example-block">
             <h3>User Registration Form:</h3>

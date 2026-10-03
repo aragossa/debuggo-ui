@@ -127,7 +127,7 @@ const ConflictNotifications = () => {
 
                                 <div className="conflict-comparison">
                                     <div className="conflict-expected">
-                                        <h4>📖 Expected (Documentation)</h4>
+                                        <h4>Expected (Documentation)</h4>
                                         <div className="status-badge expected">
                                             Status: {notification.expected_status}
                                         </div>
@@ -136,7 +136,7 @@ const ConflictNotifications = () => {
                                     <div className="conflict-arrow">→</div>
 
                                     <div className="conflict-actual">
-                                        <h4>🔍 Actual (Reality)</h4>
+                                        <h4>Actual (Reality)</h4>
                                         <div className="status-badge actual">
                                             Status: {notification.actual_status}
                                         </div>
@@ -147,7 +147,7 @@ const ConflictNotifications = () => {
                                 </div>
 
                                 <div className="conflict-resolution">
-                                    <h4>💡 Suggested Resolution</h4>
+                                    <h4>Suggested Resolution</h4>
                                     <p>{notification.suggested_resolution}</p>
                                     <div className="corrected-expectation">
                                         <strong>Corrected Expected Status:</strong> {notification.corrected_expected_status}

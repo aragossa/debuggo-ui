@@ -31,6 +31,7 @@ import {
   PanelLeftOpen
 } from 'lucide-react';
 import './Dashboard.css';
+import './DashboardPages.css';
 
 const Dashboard = () => {
   const API_URL = process.env.REACT_APP_API_URL;
@@ -480,33 +481,37 @@ const Dashboard = () => {
             )}
           </div>
         ) : activeTab === 'environments' ? (
-          <div className="tab-scrollable-container">
+          <div className="tab-scrollable-container dash-page">
             <Environments projectId={selectedProject} />
           </div>
         ) : activeTab === 'apiSchemas' ? (
-          <div className="tab-scrollable-container">
+          <div className="tab-scrollable-container dash-page">
             <ApiSchemaUpload projectId={selectedProject} onTestsGenerated={() => fetchTreeDataForProject(selectedProject)} />
           </div>
         ) : activeTab === 'suites' ? (
-          <div className="tab-scrollable-container">
+          <div className="tab-scrollable-container dash-page">
             <TestSuites projectId={selectedProject} />
           </div>
         ) : activeTab === 'conflicts' ? (
-          <ConflictNotifications />
+          <div className="tab-scrollable-container dash-page">
+            <ConflictNotifications />
+          </div>
         ) : activeTab === 'executionPlans' ? (
-          <div className="tab-scrollable-container">
+          <div className="tab-scrollable-container dash-page">
             <ExecutionPlans projectId={selectedProject} />
           </div>
         ) : activeTab === 'metrics' ? (
-          <div className="tab-scrollable-container">
+          <div className="tab-scrollable-container dash-page">
             <MetricsDashboard />
           </div>
         ) : activeTab === 'requirements' ? (
-          <div className="tab-scrollable-container">
+          <div className="tab-scrollable-container dash-page">
             <Requirements projectId={selectedProject} />
           </div>
         ) : activeTab === 'help' ? (
-          <PlaceholderHelp />
+          <div className="tab-scrollable-container dash-page">
+            <PlaceholderHelp />
+          </div>
         ) : null}
       </div>
 
