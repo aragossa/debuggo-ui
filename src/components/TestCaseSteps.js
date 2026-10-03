@@ -195,6 +195,8 @@ const TestCaseSteps = ({
 
   // API calls of the project (built from its uploaded schemas): an api_request step can be filled from one
   const [apiOperations, setApiOperations] = useState([]);
+  // UI test generation may prepare data through the API library; on by default when the project has one
+  const [useApiInGeneration, setUseApiInGeneration] = useState(true);
 
   useEffect(() => {
     if (!projectId || projectId === 'all') { setApiOperations([]); return; }
@@ -811,6 +813,7 @@ const TestCaseSteps = ({
         body.environment_id = parseInt(selectedEnvironment);
         if (projectId && projectId !== 'all') body.project_id = projectId;
         if (selectedAIModel) body.ai_model_id = selectedAIModel;
+        body.use_api = useApiInGeneration && apiOperations.length > 0;
       }
 
       const res = await fetch(endpoint, {
@@ -1045,6 +1048,21 @@ const TestCaseSteps = ({
 
             <div className="vlm-toggle-container">
               {/* Simplified VLM toggle for alignment if needed, usually handled inside AIModelSelector or separately if it existed in the block before */}
+              {test_type !== 'api' && apiOperations.length > 0 && (
+                <label
+                  className="use-api-toggle"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6b7280', cursor: 'pointer' }}
+                  title="When generating steps, let the model prepare and clean up test data through the project's API calls. The behaviour under test still goes through the page."
+                >
+                  <input
+                    type="checkbox"
+                    checked={useApiInGeneration}
+                    onChange={(e) => setUseApiInGeneration(e.target.checked)}
+                    disabled={isGeneratingSteps}
+                  />
+                  Use API for test data
+                </label>
+              )}
             </div>
           </div>
         </div>
