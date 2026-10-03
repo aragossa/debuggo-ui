@@ -252,3 +252,55 @@
 .coverage-test-link:hover {
   text-decoration: underline;
 }
+
+/* Whose requests count: a segmented control */
+.coverage-views {
+  display: inline-flex;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.coverage-views button {
+  background: white;
+  color: #374151;
+  border: none;
+  border-right: 1px solid #d1d5db;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.coverage-views button:last-child {
+  border-right: none;
+}
+
+.coverage-views button.active {
+  background: #111827;
+  color: white;
+}
+
+.coverage-detail .coverage-tests + .coverage-tests,
+.coverage-detail .coverage-tests + .coverage-empty {
+  margin-top: 14px;
+}
+
+.coverage-pages {
+  margin-top: 28px;
+}
+
+.coverage-pages h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.coverage-pages .coverage-tests {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: white;
+}
+
+.coverage-page-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}

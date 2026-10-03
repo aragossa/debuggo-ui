@@ -10,6 +10,12 @@ const STATES = {
   uncovered: { symbol: '–', label: 'No test sends it' },
 };
 const STATE_ORDER = ['full', 'basic', 'failing', 'uncovered'];
+// Whose requests count: the API steps of the tests, what the browser of the UI tests sent, or both
+const VIEWS = [
+  { id: 'api', label: 'API tests', hint: 'are sent by an API step of a test' },
+  { id: 'ui', label: 'UI tests', hint: 'were sent by the browser during UI test runs' },
+  { id: 'all', label: 'Both', hint: 'are sent by an API step or by the browser of a UI test' },
+];
 
 const ApiCoverage = ({ projectId, onOpenTest }) => {
   const [schemas, setSchemas] = useState([]);
@@ -18,6 +24,8 @@ const ApiCoverage = ({ projectId, onOpenTest }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null); // the call whose tests are listed
+  const [view, setView] = useState('api');
+  const [pages, setPages] = useState(null); // pages the UI tests were on
   const detailRef = useRef(null);
   const { getAuthHeaders } = useAuth();
   const API_URL = process.env.REACT_APP_API_URL;
@@ -55,6 +63,19 @@ const ApiCoverage = ({ projectId, onOpenTest }) => {
 
   useEffect(() => { loadCoverage(); }, [loadCoverage]);
 
+  const loadPages = useCallback(async () => {
+    if (!projectId || projectId === 'all') return;
+    try {
+      const response = await fetch(`${API_URL}/api/projects/${projectId}/page-coverage`, { headers: getAuthHeaders() });
+      setPages(response.ok ? await response.json() : null);
+    } catch (e) {
+      setPages(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
+  useEffect(() => { loadPages(); }, [loadPages]);
+
   // The tests of a call are listed under the grid: bring them into view when a call is picked
   useEffect(() => {
     if (selected && detailRef.current) detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -64,7 +85,8 @@ const ApiCoverage = ({ projectId, onOpenTest }) => {
     return <div className="api-coverage"><p className="coverage-empty">Please select a specific project to see its API coverage</p></div>;
   }
 
-  const summary = coverage ? coverage.summary : null;
+  const summary = coverage ? coverage.summary[view] : null;
+  const stateOf = (call) => call.states[view];
   const percent = summary && summary.total ? Math.round((summary.covered / summary.total) * 100) : 0;
 
   return (
@@ -77,7 +99,15 @@ const ApiCoverage = ({ projectId, onOpenTest }) => {
               {schemas.map(schema => <option key={schema.id} value={schema.id}>{schema.name}</option>)}
             </select>
           )}
-          <button className="coverage-refresh" onClick={loadCoverage} disabled={loading || !schemaId}>
+          <div className="coverage-views" role="group" aria-label="Whose requests count">
+            {VIEWS.map(item => (
+              <button key={item.id} className={view === item.id ? 'active' : ''} title={`Calls that ${item.hint}`}
+                onClick={() => setView(item.id)}>
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <button className="coverage-refresh" onClick={() => { loadCoverage(); loadPages(); }} disabled={loading}>
             {loading ? 'Loading...' : 'Refresh'}
           </button>
         </div>
@@ -93,7 +123,9 @@ const ApiCoverage = ({ projectId, onOpenTest }) => {
           <div className="coverage-summary">
             <div className="coverage-tile coverage-tile-main">
               <div className="coverage-tile-value">{percent}%</div>
-              <div className="coverage-tile-label">{summary.covered} of {summary.total} calls are sent by a test</div>
+              <div className="coverage-tile-label">
+                {summary.covered} of {summary.total} calls {VIEWS.find(item => item.id === view).hint}
+              </div>
             </div>
             {STATE_ORDER.map(state => (
               <div key={state} className="coverage-tile">
@@ -112,21 +144,22 @@ const ApiCoverage = ({ projectId, onOpenTest }) => {
                 <div className="coverage-resource" title={resource.name}>
                   {resource.name}
                   <span className="coverage-resource-count">
-                    {resource.operations.filter(call => call.state !== 'uncovered').length}/{resource.operations.length}
+                    {resource.operations.filter(call => stateOf(call) !== 'uncovered').length}/{resource.operations.length}
                   </span>
                 </div>
                 <div className="coverage-cells">
                   {resource.operations.map(call => (
                     <button
                       key={call.id}
-                      className={`coverage-cell state-${call.state} ${selected && selected.id === call.id ? 'selected' : ''}`}
+                      className={`coverage-cell state-${stateOf(call)} ${selected && selected.id === call.id ? 'selected' : ''}`}
                       onClick={() => setSelected(selected && selected.id === call.id ? null : call)}
-                      title={`${call.method} ${call.path}\n${STATES[call.state].label}` +
-                        (call.tests.length ? `\n${call.tests.length} test${call.tests.length === 1 ? '' : 's'}, statuses: ${call.statuses.join(', ')}` : '')}
+                      title={`${call.method} ${call.path}\n${STATES[stateOf(call)].label}` +
+                        `\nAPI tests: ${call.tests.length}${call.statuses.length ? ` (statuses ${call.statuses.join(', ')})` : ''}` +
+                        `\nUI tests: ${call.ui_tests.length}${call.ui_statuses.length ? ` (statuses ${call.ui_statuses.join(', ')})` : ''}`}
                     >
                       <span className="coverage-cell-method">{call.method}</span>
                       <span className="coverage-cell-path">{call.path}</span>
-                      <span className="coverage-cell-symbol">{STATES[call.state].symbol}</span>
+                      <span className="coverage-cell-symbol">{STATES[stateOf(call)].symbol}</span>
                     </button>
                   ))}
                 </div>
@@ -143,14 +176,35 @@ const ApiCoverage = ({ projectId, onOpenTest }) => {
           {selected && (
             <div className="coverage-detail" ref={detailRef}>
               <h4>
-                <span className={`coverage-swatch state-${selected.state}`}>{STATES[selected.state].symbol}</span>
+                <span className={`coverage-swatch state-${stateOf(selected)}`}>{STATES[stateOf(selected)].symbol}</span>
                 {selected.method} {selected.path}
               </h4>
               <p className="coverage-detail-summary">
-                {selected.summary || selected.name}{selected.requires_auth ? ' · needs authorization' : ''} · {STATES[selected.state].label}
+                {selected.summary || selected.name}{selected.requires_auth ? ' · needs authorization' : ''} · {STATES[stateOf(selected)].label}
               </p>
+              {selected.ui_tests.length > 0 && (
+                <table className="coverage-tests">
+                  <thead>
+                    <tr><th>UI test whose browser sent it</th><th>Type</th><th>Statuses answered</th><th>Times in the last run</th></tr>
+                  </thead>
+                  <tbody>
+                    {selected.ui_tests.map(test => (
+                      <tr key={test.id}>
+                        <td>
+                          {onOpenTest
+                            ? <button className="coverage-test-link" onClick={() => onOpenTest(test.id)}>#{test.id} {test.name}</button>
+                            : <>#{test.id} {test.name}</>}
+                        </td>
+                        <td>UI</td>
+                        <td>{test.statuses.join(', ') || 'not caught'}</td>
+                        <td>{test.hits}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
               {selected.tests.length === 0 ? (
-                <p className="coverage-empty">No test sends this call. "Suggest scenarios (AI)" on the API Schemas page prefers calls that are not covered.</p>
+                <p className="coverage-empty">No API step sends this call. "Suggest scenarios (AI)" on the API Schemas page prefers calls that are not covered.</p>
               ) : (
                 <table className="coverage-tests">
                   <thead>
@@ -175,6 +229,48 @@ const ApiCoverage = ({ projectId, onOpenTest }) => {
             </div>
           )}
         </>
+      )}
+
+      {pages && (
+        <div className="coverage-pages">
+          <h3>Pages visited by UI tests</h3>
+          {pages.pages.length === 0 ? (
+            <p className="coverage-empty">
+              No page recorded yet. The pages a UI test was on are recorded when it runs: run the UI tests of this project.
+            </p>
+          ) : (
+            <>
+              <p className="coverage-note">
+                {pages.pages.length} page{pages.pages.length === 1 ? '' : 's'} visited by {pages.traced_tests} of {pages.ui_tests} UI
+                test{pages.ui_tests === 1 ? '' : 's'}, in the last run of each. Only visited pages are listed: pages no test opens are not known yet.
+                Pages with the fewest tests come first.
+              </p>
+              <table className="coverage-tests">
+                <thead>
+                  <tr><th>Page</th><th>Tests</th><th>Visited by</th></tr>
+                </thead>
+                <tbody>
+                  {pages.pages.map(page => (
+                    <tr key={page.page}>
+                      <td className="coverage-page-name" title={page.example_url}>{page.page}</td>
+                      <td>{page.tests.length}</td>
+                      <td>
+                        {page.tests.map((test, index) => (
+                          <span key={test.id}>
+                            {index > 0 && ', '}
+                            {onOpenTest
+                              ? <button className="coverage-test-link" onClick={() => onOpenTest(test.id)}>#{test.id} {test.name}</button>
+                              : <>#{test.id} {test.name}</>}
+                          </span>
+                        ))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+        </div>
       )}
     </div>
   );
