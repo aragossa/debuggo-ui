@@ -25,6 +25,9 @@ const ApiSchemaUpload = ({ projectId, onTestsGenerated }) => {
   const [ideasEnvironmentId, setIdeasEnvironmentId] = useState('');
   const [creatingScenarios, setCreatingScenarios] = useState(false);
   const [suggestingMore, setSuggestingMore] = useState(false);
+  // Scenario tests created without steps (their generation did not finish), per schema id
+  const [pendingTests, setPendingTests] = useState({});
+  const [queuingSchemaId, setQueuingSchemaId] = useState(null);
   const [scenarioResult, setScenarioResult] = useState(null);
   const { getAuthHeaders } = useAuth();
   const API_URL = process.env.REACT_APP_API_URL;
@@ -44,9 +47,52 @@ const ApiSchemaUpload = ({ projectId, onTestsGenerated }) => {
       if (response.ok) {
         const data = await response.json();
         setSchemas(data.schemas || []);
+        fetchPendingTests(data.schemas || []);
       }
     } catch (error) {
       console.error('Error fetching schemas:', error);
+    }
+  };
+
+  const fetchPendingTests = async (list) => {
+    const found = {};
+    await Promise.all(list.map(async (schema) => {
+      try {
+        const response = await fetch(`${API_URL}/api/api-schemas/${schema.id}/scenario-tests/pending`, { headers: getAuthHeaders() });
+        if (response.ok) found[schema.id] = (await response.json()).tests || [];
+      } catch (error) { /* the button is just not shown */ }
+    }));
+    setPendingTests(found);
+  };
+
+  // Generate the steps of the scenario tests that have none: e.g. after the model's quota ran out
+  const handleGeneratePending = async (schema) => {
+    const tests = pendingTests[schema.id] || [];
+    setQueuingSchemaId(schema.id);
+    try {
+      const envResponse = await fetch(`${API_URL}/api/projects/${projectId}/environments`, { headers: getAuthHeaders() });
+      const envData = envResponse.ok ? await envResponse.json() : [];
+      const list = Array.isArray(envData) ? envData : (envData.environments || []);
+      const environment = list.find(env => env.api_url) || list[0];
+      if (!environment) throw new Error('this project has no environment; add one with the API URL of this API');
+      if (!window.confirm(`Generate the steps of ${tests.length} scenario test${tests.length === 1 ? '' : 's'} on the environment "${environment.name}"? AI generates them one test after another.`)) return;
+      const response = await fetch(`${API_URL}/api/api-schemas/${schema.id}/scenario-tests/generate`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ environment_id: environment.id })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+      setIdeas(null);
+      setGenerationResult(null);
+      setScenarioResult({ schemaName: schema.name, created: data.queued, skipped: [], requeued: true });
+      setPendingTests(prev => ({ ...prev, [schema.id]: [] }));
+      if (onTestsGenerated) onTestsGenerated();
+    } catch (error) {
+      console.error('Error queuing scenario tests:', error);
+      alert(`Failed to start the generation: ${error.message}`);
+    } finally {
+      setQueuingSchemaId(null);
     }
   };
 
@@ -371,6 +417,16 @@ const ApiSchemaUpload = ({ projectId, onTestsGenerated }) => {
                   <FontAwesomeIcon icon={faLightbulb} />
                   {suggestingSchemaId === schema.id ? ' Thinking...' : ' Suggest scenarios (AI)'}
                 </button>
+                {(pendingTests[schema.id] || []).length > 0 && (
+                  <button
+                    className="schema-calls-button"
+                    onClick={() => handleGeneratePending(schema)}
+                    disabled={queuingSchemaId !== null}
+                    title={`Scenario tests that were created but have no steps:\n${pendingTests[schema.id].map(test => test.name).join('\n')}`}
+                  >
+                    {queuingSchemaId === schema.id ? 'Starting...' : `Generate steps for ${pendingTests[schema.id].length} scenario test${pendingTests[schema.id].length === 1 ? '' : 's'}`}
+                  </button>
+                )}
                 <button
                   className="delete-schema-button"
                   onClick={() => handleDelete(schema.id)}
@@ -457,7 +513,7 @@ const ApiSchemaUpload = ({ projectId, onTestsGenerated }) => {
         <div className="schema-generation-result">
           <h4>Scenario tests of "{scenarioResult.schemaName}"</h4>
           <p>
-            Created {scenarioResult.created.length} tests
+            {scenarioResult.requeued ? 'Generation started for' : 'Created'} {scenarioResult.created.length} tests
             {scenarioResult.skipped.length > 0 ? `, ${scenarioResult.skipped.length} already existed and were left as they are` : ''}.
             They are in Test Cases, under API Tests, in "{scenarioResult.schemaName} / Scenarios".
             AI is generating their steps one test after another; open a test to follow its progress.
