@@ -121,6 +121,8 @@ const TestCaseSteps = ({
   const [expandedRuns, setExpandedRuns] = useState({});
   // Why the last step generation of this test case stopped (AI quota, no environment, a failing step)
   const [generationError, setGenerationError] = useState(null);
+  // What the generator changed to agree with the API, waiting for a person to confirm: { test_case, steps: {id: text} }
+  const [reviewNotes, setReviewNotes] = useState({ test_case: null, steps: {} });
   // Step messages (an error, or the response of an API step) are clamped to a few lines until clicked
   const [expandedStepMessages, setExpandedStepMessages] = useState({});
   const [draggedStep, setDraggedStep] = useState(null);
@@ -445,6 +447,35 @@ const TestCaseSteps = ({
       console.error('Error fetching step execution results:', error);
     }
   }, [API_URL, getAuthHeaders]);
+
+  const fetchReviewNotes = useCallback(async () => {
+    if (!testCaseId) return;
+    try {
+      const response = await fetch(`${API_URL}/api/test_cases/${testCaseId}/review-notes`, { headers: getAuthHeaders() });
+      if (response.ok) {
+        const data = await response.json();
+        setReviewNotes({ test_case: data.test_case || null, steps: data.steps || {} });
+      }
+    } catch (e) { console.error('Error fetching review notes:', e); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [testCaseId]);
+
+  // stepId: the step whose note is confirmed; null: the note of the test case itself
+  const confirmReviewNote = async (stepId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/test_cases/${testCaseId}/review-notes/confirm`, {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(stepId === null ? {} : { step_id: stepId })
+      });
+      if (response.ok) fetchReviewNotes();
+    } catch (e) { console.error('Error confirming a review note:', e); }
+  };
+
+  // Notes belong to the steps as they are now: read them again when the test or its steps change
+  useEffect(() => {
+    if (!isGeneratingSteps) fetchReviewNotes();
+  }, [fetchReviewNotes, isGeneratingSteps, steps.length]);
 
   const checkStepScreenshot = async (stepId) => {
     try {
@@ -1114,6 +1145,19 @@ const TestCaseSteps = ({
             </button>
           </div>
         )}
+        {reviewNotes.test_case && !isGeneratingSteps && (
+          <div className="review-notes-banner">
+            <AlertTriangle size={16} className="step-review-icon" />
+            <div className="generation-error-text">
+              <strong>Changed by the generator: check before you rely on this test</strong>
+              <span>{reviewNotes.test_case}</span>
+            </div>
+            <button className="step-review-confirm" onClick={() => confirmReviewNote(null)}
+              title="The change is right: the test should not do this step">
+              Confirm
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -1307,6 +1351,17 @@ const TestCaseSteps = ({
                                     </div>
                                     <button onClick={() => setActionDropdownStepId(null)} className="done-btn">Done</button>
                                   </div>
+                                </div>
+                              )}
+
+                              {!isEditing && reviewNotes.steps[step.id] && (
+                                <div className="step-review-note" onClick={e => e.stopPropagation()}>
+                                  <AlertTriangle size={14} className="step-review-icon" />
+                                  <span className="step-review-text">{reviewNotes.steps[step.id]}</span>
+                                  <button className="step-review-confirm" onClick={() => confirmReviewNote(step.id)}
+                                    title="The change is right: the test should expect what the API answers">
+                                    Confirm
+                                  </button>
                                 </div>
                               )}
 
