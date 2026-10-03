@@ -805,6 +805,7 @@ const TestCaseSteps = ({
       if (test_type === 'api') {
         endpoint = `${API_URL}/api/test-cases/${testCaseId}/generate-api-steps`;
         body.environment_id = parseInt(selectedEnvironment);
+        if (selectedAIModel) body.ai_model_id = selectedAIModel;
       } else {
         endpoint = confirm ? `${API_URL}/api/confirm_generate_steps/${testCaseId}` : `${API_URL}/api/generate_steps/${testCaseId}`;
         body.environment_id = parseInt(selectedEnvironment);
@@ -820,8 +821,8 @@ const TestCaseSteps = ({
 
       if (!res.ok) throw new Error('Failed to generate steps');
 
-      // Polling logic for API tests omitted for brevity, same as original
-      if (test_type !== 'api') startPollingForUpdates();
+      // The same status endpoint reports the generation of API tests
+      startPollingForUpdates();
 
     } catch (e) {
       console.error(e);
