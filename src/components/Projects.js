@@ -143,13 +143,16 @@ const Projects = () => {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to delete project');
+        // The server says why: show it instead of a generic "try again"
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || `Failed to delete project (HTTP ${response.status})`);
       }
-      
+
+      setError(null);
       await fetchProjects();
     } catch (err) {
       console.error('Error deleting project:', err);
-      setError('Failed to delete project. Please try again.');
+      setError(err.message || 'Failed to delete project. Please try again.');
     }
   };
 
