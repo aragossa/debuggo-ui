@@ -10,7 +10,6 @@ const ApiSchemaUpload = ({ projectId }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [schemaName, setSchemaName] = useState('');
   const [schemaDescription, setSchemaDescription] = useState('');
-  const [schemaType, setSchemaType] = useState('openapi');
   const { getAuthHeaders } = useAuth();
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -58,11 +57,11 @@ const ApiSchemaUpload = ({ projectId }) => {
       formData.append('file', selectedFile);
       formData.append('name', schemaName);
       formData.append('description', schemaDescription);
-      formData.append('schema_type', schemaType);
 
+      // No Content-Type here: the browser sets multipart/form-data with the boundary itself
       const response = await fetch(`${API_URL}/api/projects/${projectId}/api-schemas/upload`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: getAuthHeaders(false),
         body: formData
       });
 
@@ -74,14 +73,17 @@ const ApiSchemaUpload = ({ projectId }) => {
         setSelectedFile(null);
         setSchemaName('');
         setSchemaDescription('');
-        setSchemaType('openapi');
         document.getElementById('schema-file-input').value = '';
         
         // Refresh list
         fetchSchemas();
       } else {
         const error = await response.json();
-        alert(`Failed to upload schema: ${error.detail || 'Unknown error'}`);
+        // A 422 from FastAPI carries a list of field errors, not a string
+        const detail = Array.isArray(error.detail)
+          ? error.detail.map((e) => `${(e.loc || []).join('.')}: ${e.msg}`).join('; ')
+          : error.detail;
+        alert(`Failed to upload schema: ${detail || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error uploading schema:', error);
@@ -159,19 +161,6 @@ const ApiSchemaUpload = ({ projectId }) => {
               placeholder="Description of this API schema"
               disabled={uploading}
             />
-          </div>
-          
-          <div className="form-group">
-            <label>Type:</label>
-            <select
-              value={schemaType}
-              onChange={(e) => setSchemaType(e.target.value)}
-              disabled={uploading}
-            >
-              <option value="openapi">OpenAPI</option>
-              <option value="swagger">Swagger</option>
-              <option value="postman">Postman Collection</option>
-            </select>
           </div>
           
           <button
