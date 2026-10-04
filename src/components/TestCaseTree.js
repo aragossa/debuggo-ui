@@ -39,6 +39,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   const [showEditTestCaseModal, setShowEditTestCaseModal] = useState(false);
   const [testCaseToEdit, setTestCaseToEdit] = useState(null);
   const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupType, setNewGroupType] = useState('ui');
   const [selectedParentId, setSelectedParentId] = useState(null);
   const [groupToRename, setGroupToRename] = useState(null);
   const [testCaseToMove, setTestCaseToMove] = useState(null);
@@ -129,8 +130,10 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     }
   };
 
-  const handleCreateGroupClick = (parentId = null) => {
+  // A subgroup takes the type of the section it is created in; a top-level group asks for it
+  const handleCreateGroupClick = (parentId = null, testType = 'ui') => {
     setNewGroupName('');
+    setNewGroupType(testType === 'api' ? 'api' : 'ui');
     setSelectedParentId(parentId);
     setShowCreateGroupModal(true);
   };
@@ -235,7 +238,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     if (!newGroupName.trim()) { alert('Group name cannot be empty'); return; }
     try {
       const token = localStorage.getItem('token');
-      const requestBody = { name: newGroupName.trim(), parent_id: selectedParentId };
+      const requestBody = { name: newGroupName.trim(), parent_id: selectedParentId, test_type: newGroupType };
       if (projectId && projectId !== 'all') requestBody.project_id = projectId;
 
       const response = await fetch(`${API_URL}/api/test_groups`, {
@@ -496,7 +499,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                       <Plus size={14} />
                     </button>
                   )}
-                  <button className="tree-action-button" onClick={(e) => { e.stopPropagation(); handleCreateGroupClick(node.id); }} title="Add subgroup">
+                  <button className="tree-action-button" onClick={(e) => { e.stopPropagation(); handleCreateGroupClick(node.id, sectionType); }} title="Add subgroup">
                     <FolderPlus size={14} />
                   </button>
                   <button className="tree-action-button" onClick={(e) => handleRenameGroupClick(e, node)} title="Rename">
@@ -673,7 +676,28 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       {showCreateGroupModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Create New Group</h3>
+            <h3>{selectedParentId ? 'Create New Subgroup' : 'Create New Group'}</h3>
+            {!selectedParentId && (
+              <div className="form-group">
+                <label>Type</label>
+                <div className="test-type-switch" role="radiogroup" aria-label="Group type">
+                  <button
+                    type="button" role="radio" aria-checked={newGroupType === 'ui'}
+                    className={`test-type-option ${newGroupType === 'ui' ? 'active' : ''}`}
+                    onClick={() => setNewGroupType('ui')}
+                  >
+                    UI tests
+                  </button>
+                  <button
+                    type="button" role="radio" aria-checked={newGroupType === 'api'}
+                    className={`test-type-option ${newGroupType === 'api' ? 'active' : ''}`}
+                    onClick={() => setNewGroupType('api')}
+                  >
+                    API tests
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="form-group">
               <label>Group Name</label>
               <input
