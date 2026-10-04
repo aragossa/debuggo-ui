@@ -6,25 +6,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const API_URL = process.env.REACT_APP_API_URL;
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:9000';
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          await fetchUser(token);
-        } catch (error) {
-          console.error('Error during auth initialization:', error);
-          logout();
-        }
-      }
-      setIsLoading(false);
-    };
-
-    initializeAuth();
-  }, []);
-
+  // Function to fetch user data with a token
   const fetchUser = async (token) => {
     try {
       const response = await fetch(`${API_URL}/api/users/me`, {
@@ -50,10 +34,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (token) => {
+  // Function to log out the user
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  // Function to login the user
+  const login = async (tokenData) => {
     try {
-      localStorage.setItem('token', token);
-      await fetchUser(token);
+      // Store only the access token
+      localStorage.setItem('token', tokenData.access_token);
+      
+      await fetchUser(tokenData.access_token);
       return true;
     } catch (error) {
       logout();
@@ -61,12 +55,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    setIsAuthenticated(false);
-  };
-
+  // Function to get auth headers
   const getAuthHeaders = (includeContentType = true) => {
     const token = localStorage.getItem('token');
     const headers = token ? {
@@ -79,6 +68,25 @@ export const AuthProvider = ({ children }) => {
 
     return headers;
   };
+
+  // Initialize authentication on component mount
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        try {
+          await fetchUser(token);
+        } catch (error) {
+          console.error('Error during auth initialization:', error);
+          logout();
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
 
   return (
     <AuthContext.Provider value={{

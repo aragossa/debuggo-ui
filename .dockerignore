@@ -1,0 +1,13 @@
+# Git repository
+.git/
+.gitignore
+
+# IDE configurations
+.idea/
+*.iml
+
+# Image files
+*.png
+
+# Other unwanted files
+*.log

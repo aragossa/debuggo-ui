@@ -12,19 +12,19 @@
 .user-icon {
   width: 36px;
   height: 36px;
-  background-color: #34495e;
+  background-color: var(--primary, #0a2540);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 16px;
-  transition: background-color 0.3s;
+  transition: background-color 0.2s;
 }
 
 .user-menu-button:hover .user-icon {
-  background-color: #2c3e50;
+  background-color: var(--primary-light, #1e3a5f);
 }
 
 .user-dropdown {

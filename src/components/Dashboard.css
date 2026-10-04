@@ -1,60 +1,305 @@
+/* Dashboard 3-Pane Layout */
 .dashboard-container {
   display: flex;
-  flex-direction: column;
-  height: calc(100vh - 60px);
-  padding: 20px;
-  gap: 20px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  background-color: #f9fafb;
+  /* bg-gray-50 */
+  overflow: hidden;
 }
 
-.dashboard-header {
+/* 1. Global Sidebar (Slim Icon Strip) */
+.global-sidebar {
+  width: 72px;
+  /* Increased from 56px to fit larger icons */
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  z-index: 50;
+  flex-shrink: 0;
+  transition: width 0.2s;
+}
+
+.global-sidebar .nav-item span {
+  display: none;
+}
+
+
+.sidebar-header {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.sidebar-logo {
+  font-weight: 800;
+  font-size: 24px;
+  /* Increased */
+  color: #34d399;
+  /* Indigo-600 */
+  width: 40px;
+  /* Increased */
+  height: 40px;
+  /* Increased */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef2ff;
+  border-radius: 8px;
+  /* Slightly larger radius */
+}
+
+.global-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* Increased gap */
+  width: 100%;
+  align-items: center;
+}
+
+.nav-item {
+  width: 56px;
+  /* Increased from 40px */
+  height: 56px;
+  /* Increased from 40px */
+  border-radius: 12px;
+  /* Larger radius */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  /* Gray-500 */
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.nav-item:hover {
+  background-color: #f3f4f6;
+  /* Gray-100 */
+  color: #111827;
+  /* Gray-900 */
+}
+
+.nav-item.active {
+  background-color: #eef2ff;
+  /* Indigo-50 */
+  color: #34d399;
+  /* Indigo-600 */
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  margin-bottom: 12px;
+}
+
+/* 2. Context Sidebar (Test Tree) */
+.context-sidebar {
+  width: 280px;
+  background-color: #f9fafb;
+  /* Gray-50 */
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+  transition: width 0.2s ease-in-out;
+}
+
+.context-header {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.dashboard-header h1 {
-  margin: 0;
-  font-size: 24px;
-  color: #333;
+.project-selector-container {
+  position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
-.generate-from-file-button {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s;
-}
-
-.generate-from-file-button:hover {
-  background-color: #45a049;
-}
-
-.dashboard-content {
+.project-selector-button {
   display: flex;
-  flex: 1;
-  gap: 20px;
-  min-height: 0; /* Important for proper scrolling */
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.tree-container {
-  flex: 0 0 300px;
-  overflow-y: auto;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 15px;
+.project-selector-button:hover {
+  border-color: #d1d5db;
+  background: #fdfdfd;
 }
 
-.content-container {
+.project-dropdown {
+  position: absolute;
+  top: 42px;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 100;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.project-option {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.project-option:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.project-option.selected {
+  background-color: #eef2ff;
+  color: #34d399;
+  font-weight: 500;
+}
+
+.context-content {
   flex: 1;
   overflow-y: auto;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  padding: 0;
+  /* Let tree handle padding */
+}
+
+/* Tree Wrapper inside Context Sidebar */
+.tree-wrapper {
+  padding-top: 8px;
+}
+
+.context-header-collapse-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #9ca3af;
+  transition: all 0.2s;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.context-header-collapse-btn:hover {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.context-header-collapse-btn svg {
+  stroke: currentColor;
+  stroke-width: 2;
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.context-sidebar-collapsed {
+  width: 0;
+  position: relative;
+}
+
+.context-expand-btn {
+  position: absolute;
+  top: 16px;
+  left: 12px;
+  width: 32px;
+  height: 32px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #9ca3af;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 40;
+  transition: all 0.2s;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.context-expand-btn:hover {
+  color: #34d399;
+  border-color: #c7d2fe;
+}
+
+.context-expand-btn svg {
+  stroke: currentColor;
+  stroke-width: 2;
+  display: block;
+}
+
+/* 3. Main Content Area */
+.main-content-area {
+  flex: 1;
+  background-color: #ffffff;
+  overflow: hidden;
+  /* Prevent body scroll */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.tab-scrollable-container {
+  flex: 1;
+  overflow-y: auto;
+  height: 100%;
+  padding: 24px;
+  /* Add some padding for better aesthetics */
+}
+
+/* Error/Empty States */
+.error-message {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  margin: 16px;
+}
+
+/* Mobile Responsive Overlay */
+@media (max-width: 768px) {
+  .context-sidebar {
+    position: absolute;
+    left: 56px;
+    height: 100%;
+    z-index: 40;
+    width: 280px;
+    box-shadow: 10px 0 15px -3px rgba(0, 0, 0, 0.1);
+    background: white;
+  }
 }

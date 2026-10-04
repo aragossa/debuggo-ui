@@ -1,0 +1,63 @@
+# Docker Compose for Local UI Testing
+# This runs the production-built React frontend connected to your local backend
+
+version: '3.8'
+
+services:
+  auroqa-ui-local:
+    image: auroqa-ui:production-local
+    container_name: auroqa-ui-local
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    ports:
+      - "3000:80"  # Map host port 3000 to container port 80
+    environment:
+      # Nginx environment (not directly used by React, but for consistency)
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+    networks:
+      - auroqa-ui-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/index.html"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - auroqa-backend-local
+    labels:
+      - "com.auroqa.service=frontend"
+      - "com.auroqa.environment=local"
+
+  # Optional: Include backend service for full-stack local testing
+  auroqa-backend-local:
+    image: auroqa:obfuscated-local
+    container_name: auroqa-backend-local
+    ports:
+      - "9000:8000"
+    env_file:
+      - ../auroqa/.env
+    environment:
+      DB_HOST: host.docker.internal
+      REDIS_HOST: host.docker.internal
+      KAFKA_HOST: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - auroqa-ui-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.auroqa.service=backend"
+      - "com.auroqa.environment=local"
+
+networks:
+  auroqa-ui-network:
+    driver: bridge

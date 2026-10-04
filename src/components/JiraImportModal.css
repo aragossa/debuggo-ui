@@ -1,0 +1,233 @@
+.jira-import-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.jira-import-modal {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    width: 800px;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+}
+
+.jira-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.jira-modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #fff;
+    font-weight: 600;
+}
+
+.jira-close-button {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.jira-close-button:hover {
+    background-color: #374151;
+    color: #fff;
+}
+
+.jira-modal-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+/* Steps Indicator */
+.jira-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 16px;
+}
+
+.jira-step {
+    flex: 1;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.875rem;
+    position: relative;
+    font-weight: 500;
+}
+
+.jira-step.active {
+    color: #3b82f6;
+}
+
+.jira-step.completed {
+    color: #10b981;
+}
+
+/* Form Styles */
+.jira-form-group {
+    margin-bottom: 16px;
+}
+
+.jira-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #d1d5db;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.jira-form-group input,
+.jira-form-group select,
+.jira-form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+
+.jira-form-group input:focus,
+.jira-form-group select:focus,
+.jira-form-group textarea:focus {
+    border-color: #3b82f6;
+    outline: none;
+}
+
+.jira-form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Issue List */
+.jira-issues-list {
+    border: 1px solid #374151;
+    border-radius: 6px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.jira-issue-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #374151;
+    background-color: #1f2937;
+}
+
+.jira-issue-item:last-child {
+    border-bottom: none;
+}
+
+.jira-issue-item:hover {
+    background-color: #374151;
+}
+
+.jira-issue-key {
+    font-weight: 600;
+    color: #3b82f6;
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.jira-issue-summary {
+    flex: 1;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 12px;
+}
+
+.jira-issue-meta {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    display: flex;
+    gap: 12px;
+}
+
+/* Footer Actions */
+.jira-modal-footer {
+    padding: 20px 24px;
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.jira-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.jira-btn-secondary {
+    background-color: transparent;
+    border: 1px solid #4b5563;
+    color: #d1d5db;
+}
+
+.jira-btn-secondary:hover {
+    background-color: #374151;
+    border-color: #6b7280;
+}
+
+.jira-btn-primary {
+    background-color: #3b82f6;
+    border: 1px solid #3b82f6;
+    color: #fff;
+}
+
+.jira-btn-primary:hover {
+    background-color: #2563eb;
+}
+
+.jira-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.jira-loading {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+    color: #9ca3af;
+}
+
+.jira-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 0.875rem;
+}

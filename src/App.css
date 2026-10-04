@@ -1,27 +1,50 @@
 .app {
-  min-height: 100vh;
-  background-color: #f5f6fa;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  background-color: var(--gray-100);
   display: flex;
   flex-direction: column;
+  font-family: var(--font-family);
 }
 
-.top-nav {
-  display: flex;
-  align-items: center;
-  padding: 1rem 2rem;
-  background-color: #2c3e50;
-  color: white;
+/* Add padding to body when status bar is active */
+body.status-bar-active {
+  padding-bottom: 70px;
 }
+
+@media (max-width: 768px) {
+  body.status-bar-active {
+    padding-bottom: 80px;
+  }
+}
+
+
 
 .nav-brand {
   margin-right: 2rem;
+  display: flex;
+  align-items: center;
 }
 
-.nav-brand a {
+/* .nav-brand a {
   color: white;
   text-decoration: none;
   font-size: 1.5rem;
   font-weight: bold;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.5px;
+  position: relative;
+} */
+
+/* .nav-brand a:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+} */
+
+.nav-logo {
+  height: 32px;
+  width: auto;
 }
 
 .nav-menu {
@@ -39,16 +62,29 @@
 
 .menu-item,
 .admin-menu-item {
-  color: white;
+  color: var(--gray-600);
   text-decoration: none;
   padding: 0.5rem 1rem;
-  border-radius: 4px;
-  transition: background-color 0.3s;
+  border-radius: var(--border-radius-full);
+  transition: all var(--transition-fast);
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+  font-size: var(--font-size-sm);
 }
 
 .menu-item:hover,
 .admin-menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--primary);
+  background-color: var(--gray-100);
+  transform: translateY(-1px);
+}
+
+.menu-item.active,
+.admin-menu-item.active {
+  background-color: var(--primary-subtle);
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .nav-auth {
@@ -58,25 +94,32 @@
 .nav-auth a {
   color: white;
   text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  transition: background-color 0.3s;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--border-radius-full);
+  transition: all var(--transition-fast);
+  font-weight: 500;
+  background-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+  font-size: var(--font-size-sm);
 }
 
 .nav-auth a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .header {
-  background-color: #0078d4;
+  background-color: var(--primary);
   color: white;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 60px;
   position: relative;
   z-index: 10;
+  box-shadow: var(--shadow-sm);
 }
 
 .header .logo-title-container {
@@ -88,7 +131,8 @@
 .header h1 {
   margin: 0;
   font-size: 1.5rem;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.25px;
 }
 
 .header-actions {
@@ -104,36 +148,41 @@
 }
 
 .generate-from-file-button {
-  padding: 8px 16px;
+  padding: 0.6rem 1rem;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  font-size: 14px;
-  background-color: #00594c;
+  font-size: var(--font-size-sm);
+  background-color: var(--secondary);
   color: white;
-  transition: background-color 0.2s;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.generate-from-file-button:hover {
-  background-color: #004a3f;
-}
+/* Hover effects disabled */
 
 .logout-button {
-  padding: 8px 16px;
+  padding: 0.6rem 1rem;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  background-color: #757575;
+  gap: 0.5rem;
+  font-size: var(--font-size-sm);
+  background-color: var(--gray-600);
   color: white;
-  transition: background-color 0.2s;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
 
 .logout-button:hover {
-  background-color: #616161;
+  background-color: var(--gray-700);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .logout-button svg {
@@ -152,28 +201,94 @@
 }
 
 .upload-button {
-  background-color: #035a2a;
+  background-color: var(--success);
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 0.6rem 1.25rem;
   cursor: pointer;
   z-index: 100;
+  border-radius: var(--border-radius-md);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.upload-button:hover {
+  background-color: var(--success-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .main-content {
   flex: 1;
   display: flex;
   overflow: hidden;
+  background-color: var(--gray-100);
 }
 
 .sidebar {
   width: 250px;
-  border-right: 1px solid #e0e0e0;
+  border-right: 1px solid var(--gray-200);
   overflow-y: auto;
+  background-color: white;
+  box-shadow: var(--shadow-sm);
 }
 
 .content {
   flex: 1;
-  padding: 1rem;
+  padding: 1.5rem;
   overflow-y: auto;
+  background-color: var(--gray-100);
+}
+
+/* Add responsive media queries */
+@media (max-width: 768px) {
+  .top-nav {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+  }
+
+  .nav-menu {
+    order: 3;
+    width: 100%;
+    margin-top: 0.75rem;
+    justify-content: space-between;
+  }
+
+  .nav-brand {
+    margin-right: 1rem;
+  }
+
+  .sidebar {
+    width: 220px;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+}
+
+/* Utility Classes for Layout */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.min-h-0 {
+  min-height: 0;
+}
+
+.overflow-hidden {
+  overflow: hidden;
 }

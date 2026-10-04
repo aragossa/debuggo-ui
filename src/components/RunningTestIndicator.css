@@ -1,0 +1,137 @@
+.running-test-indicator {
+  margin-bottom: 24px;
+}
+
+.current-test-running {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: #eff6ff;
+  /* blue-50 */
+  border: 1px solid #bfdbfe;
+  /* blue-200 */
+  border-radius: 8px;
+  color: #1e40af;
+  /* blue-800 */
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.current-test-running .spinning {
+  animation: spin 1s linear infinite;
+  color: #3b82f6;
+  /* blue-500 */
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.running-tests-summary {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  /* gray-200 */
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.running-tests-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f9fafb;
+  /* gray-50 */
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+  font-size: 13px;
+  color: #374151;
+  /* gray-700 */
+}
+
+.running-tests-header svg {
+  color: #059669;
+  /* emerald-600 */
+  font-size: 12px;
+}
+
+.running-tests-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.running-test-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.15s;
+}
+
+.running-test-item:last-child {
+  border-bottom: none;
+}
+
+.running-test-item:hover {
+  background: #f9fafb;
+}
+
+.test-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.test-name {
+  font-weight: 500;
+  color: #111827;
+  /* gray-900 */
+  font-size: 14px;
+}
+
+.execution-name {
+  font-size: 12px;
+  color: #6b7280;
+  /* gray-500 */
+}
+
+.test-timing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  /* gray-500 */
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.test-timing svg {
+  color: #0891b2;
+  /* cyan-600 */
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .running-test-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .test-timing {
+    align-self: flex-start;
+    margin-top: 4px;
+  }
+}

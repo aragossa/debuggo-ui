@@ -1,0 +1,144 @@
+/* Navbar.css */
+.top-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    padding: 0 24px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    font-family: var(--font-family, 'Inter', sans-serif);
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    margin-right: 48px;
+    flex-shrink: 0;
+}
+
+.nav-logo {
+    height: 32px;
+    width: auto;
+}
+
+.navbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    flex: 1;
+    min-width: 0;
+    /* Enable shrinking */
+}
+
+.navbar-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    color: #4b5563;
+    /* Gray 600 */
+    font-weight: 500;
+    font-size: 14px;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    gap: 8px;
+    line-height: 1.5;
+}
+
+.navbar-link svg {
+    flex-shrink: 0;
+}
+
+.navbar-link:hover {
+    color: #111827;
+    /* Gray 900 */
+    background-color: #f3f4f6;
+    /* Gray 100 */
+}
+
+.navbar-link.active {
+    color: var(--primary, #0a2540);
+    background-color: var(--primary-subtle, #e6f0fa);
+}
+
+/* Dropdown Styles */
+.nav-dropdown-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.nav-dropdown-trigger {
+    cursor: pointer;
+}
+
+.nav-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    min-width: 220px;
+    padding: 6px;
+    display: none;
+    flex-direction: column;
+    z-index: 1001;
+}
+
+.nav-dropdown-container:hover .nav-dropdown-menu {
+    display: flex;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    color: #4b5563;
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    gap: 10px;
+}
+
+.dropdown-item:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+/* User Menu / Right Actions */
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.nav-auth-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    background-color: var(--primary, #0a2540);
+    color: white;
+    font-weight: 500;
+    font-size: 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.nav-auth-btn:hover {
+    background-color: var(--primary-light, #1e3a5f);
+}

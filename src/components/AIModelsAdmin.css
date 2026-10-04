@@ -1,0 +1,297 @@
+.ai-models-admin-container {
+  padding: 20px;
+  width: 100%;
+  margin: 0;
+  /* .app is a 100vh flex column with overflow hidden, so the page scrolls itself */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.ai-models-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.add-model-btn {
+  background-color: var(--secondary-dark);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-models-list {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Scrollbar styling */
+.ai-models-list::-webkit-scrollbar {
+  height: 8px;
+}
+
+.ai-models-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.ai-models-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.ai-models-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.ai-models-list table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+}
+
+.ai-models-list th,
+.ai-models-list td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.ai-models-list th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+}
+
+.ai-models-list tr:hover {
+  background-color: #f9f9f9;
+}
+
+.ai-models-list tr.editing {
+  background-color: #f0f7ff;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-btn, .delete-btn, .save-btn, .cancel-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+}
+
+.edit-btn {
+  color: #1890ff;
+}
+
+.delete-btn {
+  color: #ff4d4f;
+}
+
+.delete-btn:disabled {
+  color: #d9d9d9;
+  cursor: not-allowed;
+}
+
+.save-btn {
+  color: #52c41a;
+}
+
+.cancel-btn {
+  color: #ff4d4f;
+}
+
+.edit-btn:hover, .save-btn:hover {
+  background-color: rgba(24, 144, 255, 0.1);
+}
+
+.delete-btn:hover, .cancel-btn:hover {
+  background-color: rgba(255, 77, 79, 0.1);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.status-badge.active {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+}
+
+.status-badge.inactive {
+  background-color: #fff1f0;
+  color: #ff4d4f;
+  border: 1px solid #ffa39e;
+}
+
+.default-icon {
+  color: #52c41a;
+}
+
+.model-form {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.form-actions button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-actions .save-btn {
+  background-color: #1890ff;
+  color: white;
+}
+
+.form-actions .cancel-btn {
+  background-color: #f5f5f5;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.form-actions .save-btn:hover {
+  background-color: #40a9ff;
+}
+
+.form-actions .cancel-btn:hover {
+  background-color: #e8e8e8;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 50px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modal-actions button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-actions .delete-btn {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.modal-actions .cancel-btn {
+  background-color: #f5f5f5;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.no-models {
+  text-align: center;
+  padding: 24px;
+  color: #999;
+}
+
+.loading {
+  text-align: center;
+  padding: 24px;
+  color: #999;
+}
+
+.access-denied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+  color: #999;
+}
+
+.access-denied svg {
+  margin-bottom: 16px;
+  color: #d9d9d9;
+}

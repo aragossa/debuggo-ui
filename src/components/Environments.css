@@ -1,0 +1,316 @@
+/* Environments.css */
+.environments-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.environments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.environments-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.add-environment-button {
+  background-color: var(--secondary-dark);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+
+
+.add-environment-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.environments-message,
+.no-environments-message,
+.loading-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.environments-message svg,
+.no-environments-message svg {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #6c757d;
+}
+
+.add-first-environment-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin-top: 15px;
+  transition: background-color 0.2s;
+}
+
+.add-first-environment-button:hover {
+  background-color: #0069d9;
+}
+
+.environments-table-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.environments-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.environments-table th {
+  padding: 16px;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  border-bottom: 2px solid #e9ecef;
+  white-space: nowrap;
+}
+
+.environments-table td {
+  padding: 16px;
+  border-bottom: 1px solid #e9ecef;
+  color: #333;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.environments-table tr:last-child td {
+  border-bottom: none;
+}
+
+.environments-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.env-name {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.env-url {
+  font-family: monospace;
+  color: #666;
+}
+
+.text-muted {
+  color: #adb5bd;
+  font-style: italic;
+}
+
+.actions-header {
+  text-align: right;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.edit-button,
+.delete-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 5px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.edit-button {
+  background-color: var(--primary-dark);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  margin-right: 5px;
+  transition: background-color 0.2s;
+}
+
+.edit-button:hover {
+  background-color: #0069d9;
+}
+
+.delete-button {
+  color: #dc3545;
+}
+
+.delete-button:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.edit-button:disabled,
+.delete-button:disabled {
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.edit-button:disabled:hover,
+.delete-button:disabled:hover {
+  background-color: transparent;
+}
+
+.login-button {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  margin-right: 5px;
+  transition: background-color 0.2s;
+}
+
+.login-button:hover {
+  background-color: #138496;
+}
+
+.login-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.environment-form-container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.environment-form-container h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.cancel-button,
+.save-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  border: none;
+}
+
+.cancel-button {
+  background-color: #f8f9fa;
+  color: #212529;
+  border: 1px solid #ced4da;
+}
+
+.cancel-button:hover {
+  background-color: #e2e6ea;
+}
+
+.save-button {
+  background-color: #007bff;
+  color: white;
+}
+
+.save-button:hover {
+  background-color: #0069d9;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-message svg {
+  color: #721c24;
+}
+
+.success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
