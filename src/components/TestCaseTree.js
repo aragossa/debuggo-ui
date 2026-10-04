@@ -39,6 +39,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   const [showEditTestCaseModal, setShowEditTestCaseModal] = useState(false);
   const [testCaseToEdit, setTestCaseToEdit] = useState(null);
   const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupType, setNewGroupType] = useState('ui');
   const [selectedParentId, setSelectedParentId] = useState(null);
   const [groupToRename, setGroupToRename] = useState(null);
   const [testCaseToMove, setTestCaseToMove] = useState(null);
@@ -129,8 +130,10 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     }
   };
 
-  const handleCreateGroupClick = (parentId = null) => {
+  // A subgroup takes the type of the section it is created in; a top-level group asks for it
+  const handleCreateGroupClick = (parentId = null, testType = 'ui') => {
     setNewGroupName('');
+    setNewGroupType(testType === 'api' ? 'api' : 'ui');
     setSelectedParentId(parentId);
     setShowCreateGroupModal(true);
   };
@@ -157,7 +160,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     const flatGroups = [];
     const buildGroupPath = (group, parentPath = '') => {
       const currentPath = parentPath ? `${parentPath} / ${group.name}` : group.name;
-      flatGroups.push({ id: group.id, name: group.name, path: currentPath });
+      flatGroups.push({ id: group.id, name: group.name, path: currentPath, project_id: group.project_id });
       if (group.children) group.children.forEach(child => buildGroupPath(child, currentPath));
     };
     groups.forEach(group => buildGroupPath(group));
@@ -188,13 +191,13 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     }
   };
 
-  const handleCreateTestCaseClick = async (parentId = null) => {
+  const handleCreateTestCaseClick = async (parentId = null, testType = 'ui') => {
     setNewTestCase({
       name: '',
       description: '',
       parent_id: parentId,
       project_id: projectId !== 'all' ? projectId : null,
-      test_type: 'ui'
+      test_type: testType === 'api' ? 'api' : 'ui'
     });
     try {
       await fetchAndFlattenGroups();
@@ -235,7 +238,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
     if (!newGroupName.trim()) { alert('Group name cannot be empty'); return; }
     try {
       const token = localStorage.getItem('token');
-      const requestBody = { name: newGroupName.trim(), parent_id: selectedParentId };
+      const requestBody = { name: newGroupName.trim(), parent_id: selectedParentId, test_type: newGroupType };
       if (projectId && projectId !== 'all') requestBody.project_id = projectId;
 
       const response = await fetch(`${API_URL}/api/test_groups`, {
@@ -300,7 +303,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   };
 
   const handleConfirmCreateTestCase = async () => {
-    if (!newTestCase.name.trim() || !newTestCase.project_id) { alert('Check inputs'); return; }
+    if (!newTestCase.name.trim() || !newTestCase.project_id) return;
     try {
       const token = localStorage.getItem('token');
       const requestBody = {
@@ -316,8 +319,11 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
         body: JSON.stringify(requestBody)
       });
       if (!response.ok) throw new Error((await response.json()).detail || 'Failed');
+      const created = await response.json();
       setShowCreateTestCaseModal(false);
       if (onTestCaseDeleted) onTestCaseDeleted(null);
+      // Open the new test: the next thing to do with it is to generate or add its steps
+      if (created && created.id && onNodeClick) onNodeClick(created.id);
     } catch (e) { alert(e.message); }
   };
 
@@ -408,7 +414,8 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
   }, [searchTerm, filteredTreeData]);
 
   // Render Logic
-  const renderNode = (node, index) => {
+  const renderNode = (node, index, sectionType = 'ui') => {
+    if (node.type === 'type_group') sectionType = node.test_type;
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = expandedNodes[node.id];
     const isSelected = selectedTestId === node.id;
@@ -487,7 +494,12 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
               {/* Group actions */}
               {(node.type === 'group' || node.type === 'api_group') && (
                 <>
-                  <button className="tree-action-button" onClick={(e) => { e.stopPropagation(); handleCreateGroupClick(node.id); }} title="Add subgroup">
+                  {node.type === 'group' && (
+                    <button className="tree-action-button" onClick={(e) => { e.stopPropagation(); handleCreateTestCaseClick(node.id, sectionType); }} title={`Add ${sectionType === 'api' ? 'API' : 'UI'} test to this group`}>
+                      <Plus size={14} />
+                    </button>
+                  )}
+                  <button className="tree-action-button" onClick={(e) => { e.stopPropagation(); handleCreateGroupClick(node.id, sectionType); }} title="Add subgroup">
                     <FolderPlus size={14} />
                   </button>
                   <button className="tree-action-button" onClick={(e) => handleRenameGroupClick(e, node)} title="Rename">
@@ -503,9 +515,8 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
               {node.type === 'type_group' && (
                 <button className="tree-action-button" onClick={(e) => {
                   e.stopPropagation();
-                  setNewTestCase(prev => ({ ...prev, parent_id: null, test_type: node.test_type }));
-                  handleCreateTestCaseClick();
-                }} title="Add Test">
+                  handleCreateTestCaseClick(null, node.test_type);
+                }} title={`Add ${node.test_type === 'api' ? 'API' : 'UI'} test`}>
                   <Plus size={14} />
                 </button>
               )}
@@ -553,13 +564,13 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
                     Drop into {node.name}
                   </div>
                 )}
-                {node.children && node.children.map((child, idx) => renderNode(child, idx))}
+                {node.children && node.children.map((child, idx) => renderNode(child, idx, sectionType))}
                 {provided.placeholder}
               </div>
             )}
           </Droppable>
         ) : (
-          node.children && node.children.map((child, idx) => renderNode(child, idx))
+          node.children && node.children.map((child, idx) => renderNode(child, idx, sectionType))
         )}
       </div>
     ) : null;
@@ -665,7 +676,28 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
       {showCreateGroupModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Create New Group</h3>
+            <h3>{selectedParentId ? 'Create New Subgroup' : 'Create New Group'}</h3>
+            {!selectedParentId && (
+              <div className="form-group">
+                <label>Type</label>
+                <div className="test-type-switch" role="radiogroup" aria-label="Group type">
+                  <button
+                    type="button" role="radio" aria-checked={newGroupType === 'ui'}
+                    className={`test-type-option ${newGroupType === 'ui' ? 'active' : ''}`}
+                    onClick={() => setNewGroupType('ui')}
+                  >
+                    UI tests
+                  </button>
+                  <button
+                    type="button" role="radio" aria-checked={newGroupType === 'api'}
+                    className={`test-type-option ${newGroupType === 'api' ? 'active' : ''}`}
+                    onClick={() => setNewGroupType('api')}
+                  >
+                    API tests
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="form-group">
               <label>Group Name</label>
               <input
@@ -705,46 +737,112 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
         </div>
       )}
 
-      {showCreateTestCaseModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Create Test Case</h3>
-            <div className="form-group">
-              <label>Project</label>
-              <select
-                value={newTestCase.project_id || ''}
-                onChange={(e) => setNewTestCase({ ...newTestCase, project_id: e.target.value })}
-                disabled={projectId && projectId !== 'all'}
-              >
-                <option value="">Select Project</option>
-                {availableProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Group (Optional)</label>
-              <select
-                value={newTestCase.parent_id || ''}
-                onChange={(e) => setNewTestCase({ ...newTestCase, parent_id: e.target.value || null })}
-              >
-                <option value="">None (Root)</option>
-                {availableGroups.map(g => <option key={g.id} value={g.id}>{g.path}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Name</label>
-              <input
-                value={newTestCase.name}
-                onChange={(e) => setNewTestCase({ ...newTestCase, name: e.target.value })}
-                placeholder="Test case name"
-              />
-            </div>
-            <div className="modal-actions">
-              <button className="modal-button cancel" onClick={() => setShowCreateTestCaseModal(false)}>Cancel</button>
-              <button className="modal-button create" onClick={handleConfirmCreateTestCase}>Create</button>
+      {showCreateTestCaseModal && (() => {
+        const isApi = newTestCase.test_type === 'api';
+        const projectFixed = projectId && projectId !== 'all';
+        const projectName = (availableProjects.find(p => String(p.id) === String(newTestCase.project_id)) || {}).name;
+        // Only the groups of the chosen project: a test cannot live in a group of another one
+        const projectGroups = availableGroups.filter(g => !g.project_id || String(g.project_id) === String(newTestCase.project_id));
+        const canCreate = newTestCase.name.trim() && newTestCase.project_id;
+        const close = () => setShowCreateTestCaseModal(false);
+        const onKeyDown = (e) => {
+          if (e.key === 'Escape') close();
+          // Enter creates from the name field; in the description it is a new line (Cmd/Ctrl+Enter creates)
+          if (e.key === 'Enter' && canCreate && (e.target.tagName !== 'TEXTAREA' || e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            handleConfirmCreateTestCase();
+          }
+        };
+        return (
+          <div className="modal-overlay" onClick={close}>
+            <div className="modal-content create-test-modal" onClick={(e) => e.stopPropagation()} onKeyDown={onKeyDown}>
+              <h3>
+                New test case
+                {projectFixed && projectName && <span className="create-test-project"> in {projectName}</span>}
+              </h3>
+
+              <div className="form-group">
+                <label>Type</label>
+                <div className="test-type-switch" role="radiogroup" aria-label="Test type">
+                  <button
+                    type="button" role="radio" aria-checked={!isApi}
+                    className={`test-type-option ${!isApi ? 'active' : ''}`}
+                    onClick={() => setNewTestCase({ ...newTestCase, test_type: 'ui' })}
+                  >
+                    UI test
+                  </button>
+                  <button
+                    type="button" role="radio" aria-checked={isApi}
+                    className={`test-type-option ${isApi ? 'active' : ''}`}
+                    onClick={() => setNewTestCase({ ...newTestCase, test_type: 'api' })}
+                  >
+                    API test
+                  </button>
+                </div>
+                <div className="form-hint">
+                  {isApi
+                    ? 'Steps are API requests. Generation builds them from the calls of the uploaded API schema.'
+                    : 'Steps run in the browser. Generation can prepare data through the API when the project has a schema.'}
+                </div>
+              </div>
+
+              {!projectFixed && (
+                <div className="form-group">
+                  <label>Project</label>
+                  <select
+                    value={newTestCase.project_id || ''}
+                    onChange={(e) => setNewTestCase({ ...newTestCase, project_id: e.target.value, parent_id: null })}
+                  >
+                    <option value="">{isLoadingProjects ? 'Loading...' : 'Select project'}</option>
+                    {availableProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label>Name</label>
+                <input
+                  autoFocus
+                  value={newTestCase.name}
+                  onChange={(e) => setNewTestCase({ ...newTestCase, name: e.target.value })}
+                  placeholder={isApi ? 'e.g. Brand: create, rename, delete' : 'e.g. Log in with a wrong password'}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>What to test <span className="label-optional">(used to generate the steps)</span></label>
+                <textarea
+                  rows={4}
+                  value={newTestCase.description}
+                  onChange={(e) => setNewTestCase({ ...newTestCase, description: e.target.value })}
+                  placeholder={isApi
+                    ? 'Create a brand, read it and check its name, rename it, delete it and check that it is gone (404).'
+                    : '1. Open the login page.\n2. Type the login and a wrong password, submit.\n3. Check that the error message is shown.'}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Group <span className="label-optional">(optional)</span></label>
+                <select
+                  value={newTestCase.parent_id || ''}
+                  onChange={(e) => setNewTestCase({ ...newTestCase, parent_id: e.target.value || null })}
+                  disabled={!newTestCase.project_id}
+                >
+                  <option value="">No group</option>
+                  {projectGroups.map(g => <option key={g.id} value={g.id}>{g.path}</option>)}
+                </select>
+              </div>
+
+              <div className="modal-actions">
+                <button className="modal-button cancel" onClick={close}>Cancel</button>
+                <button className="modal-button create" onClick={handleConfirmCreateTestCase} disabled={!canCreate}>
+                  Create {isApi ? 'API' : 'UI'} test
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {showMoveTestCaseModal && (
         <div className="modal-overlay">
@@ -754,7 +852,7 @@ const TestCaseTree = ({ onNodeClick, selectedTestId, treeData, error, onTestCase
               <label>Select Target Group</label>
               <select value={targetGroupId || ''} onChange={(e) => setTargetGroupId(e.target.value)}>
                 <option value="">Select Group...</option>
-                {availableGroups.map(g => (
+                {availableGroups.filter(g => !g.project_id || projectId === 'all' || String(g.project_id) === String(projectId)).map(g => (
                   <option key={g.id} value={g.id} disabled={g.id === testCaseToMove?.parent_id}>
                     {g.path}
                   </option>

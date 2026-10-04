@@ -416,7 +416,7 @@ const Requirements = ({ projectId }) => {
                   ✏️ Edit
                 </button>
                 <button className="delete-btn" onClick={() => handleDeleteRequirement(selectedRequirement.id)}>
-                  🗑️ Delete
+                  Delete
                 </button>
               </div>
             </div>

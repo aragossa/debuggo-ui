@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { usePendingConflicts } from '../utils/polling';
 import './ConflictPopup.css';
 
 const ConflictPopup = () => {
@@ -10,41 +11,16 @@ const ConflictPopup = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
+  const { data: pendingConflicts } = usePendingConflicts();
+
+  // Runs after every poll: show the first pending conflict
   useEffect(() => {
-    // Poll for new conflicts every 5 seconds
-    const pollInterval = setInterval(() => {
-      fetchPendingConflicts();
-    }, 5000);
-
-    // Initial fetch
-    fetchPendingConflicts();
-
-    return () => clearInterval(pollInterval);
-  }, []);
-
-  const fetchPendingConflicts = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/conflict-notifications/pending`, {
-        headers: getAuthHeaders()
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const notifications = data.notifications || [];
-        console.log('Fetched conflicts:', notifications.length, notifications);
-        setConflicts(notifications);
-        
-        // Show popup if there are new conflicts and popup is not already shown
-        if (notifications.length > 0 && !showPopup) {
-          console.log('Showing popup for conflict:', notifications[0]);
-          setCurrentConflict(notifications[0]); // Show first conflict
-          setShowPopup(true);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching conflicts:', error);
+    setConflicts(pendingConflicts);
+    if (pendingConflicts.length > 0) {
+      setCurrentConflict(pendingConflicts[0]);
+      setShowPopup(true);
     }
-  };
+  }, [pendingConflicts]);
 
   const handleApprove = async () => {
     if (!currentConflict) return;

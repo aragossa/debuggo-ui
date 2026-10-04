@@ -37,12 +37,17 @@ import PlanningPanel from './PlanningPanel';
 import ReasoningPanel from './ReasoningPanel';
 import AIModelSelector from './AIModelSelector';
 import RunningTestIndicator from './RunningTestIndicator';
+import { pollWhileVisible } from '../utils/polling';
 import './TestCaseSteps.css';
 
 // The action list comes from GET /api/step_actions (source of truth: TestRunner.execute_step
 // in the backend). Until it loads, or if it fails, only the actions of the current steps
 // are offered, so an existing step can still be shown and edited.
 const ACTION_GROUP_ORDER = ['Interaction', 'Navigation', 'Wait', 'Assertion', 'Alert', 'API'];
+
+// API steps do not work on the page: they have no screenshot and no button for one
+const API_ACTIONS = ['api_request', 'api_auth', 'api_get', 'api_post', 'api_put', 'api_delete', 'api_patch', 'response_validation', 'validation'];
+const isApiAction = (action) => API_ACTIONS.includes(action);
 
 const groupActions = (actions) => {
   const groups = {};
@@ -57,6 +62,7 @@ const TestCaseSteps = ({
   projectId,
   user,
   onTestCaseUpdate,
+  onTestCaseNotFound,
   generationDuration,
   updated_at,
   test_type
@@ -113,6 +119,12 @@ const TestCaseSteps = ({
   const [activeTab, setActiveTab] = useState('description');
   const [localTestRuns, setLocalTestRuns] = useState([]);
   const [expandedRuns, setExpandedRuns] = useState({});
+  // Why the last step generation of this test case stopped (AI quota, no environment, a failing step)
+  const [generationError, setGenerationError] = useState(null);
+  // What the generator changed to agree with the API, waiting for a person to confirm: { test_case, steps: {id: text} }
+  const [reviewNotes, setReviewNotes] = useState({ test_case: null, steps: {} });
+  // Step messages (an error, or the response of an API step) are clamped to a few lines until clicked
+  const [expandedStepMessages, setExpandedStepMessages] = useState({});
   const [draggedStep, setDraggedStep] = useState(null);
   const [stepExecutionResults, setStepExecutionResults] = useState({});
 
@@ -120,7 +132,6 @@ const TestCaseSteps = ({
   // Polling intervals
   const pollingIntervalRef = useRef(null);
   const [stepResultsPollingInterval, setStepResultsPollingInterval] = useState(null);
-  const [runningTestsPollingInterval, setRunningTestsPollingInterval] = useState(null);
 
   // UI state
   const [actionDropdownStepId, setActionDropdownStepId] = useState(null);
@@ -192,6 +203,39 @@ const TestCaseSteps = ({
     })();
     return () => { cancelled = true; };
   }, [API_URL, getAuthHeaders]);
+
+  // API calls of the project (built from its uploaded schemas): an api_request step can be filled from one
+  const [apiOperations, setApiOperations] = useState([]);
+  // UI test generation may prepare data through the API library; on by default when the project has one
+  const [useApiInGeneration, setUseApiInGeneration] = useState(true);
+
+  useEffect(() => {
+    if (!projectId || projectId === 'all') { setApiOperations([]); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/projects/${projectId}/api-operations`, { headers: getAuthHeaders() });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (!cancelled) setApiOperations(data.operations || []);
+      } catch (error) {
+        console.error('Error fetching API calls:', error);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [API_URL, getAuthHeaders, projectId]);
+
+  const renderApiOperationOptions = () => {
+    const byResource = {};
+    apiOperations.forEach(op => { (byResource[op.resource || 'Other'] = byResource[op.resource || 'Other'] || []).push(op); });
+    return Object.keys(byResource).sort().map(resource => (
+      <optgroup key={resource} label={resource}>
+        {byResource[resource].map(op => (
+          <option key={op.id} value={op.id}>{op.method} {op.path}{op.requires_auth ? ' (auth)' : ''}</option>
+        ))}
+      </optgroup>
+    ));
+  };
 
   const actionMeta = useCallback((name) => {
     const meta = stepActions.find(a => a.name === name);
@@ -356,6 +400,11 @@ const TestCaseSteps = ({
       const response = await fetch(`${API_URL}/api/test_cases/${testCaseId}/runs`, {
         headers: getAuthHeaders()
       });
+      if (response.status === 404 && onTestCaseNotFound) {
+        // The test case was deleted: let the parent drop it, which stops this polling
+        onTestCaseNotFound(testCaseId);
+        return;
+      }
       if (!response.ok) return; // Silent fail for polling
 
       const runs = await response.json();
@@ -379,7 +428,7 @@ const TestCaseSteps = ({
     } catch (error) {
       console.error('Error fetching test runs:', error);
     }
-  }, [testCaseId, API_URL, stepResultsPollingInterval, getAuthHeaders]);
+  }, [testCaseId, API_URL, stepResultsPollingInterval, getAuthHeaders, onTestCaseNotFound]);
 
   const fetchStepExecutionResults = useCallback(async (runId) => {
     try {
@@ -398,6 +447,35 @@ const TestCaseSteps = ({
       console.error('Error fetching step execution results:', error);
     }
   }, [API_URL, getAuthHeaders]);
+
+  const fetchReviewNotes = useCallback(async () => {
+    if (!testCaseId) return;
+    try {
+      const response = await fetch(`${API_URL}/api/test_cases/${testCaseId}/review-notes`, { headers: getAuthHeaders() });
+      if (response.ok) {
+        const data = await response.json();
+        setReviewNotes({ test_case: data.test_case || null, steps: data.steps || {} });
+      }
+    } catch (e) { console.error('Error fetching review notes:', e); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [testCaseId]);
+
+  // stepId: the step whose note is confirmed; null: the note of the test case itself
+  const confirmReviewNote = async (stepId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/test_cases/${testCaseId}/review-notes/confirm`, {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(stepId === null ? {} : { step_id: stepId })
+      });
+      if (response.ok) fetchReviewNotes();
+    } catch (e) { console.error('Error confirming a review note:', e); }
+  };
+
+  // Notes belong to the steps as they are now: read them again when the test or its steps change
+  useEffect(() => {
+    if (!isGeneratingSteps) fetchReviewNotes();
+  }, [fetchReviewNotes, isGeneratingSteps, steps.length]);
 
   const checkStepScreenshot = async (stepId) => {
     try {
@@ -497,6 +575,13 @@ const TestCaseSteps = ({
         setIsGeneratingSteps(true);
         startPollingForUpdates();
       }
+
+      // A generation that failed while the test was not open: show why
+      setGenerationError(null);
+      fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, { headers: getAuthHeaders() })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => { if (data && !data.is_generating && data.error) setGenerationError(data.error); })
+        .catch(() => { });
     }
 
     return () => {
@@ -515,7 +600,7 @@ const TestCaseSteps = ({
     if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
 
     pollingIntervalRef.current = setInterval(async () => {
-      if (!testCaseId) return;
+      if (!testCaseId || document.hidden) return;
 
       try {
         const statusResponse = await fetch(`${API_URL}/api/test_case_generation_status/${testCaseId}`, {
@@ -555,6 +640,7 @@ const TestCaseSteps = ({
         }
 
         if (!statusData.is_generating) {
+          setGenerationError(statusData.error || null);
           setIsGeneratingSteps(false);
           setGeneratingTestCases(prev => {
             const updated = { ...prev };
@@ -576,6 +662,7 @@ const TestCaseSteps = ({
     if (stepResultsPollingInterval) clearInterval(stepResultsPollingInterval);
 
     const interval = setInterval(async () => {
+      if (document.hidden) return;
       if (!localTestRuns || localTestRuns.length === 0) return;
       try {
         const latestRun = localTestRuns[0];
@@ -591,12 +678,7 @@ const TestCaseSteps = ({
   };
 
   // Start polling for running tests
-  useEffect(() => {
-    fetchRunningTests();
-    const interval = setInterval(fetchRunningTests, 3000);
-    setRunningTestsPollingInterval(interval);
-    return () => clearInterval(interval);
-  }, [fetchRunningTests]);
+  useEffect(() => pollWhileVisible(fetchRunningTests, 3000), [fetchRunningTests]);
 
   const checkNewStepsForScreenshots = async (newSteps) => {
     if (!newSteps || newSteps.length === 0) return;
@@ -765,6 +847,7 @@ const TestCaseSteps = ({
 
   const generateSteps = async (confirm) => {
     if (!testCaseId || isGeneratingSteps) return;
+    setGenerationError(null);
     setIsGeneratingSteps(true);
     setGeneratingTestCases(prev => ({ ...prev, [testCaseId]: true }));
 
@@ -774,11 +857,13 @@ const TestCaseSteps = ({
       if (test_type === 'api') {
         endpoint = `${API_URL}/api/test-cases/${testCaseId}/generate-api-steps`;
         body.environment_id = parseInt(selectedEnvironment);
+        if (selectedAIModel) body.ai_model_id = selectedAIModel;
       } else {
         endpoint = confirm ? `${API_URL}/api/confirm_generate_steps/${testCaseId}` : `${API_URL}/api/generate_steps/${testCaseId}`;
         body.environment_id = parseInt(selectedEnvironment);
         if (projectId && projectId !== 'all') body.project_id = projectId;
         if (selectedAIModel) body.ai_model_id = selectedAIModel;
+        body.use_api = useApiInGeneration && apiOperations.length > 0;
       }
 
       const res = await fetch(endpoint, {
@@ -787,14 +872,18 @@ const TestCaseSteps = ({
         body: JSON.stringify(body)
       });
 
-      if (!res.ok) throw new Error('Failed to generate steps');
+      if (!res.ok) {
+        let detail = `The server answered ${res.status}`;
+        try { detail = (await res.json()).detail || detail; } catch (parseError) { /* not JSON */ }
+        throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+      }
 
-      // Polling logic for API tests omitted for brevity, same as original
-      if (test_type !== 'api') startPollingForUpdates();
+      // The same status endpoint reports the generation of API tests
+      startPollingForUpdates();
 
     } catch (e) {
       console.error(e);
-      alert(e.message);
+      setGenerationError(`The generation could not start: ${e.message}`);
       setIsGeneratingSteps(false);
       setGeneratingTestCases(prev => {
         const u = { ...prev }; delete u[testCaseId]; return u;
@@ -1013,6 +1102,21 @@ const TestCaseSteps = ({
 
             <div className="vlm-toggle-container">
               {/* Simplified VLM toggle for alignment if needed, usually handled inside AIModelSelector or separately if it existed in the block before */}
+              {test_type !== 'api' && apiOperations.length > 0 && (
+                <label
+                  className="use-api-toggle"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6b7280', cursor: 'pointer' }}
+                  title="When generating steps, let the model prepare and clean up test data through the project's API calls. The behaviour under test still goes through the page."
+                >
+                  <input
+                    type="checkbox"
+                    checked={useApiInGeneration}
+                    onChange={(e) => setUseApiInGeneration(e.target.checked)}
+                    disabled={isGeneratingSteps}
+                  />
+                  Use API for test data
+                </label>
+              )}
             </div>
           </div>
         </div>
@@ -1020,6 +1124,40 @@ const TestCaseSteps = ({
         <p className="test-description">{currentTestDescription}</p>
 
         <RunningTestIndicator testCaseId={testCaseId} onRunningStateChange={setIsRunning} />
+
+        {generationError && !isGeneratingSteps && (
+          <div className="generation-error-banner" role="alert">
+            <AlertTriangle size={16} className="generation-error-icon" />
+            <div className="generation-error-text">
+              <strong>Step generation stopped</strong>
+              <span>{generationError}</span>
+            </div>
+            <button
+              className="generation-error-dismiss"
+              title="Dismiss"
+              onClick={() => {
+                setGenerationError(null);
+                fetch(`${API_URL}/api/test_case_generation_error/${testCaseId}`, { method: 'DELETE', headers: getAuthHeaders() })
+                  .catch(() => { });
+              }}
+            >
+              <XCircle size={16} />
+            </button>
+          </div>
+        )}
+        {reviewNotes.test_case && !isGeneratingSteps && (
+          <div className="review-notes-banner">
+            <AlertTriangle size={16} className="step-review-icon" />
+            <div className="generation-error-text">
+              <strong>Changed by the generator: check before you rely on this test</strong>
+              <span>{reviewNotes.test_case}</span>
+            </div>
+            <button className="step-review-confirm" onClick={() => confirmReviewNote(null)}
+              title="The change is right: the test should not do this step">
+              Confirm
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -1158,6 +1296,18 @@ const TestCaseSteps = ({
                                         {renderActionOptions()}
                                       </select>
                                     </div>
+                                    {step.action === 'api_request' && apiOperations.length > 0 && (
+                                      <div className="edit-group">
+                                        <span className="edit-label">API call</span>
+                                        <select value="" onChange={e => {
+                                          const op = apiOperations.find(o => String(o.id) === e.target.value);
+                                          if (op) handleValueChange(step.id, JSON.stringify(op.step_request), step.action);
+                                        }} onKeyDown={handleEditKeyDown}>
+                                          <option value="">Replace with a call from the library</option>
+                                          {renderApiOperationOptions()}
+                                        </select>
+                                      </div>
+                                    )}
                                     {showValue && (
                                       <div className="edit-group">
                                         <span className="edit-label">Value{meta.needs_value === 'optional' ? ' (optional)' : ''}</span>
@@ -1180,7 +1330,7 @@ const TestCaseSteps = ({
                                   )}
                                   <div className="edit-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                                     <div>
-                                      <button
+                                      {!isApiAction(step.action) && <button
                                         className="view-screenshot-btn"
                                         style={{
                                           display: 'flex',
@@ -1197,18 +1347,31 @@ const TestCaseSteps = ({
                                         onClick={(e) => { e.stopPropagation(); openStepScreenshot(step.id); }}
                                       >
                                         <Camera size={14} /> View Screenshot
-                                      </button>
+                                      </button>}
                                     </div>
                                     <button onClick={() => setActionDropdownStepId(null)} className="done-btn">Done</button>
                                   </div>
                                 </div>
                               )}
 
+                              {!isEditing && reviewNotes.steps[step.id] && (
+                                <div className="step-review-note" onClick={e => e.stopPropagation()}>
+                                  <AlertTriangle size={14} className="step-review-icon" />
+                                  <span className="step-review-text">{reviewNotes.steps[step.id]}</span>
+                                  <button className="step-review-confirm" onClick={() => confirmReviewNote(step.id)}
+                                    title="The change is right: the test should expect what the API answers">
+                                    Confirm
+                                  </button>
+                                </div>
+                              )}
+
                               {!isEditing && (
                                 <div className="step-hover-actions">
-                                  <button className="step-btn-icon" onClick={(e) => { e.stopPropagation(); openStepScreenshot(step.id); }}>
-                                    <Camera size={14} />
-                                  </button>
+                                  {!isApiAction(step.action) && (
+                                    <button className="step-btn-icon" onClick={(e) => { e.stopPropagation(); openStepScreenshot(step.id); }}>
+                                      <Camera size={14} />
+                                    </button>
+                                  )}
                                   <button className="step-btn-icon delete" onClick={(e) => { e.stopPropagation(); handleDeleteStepClick(step); }}>
                                     <Trash2 size={14} />
                                   </button>
@@ -1237,11 +1400,11 @@ const TestCaseSteps = ({
               <table className="test-results-table">
                 <thead>
                   <tr>
-                    <th className="w-20">Run ID</th>
+                    <th style={{ width: '90px' }}>Run ID</th>
                     <th>Date</th>
-                    <th>Duration</th>
-                    <th>Status</th>
-                    <th className="w-10"></th>
+                    <th style={{ width: '110px' }}>Duration</th>
+                    <th style={{ width: '120px' }}>Status</th>
+                    <th style={{ width: '48px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1284,7 +1447,7 @@ const TestCaseSteps = ({
                                     <tr>
                                       <th style={{ width: '40px' }}>#</th>
                                       <th>Action</th>
-                                      <th>Status</th>
+                                      <th style={{ width: '60px' }}>Status</th>
                                       <th style={{ width: '60px' }}>Shot</th>
                                     </tr>
                                   </thead>
@@ -1293,16 +1456,21 @@ const TestCaseSteps = ({
                                       <tr key={res.id}>
                                         <td className="text-center text-gray-400">{res.step_order}</td>
                                         <td>
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-medium text-gray-700 uppercase text-xs px-2 py-0.5 rounded bg-gray-100">
-                                              {res.action}
-                                            </span>
-                                            {res.error_message && (
-                                              <span className="text-red-500 text-xs truncate max-w-xs" title={res.error_message}>
-                                                {res.error_message}
-                                              </span>
-                                            )}
-                                          </div>
+                                          <span className="font-medium text-gray-700 uppercase text-xs px-2 py-0.5 rounded bg-gray-100">
+                                            {res.action}
+                                          </span>
+                                          {res.error_message && (
+                                            <div
+                                              className={`step-result-message ${res.status === 'failed' ? 'failed' : ''} ${expandedStepMessages[res.id] ? 'expanded' : ''}`}
+                                              title={expandedStepMessages[res.id] ? 'Click to collapse' : 'Click to show all'}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setExpandedStepMessages(p => ({ ...p, [res.id]: !p[res.id] }));
+                                              }}
+                                            >
+                                              {res.error_message}
+                                            </div>
+                                          )}
                                         </td>
                                         <td>
                                           {res.status === 'passed' && <CheckCircle size={14} className="text-green-500" />}
@@ -1310,7 +1478,7 @@ const TestCaseSteps = ({
                                           {res.status === 'skipped' && <MinusCircle size={14} className="text-gray-400" />}
                                         </td>
                                         <td className="text-center">
-                                          {res.has_screenshot && (
+                                          {res.has_screenshot && !isApiAction(res.action) && (
                                             <button
                                               className="p-1 hover:bg-gray-100 rounded text-gray-500 hover:text-indigo-600 transition-colors"
                                               onClick={(e) => {
@@ -1454,10 +1622,35 @@ const TestCaseSteps = ({
                   onChange={(e) => setNewStep({ ...newStep, description: e.target.value })}
                 />
               </div>
+              {newStep.action === 'api_request' && apiOperations.length > 0 && (
+                <div className="form-group">
+                  <label>API call</label>
+                  <select value="" onChange={(e) => {
+                    const op = apiOperations.find(o => String(o.id) === e.target.value);
+                    if (op) setNewStep({
+                      ...newStep,
+                      value: JSON.stringify(op.step_request, null, 2),
+                      description: newStep.description.trim() || op.summary || `${op.method} ${op.path}`
+                    });
+                  }}>
+                    <option value="">Fill from the project's API library</option>
+                    {renderApiOperationOptions()}
+                  </select>
+                  <div className="form-hint">The request is copied into the step; edit it below. A relative endpoint goes to the environment's API URL.</div>
+                </div>
+              )}
               {showValue && (
                 <div className="form-group">
                   <label>Value{meta.needs_value === 'optional' ? ' (optional)' : ''}</label>
-                  {meta.value_options ? (
+                  {newStep.action === 'api_request' ? (
+                    <textarea
+                      rows={8}
+                      style={{ fontFamily: 'monospace', fontSize: '12px' }}
+                      placeholder={meta.value_hint || 'Request as JSON'}
+                      value={newStep.value}
+                      onChange={(e) => setNewStep({ ...newStep, value: e.target.value })}
+                    />
+                  ) : meta.value_options ? (
                     <select value={newStep.value} onChange={(e) => setNewStep({ ...newStep, value: e.target.value })}>
                       <option value="">Select file</option>
                       {meta.value_options.map(v => <option key={v} value={v}>{v}</option>)}

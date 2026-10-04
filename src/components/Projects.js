@@ -23,6 +23,7 @@ const Projects = () => {
   const [editingProject, setEditingProject] = useState(null);
   const [clients, setClients] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState(null); // { project, contents, deleteTests, deleting }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -131,25 +132,42 @@ const Projects = () => {
     }
   };
 
-  const handleDeleteProject = async (projectId) => {
-    if (!window.confirm('Are you sure you want to delete this project? Test cases will be unassigned from this project but not deleted.')) {
-      return;
-    }
-    
+  // The delete dialog: the project, what it holds, and whether its tests go with it
+  const openDeleteDialog = async (project) => {
+    setDeleteDialog({ project, contents: null, deleteTests: false, deleting: false });
     try {
-      const response = await fetch(`${API_URL}/api/projects/${projectId}`, {
+      const response = await fetch(`${API_URL}/api/projects/${project.id}/contents`, { headers: getAuthHeaders() });
+      if (response.ok) {
+        const contents = await response.json();
+        setDeleteDialog(prev => (prev && prev.project.id === project.id ? { ...prev, contents } : prev));
+      }
+    } catch (err) {
+      console.error('Error fetching project contents:', err);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    const { project, deleteTests } = deleteDialog;
+    setDeleteDialog(prev => ({ ...prev, deleting: true }));
+    try {
+      const response = await fetch(`${API_URL}/api/projects/${project.id}${deleteTests ? '?delete_tests=true' : ''}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
       
       if (!response.ok) {
-        throw new Error('Failed to delete project');
+        // The server says why: show it instead of a generic "try again"
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || `Failed to delete project (HTTP ${response.status})`);
       }
-      
+
+      setError(null);
       await fetchProjects();
     } catch (err) {
       console.error('Error deleting project:', err);
-      setError('Failed to delete project. Please try again.');
+      setError(err.message || 'Failed to delete project. Please try again.');
+    } finally {
+      setDeleteDialog(null);
     }
   };
 
@@ -435,7 +453,7 @@ const Projects = () => {
                   </button>
                   <button 
                     className="action-button delete"
-                    onClick={() => handleDeleteProject(project.id)}
+                    onClick={() => openDeleteDialog(project)}
                     title="Delete Project"
                   >
                     <FontAwesomeIcon icon={faTrash} />
@@ -459,6 +477,50 @@ const Projects = () => {
           ))}
         </div>
       )}
+
+      {deleteDialog && (() => {
+        const { project, contents, deleteTests, deleting } = deleteDialog;
+        const plural = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`;
+        const close = () => { if (!deleting) setDeleteDialog(null); };
+        return (
+          <div className="project-delete-overlay" onClick={close}>
+            <div className="project-delete-dialog" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+              <h3>Delete project "{project.name}"?</h3>
+              <p className="project-delete-contents">
+                {contents
+                  ? <>Deleted with the project: {plural(contents.environments, 'environment')}, {plural(contents.api_schemas, 'API schema')} with {contents.api_schemas === 1 ? 'its' : 'their'} calls, {plural(contents.suites, 'test suite')}, its execution plans and requirements. It also has {plural(contents.tests, 'test case')} in {plural(contents.groups, 'folder')}.</>
+                  : 'Loading what the project holds...'}
+              </p>
+              <label className={`project-delete-option ${!deleteTests ? 'selected' : ''}`}>
+                <input type="radio" name="delete-tests" checked={!deleteTests} disabled={deleting}
+                  onChange={() => setDeleteDialog(prev => ({ ...prev, deleteTests: false }))} />
+                <span>
+                  <strong>Delete the project, keep its tests</strong>
+                  <span>The test cases stay, without a project.</span>
+                </span>
+              </label>
+              <label className={`project-delete-option danger ${deleteTests ? 'selected' : ''}`}>
+                <input type="radio" name="delete-tests" checked={deleteTests} disabled={deleting}
+                  onChange={() => setDeleteDialog(prev => ({ ...prev, deleteTests: true }))} />
+                <span>
+                  <strong>Delete the project and all its tests</strong>
+                  <span>
+                    {contents
+                      ? `${plural(contents.tests, 'test case')}, ${plural(contents.groups, 'folder')} and ${plural(contents.runs, 'run')} with their steps and results are deleted too.`
+                      : 'Its test cases, folders, steps and run history are deleted too.'} This cannot be undone.
+                  </span>
+                </span>
+              </label>
+              <div className="project-delete-actions">
+                <button className="project-delete-cancel" onClick={close} disabled={deleting}>Cancel</button>
+                <button className="project-delete-confirm" onClick={handleDeleteProject} disabled={deleting}>
+                  {deleting ? 'Deleting...' : (deleteTests ? 'Delete project and tests' : 'Delete project')}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

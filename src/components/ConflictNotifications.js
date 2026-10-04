@@ -1,38 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { usePendingConflicts } from '../utils/polling';
 import './ConflictNotifications.css';
 
 const ConflictNotifications = () => {
-    const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { data: notifications, loaded, refresh: fetchNotifications } = usePendingConflicts();
+    const loading = !loaded;
     const [selectedNotification, setSelectedNotification] = useState(null);
     const API_BASE = process.env.REACT_APP_API_URL || '';
-
-    useEffect(() => {
-        fetchNotifications();
-        // Poll for new notifications every 10 seconds
-        const interval = setInterval(fetchNotifications, 10000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const fetchNotifications = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE}/api/conflict-notifications/pending`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setNotifications(data.notifications || []);
-            }
-        } catch (error) {
-            console.error('Error fetching conflict notifications:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleApprove = async (notificationId) => {
         try {
@@ -153,7 +127,7 @@ const ConflictNotifications = () => {
 
                                 <div className="conflict-comparison">
                                     <div className="conflict-expected">
-                                        <h4>📖 Expected (Documentation)</h4>
+                                        <h4>Expected (Documentation)</h4>
                                         <div className="status-badge expected">
                                             Status: {notification.expected_status}
                                         </div>
@@ -162,7 +136,7 @@ const ConflictNotifications = () => {
                                     <div className="conflict-arrow">→</div>
 
                                     <div className="conflict-actual">
-                                        <h4>🔍 Actual (Reality)</h4>
+                                        <h4>Actual (Reality)</h4>
                                         <div className="status-badge actual">
                                             Status: {notification.actual_status}
                                         </div>
@@ -173,7 +147,7 @@ const ConflictNotifications = () => {
                                 </div>
 
                                 <div className="conflict-resolution">
-                                    <h4>💡 Suggested Resolution</h4>
+                                    <h4>Suggested Resolution</h4>
                                     <p>{notification.suggested_resolution}</p>
                                     <div className="corrected-expectation">
                                         <strong>Corrected Expected Status:</strong> {notification.corrected_expected_status}

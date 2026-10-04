@@ -12,12 +12,12 @@ import {
   faClock,
   faHistory
 } from '@fortawesome/free-solid-svg-icons';
+import { pollWhileVisible } from '../utils/polling';
 import './ReasoningPanel.css';
 
 const ReasoningPanel = ({ testCaseId, isGenerating, API_URL, getAuthHeaders }) => {
   const [reasoning, setReasoning] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [pollingInterval, setPollingInterval] = useState(null);
 
   // Note: Removed auto-scroll to prevent page jumping during updates
   // Users can manually scroll to see new content
@@ -25,7 +25,6 @@ const ReasoningPanel = ({ testCaseId, isGenerating, API_URL, getAuthHeaders }) =
   // Fetch reasoning data periodically while generating
   useEffect(() => {
     if (!isGenerating || !testCaseId) {
-      if (pollingInterval) clearInterval(pollingInterval);
       return;
     }
 
@@ -46,13 +45,7 @@ const ReasoningPanel = ({ testCaseId, isGenerating, API_URL, getAuthHeaders }) =
     };
 
     // Fetch immediately and then every 2 seconds
-    fetchReasoning();
-    const interval = setInterval(fetchReasoning, 2000);
-    setPollingInterval(interval);
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return pollWhileVisible(fetchReasoning, 2000);
   }, [isGenerating, testCaseId, API_URL, getAuthHeaders]);
 
   if (!reasoning && !isGenerating) {

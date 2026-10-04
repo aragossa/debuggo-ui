@@ -1,54 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner, faPlay, faClock } from '@fortawesome/free-solid-svg-icons';
+import { useRunningTests } from '../utils/polling';
 import './RunningTestIndicator.css';
 
 const RunningTestIndicator = ({ testCaseId, onRunningStateChange }) => {
-  const [runningTests, setRunningTests] = useState([]);
-  const [isCurrentTestRunning, setIsCurrentTestRunning] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL;
+  const { data: runningTests, loaded } = useRunningTests();
+  const isCurrentTestRunning = runningTests.some(test =>
+    String(test.test_case_id) === String(testCaseId)
+  );
 
-  const fetchRunningTests = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/running-tests`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setRunningTests(data.running_tests || []);
-        
-        // Check if current test case is running
-        const currentTestRunning = data.running_tests.some(test => 
-          test.test_case_id == testCaseId
-        );
-        setIsCurrentTestRunning(currentTestRunning);
-        
-        // Notify parent component
-        if (onRunningStateChange) {
-          onRunningStateChange(currentTestRunning);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching running tests:', error);
-    }
-  };
-
+  // Notify parent component after every poll
   useEffect(() => {
-    fetchRunningTests();
-    
-    // Poll every 3 seconds
-    const interval = setInterval(fetchRunningTests, 3000);
-    
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [testCaseId]);
+    if (loaded && onRunningStateChange) {
+      onRunningStateChange(isCurrentTestRunning);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runningTests, loaded, testCaseId]);
 
   if (runningTests.length === 0) {
     return null;

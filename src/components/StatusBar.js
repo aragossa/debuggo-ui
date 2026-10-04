@@ -1,30 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useRunningTests } from '../utils/polling';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner, faPlay, faClock, faStop, faCog } from '@fortawesome/free-solid-svg-icons';
 import './StatusBar.css';
 
 const StatusBar = () => {
-  const [runningTests, setRunningTests] = useState([]);
+  const { data: runningTests, refresh: fetchRunningTests } = useRunningTests();
   const [stopAllLoading, setStopAllLoading] = useState(false);
   const API_URL = process.env.REACT_APP_API_URL;
-
-  const fetchRunningTests = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/running-tests`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setRunningTests(data.running_tests || []);
-      }
-    } catch (error) {
-      console.error('Error fetching running tests:', error);
-    }
-  };
 
   const handleStopAllExecutions = async () => {
     if (runningTests.length === 0) {
@@ -65,20 +48,6 @@ const StatusBar = () => {
       setStopAllLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchRunningTests();
-    
-    // Poll every 3 seconds
-    const interval = setInterval(fetchRunningTests, 3000);
-    
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Manage body class for status bar padding
   useEffect(() => {

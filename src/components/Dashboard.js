@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TestCaseTree from './TestCaseTree';
 import TestCaseSteps from './TestCaseSteps';
 import TestSuites from './TestSuites';
@@ -6,6 +6,7 @@ import UploadPopup from './UploadPopup';
 import TestResultPopup from './TestResultPopup';
 import Environments from './Environments';
 import ApiSchemaUpload from './ApiSchemaUpload';
+import ApiCoverage from './ApiCoverage';
 import ConflictNotifications from './ConflictNotifications';
 import ConflictPopup from './ConflictPopup';
 import PlaceholderHelp from './PlaceholderHelp';
@@ -17,6 +18,7 @@ import {
   FlaskConical,
   Settings,
   FileJson,
+  Grid3x3,
   Folder,
   AlertTriangle,
   ClipboardList,
@@ -31,6 +33,7 @@ import {
   PanelLeftOpen
 } from 'lucide-react';
 import './Dashboard.css';
+import './DashboardPages.css';
 
 const Dashboard = () => {
   const API_URL = process.env.REACT_APP_API_URL;
@@ -167,10 +170,26 @@ const Dashboard = () => {
     localStorage.removeItem('selectedTestId');
   };
 
+  // Stable identity: TestCaseSteps restarts its polling when this prop changes.
+  // localStorage always mirrors selectedTestId, so it tells whether the missing
+  // test is still the selected one.
+  const handleTestCaseNotFound = useCallback((missingTestId) => {
+    if (localStorage.getItem('selectedTestId') !== String(missingTestId)) return;
+    setSelectedTestId(null);
+    setTestCase(null);
+    localStorage.removeItem('selectedTestId');
+  }, []);
+
   const handleNodeClick = async (id) => {
     setSelectedTestId(id);
     localStorage.setItem('selectedTestId', id);
     fetchTestCase(id);
+  };
+
+  // A test picked on the API Coverage page: show it on the Test Cases page
+  const openTestFromCoverage = (id) => {
+    setActiveTab('testCases');
+    handleNodeClick(id);
   };
 
   const fetchTestCase = async (id) => {
@@ -196,6 +215,10 @@ const Dashboard = () => {
           };
 
           setTestCase(formattedTestCase);
+        } else if (data.status === 'error') {
+          // The backend answers 200 with status "error" for a missing test case
+          setTestCase(null);
+          handleTestCaseNotFound(id);
         } else {
           setTestCase(data);
         }
@@ -241,7 +264,7 @@ const Dashboard = () => {
   };
 
   const handleTestCaseDeleted = (deletedTestId) => {
-    if (deletedTestId === selectedTestId) {
+    if (deletedTestId !== null && String(deletedTestId) === String(selectedTestId)) {
       setSelectedTestId(null);
       setTestCase(null);
       localStorage.removeItem('selectedTestId');
@@ -286,6 +309,14 @@ const Dashboard = () => {
           >
             <FileJson className="nav-icon" size={18} />
             {!isSidebarCollapsed && <span>API Schemas</span>}
+          </button>
+          <button
+            className={`nav-item ${activeTab === 'apiCoverage' ? 'active' : ''}`}
+            onClick={() => setActiveTab('apiCoverage')}
+            title="API Coverage"
+          >
+            <Grid3x3 className="nav-icon" size={18} />
+            {!isSidebarCollapsed && <span>API Coverage</span>}
           </button>
           <button
             className={`nav-item ${activeTab === 'suites' ? 'active' : ''}`}
@@ -446,6 +477,7 @@ const Dashboard = () => {
                 steps_generation_start_time={testCase.steps_generation_start_time}
                 steps_generation_end_time={testCase.steps_generation_end_time}
                 onTestResult={setTestResult}
+                onTestCaseNotFound={handleTestCaseNotFound}
                 onTestCaseUpdate={(name, description, updated_at) => {
                   setTestCase(prev => ({
                     ...prev,
@@ -465,33 +497,41 @@ const Dashboard = () => {
             )}
           </div>
         ) : activeTab === 'environments' ? (
-          <div className="tab-scrollable-container">
+          <div className="tab-scrollable-container dash-page">
             <Environments projectId={selectedProject} />
           </div>
         ) : activeTab === 'apiSchemas' ? (
-          <div className="tab-scrollable-container">
-            <ApiSchemaUpload projectId={selectedProject} />
+          <div className="tab-scrollable-container dash-page">
+            <ApiSchemaUpload projectId={selectedProject} onTestsGenerated={() => fetchTreeDataForProject(selectedProject)} />
+          </div>
+        ) : activeTab === 'apiCoverage' ? (
+          <div className="tab-scrollable-container dash-page">
+            <ApiCoverage projectId={selectedProject} onOpenTest={openTestFromCoverage} />
           </div>
         ) : activeTab === 'suites' ? (
-          <div className="tab-scrollable-container">
+          <div className="tab-scrollable-container dash-page">
             <TestSuites projectId={selectedProject} />
           </div>
         ) : activeTab === 'conflicts' ? (
-          <ConflictNotifications />
+          <div className="tab-scrollable-container dash-page">
+            <ConflictNotifications />
+          </div>
         ) : activeTab === 'executionPlans' ? (
-          <div className="tab-scrollable-container">
+          <div className="tab-scrollable-container dash-page">
             <ExecutionPlans projectId={selectedProject} />
           </div>
         ) : activeTab === 'metrics' ? (
-          <div className="tab-scrollable-container">
+          <div className="tab-scrollable-container dash-page">
             <MetricsDashboard />
           </div>
         ) : activeTab === 'requirements' ? (
-          <div className="tab-scrollable-container">
+          <div className="tab-scrollable-container dash-page">
             <Requirements projectId={selectedProject} />
           </div>
         ) : activeTab === 'help' ? (
-          <PlaceholderHelp />
+          <div className="tab-scrollable-container dash-page">
+            <PlaceholderHelp />
+          </div>
         ) : null}
       </div>
 

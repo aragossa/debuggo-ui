@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './TestSuites.css';
-import { FaPlus, FaEdit, FaTrash, FaChevronDown, FaChevronRight, FaFolder, FaList, FaTimes } from 'react-icons/fa';
+import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, Folder, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const TestSuites = ({ projectId }) => {
@@ -280,102 +280,100 @@ const TestSuites = ({ projectId }) => {
     setExpandedSuites(newExpanded);
   };
 
-  const getSuiteTypeColor = (type) => {
-    switch (type) {
-      case 'static': return '#3498db';
-      case 'dynamic': return '#e74c3c';
-      case 'smart': return '#f39c12';
-      default: return '#95a5a6';
-    }
-  };
-
-  const renderSuite = (suite, level = 0) => {
+  const renderSuite = (suite) => {
     const isExpanded = expandedSuites.has(suite.id);
-    const tests = suiteTests[suite.id] || [];
+    const tests = suiteTests[suite.id];
     const childSuites = suites.filter(s => s.parent_suite_id === suite.id);
     const hasContent = suite.test_count > 0 || childSuites.length > 0;
 
     return (
-      <div key={suite.id} className="suite-item" style={{ marginLeft: `${level * 20}px` }}>
-        <div className="suite-header">
+      <div key={suite.id} className={`ts-suite ${isExpanded ? 'expanded' : ''}`}>
+        <div className="ts-suite-row">
           <button
-            className="expand-button"
+            className="ts-icon-btn"
             onClick={() => toggleSuiteExpanded(suite.id)}
             disabled={!hasContent}
+            title={isExpanded ? 'Collapse' : 'Expand'}
           >
-            {isExpanded ? <FaChevronDown /> : <FaChevronRight />}
+            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
 
-          <div className="suite-info">
-            <FaFolder style={{ color: getSuiteTypeColor(suite.suite_type), marginRight: '8px' }} />
-            <div className="suite-details">
-              <h4 className="suite-name">{suite.name}</h4>
-              {suite.description && <p className="suite-description">{suite.description}</p>}
-              <div className="suite-meta">
-                <span className="badge" style={{ backgroundColor: getSuiteTypeColor(suite.suite_type) }}>
-                  {suite.suite_type}
+          <div
+            className={`ts-suite-info ${hasContent ? 'clickable' : ''}`}
+            onClick={hasContent ? () => toggleSuiteExpanded(suite.id) : undefined}
+          >
+            <Folder size={16} className="ts-suite-icon" />
+            <div className="ts-suite-text">
+              <div className="ts-suite-title">
+                <h4 className="ts-suite-name">{suite.name}</h4>
+                <span className="ts-badge">{suite.suite_type}</span>
+                <span className="ts-suite-count">
+                  {suite.test_count} test{suite.test_count !== 1 ? 's' : ''}
                 </span>
-                <span className="test-count">{suite.test_count} tests</span>
               </div>
+              {suite.description && <p className="ts-suite-description">{suite.description}</p>}
             </div>
           </div>
 
-          <div className="suite-actions">
+          <div className="ts-suite-actions">
             <button
-              className="action-button add"
+              className="ts-btn"
               onClick={() => handleOpenAddTestsModal(suite)}
               title="Add tests to suite"
             >
-              <FaPlus />
+              <Plus size={14} /> Add Tests
             </button>
             <button
-              className="action-button edit"
+              className="ts-icon-btn"
               onClick={() => handleEditSuite(suite)}
               title="Edit suite"
             >
-              <FaEdit />
+              <Pencil size={15} />
             </button>
             <button
-              className="action-button delete"
+              className="ts-icon-btn danger"
               onClick={() => handleDeleteSuite(suite.id)}
               title="Delete suite"
             >
-              <FaTrash />
+              <Trash2 size={15} />
             </button>
           </div>
         </div>
 
         {isExpanded && (
-          <div className="suite-content">
-            {tests.length > 0 && (
-              <div className="tests-list">
-                <h5>Tests in Suite ({tests.length})</h5>
-                <ul>
-                  {tests.map(test => (
-                    <li key={test.test_case_id} className="test-item">
-                      <FaList style={{ marginRight: '8px', color: test.test_type === 'ui' ? '#3498db' : '#e74c3c' }} />
-                      <span className="test-name">{test.test_name}</span>
-                      <span className="test-type">{test.test_type}</span>
-                      <button
-                        className="remove-test-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveTestFromSuite(suite.id, test.test_case_id);
-                        }}
-                        title="Remove test from suite"
-                      >
-                        <FaTimes />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          <div className="ts-suite-body">
+            {tests === undefined && suite.test_count > 0 && (
+              <div className="ts-tests-loading">Loading tests...</div>
+            )}
+
+            {tests && tests.length > 0 && (
+              <ul className="ts-tests">
+                {tests.map((test, index) => (
+                  <li key={test.test_case_id} className="ts-test-row">
+                    <span className="ts-test-index">{index + 1}</span>
+                    <span className="ts-badge">{test.test_type}</span>
+                    <span className="ts-test-name">{test.test_name}</span>
+                    <button
+                      className="ts-icon-btn danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveTestFromSuite(suite.id, test.test_case_id);
+                      }}
+                      title="Remove test from suite"
+                    >
+                      <X size={15} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
 
             {childSuites.length > 0 && (
-              <div className="child-suites">
+              <div className="ts-children">
                 <h5>Child Suites</h5>
-                {childSuites.map(childSuite => renderSuite(childSuite, level + 1))}
+                <div className="ts-suites">
+                  {childSuites.map(childSuite => renderSuite(childSuite))}
+                </div>
               </div>
             )}
           </div>
@@ -383,6 +381,35 @@ const TestSuites = ({ projectId }) => {
       </div>
     );
   };
+
+  const renderSuiteTypeAndEnvironment = (typeLabels) => (
+    <div className="ts-form-row">
+      <div className="form-group">
+        <label>Suite Type *</label>
+        <select
+          value={formData.suite_type}
+          onChange={e => setFormData({ ...formData, suite_type: e.target.value })}
+        >
+          <option value="static">{typeLabels.static}</option>
+          <option value="dynamic">{typeLabels.dynamic}</option>
+          <option value="smart">{typeLabels.smart}</option>
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label>Default Environment</label>
+        <select
+          value={formData.default_environment_id || ''}
+          onChange={e => setFormData({ ...formData, default_environment_id: e.target.value ? parseInt(e.target.value) : null })}
+        >
+          <option value="">None</option>
+          {environments.map(env => (
+            <option key={env.id} value={env.id}>{env.name}</option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
 
   const rootSuites = suites.filter(s => !s.parent_suite_id);
 
@@ -403,7 +430,7 @@ const TestSuites = ({ projectId }) => {
             setShowCreateModal(true);
           }}
         >
-          <FaPlus /> Create Suite
+          <Plus size={14} /> Create Suite
         </button>
       </div>
 
@@ -416,15 +443,15 @@ const TestSuites = ({ projectId }) => {
           <p>No test suites yet. Create one to get started!</p>
         </div>
       ) : (
-        <div className="suites-list">
+        <div className="ts-suites">
           {rootSuites.map(suite => renderSuite(suite))}
         </div>
       )}
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="ts-modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="ts-modal" onClick={e => e.stopPropagation()}>
             <h3>Create Test Suite</h3>
             <form onSubmit={handleCreateSuite}>
               <div className="form-group">
@@ -434,6 +461,7 @@ const TestSuites = ({ projectId }) => {
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                   required
+                  autoFocus
                   placeholder="e.g., Smoke Tests, Regression Suite"
                 />
               </div>
@@ -448,32 +476,11 @@ const TestSuites = ({ projectId }) => {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Suite Type *</label>
-                  <select
-                    value={formData.suite_type}
-                    onChange={e => setFormData({ ...formData, suite_type: e.target.value })}
-                  >
-                    <option value="static">Static (Manual selection)</option>
-                    <option value="dynamic">Dynamic (Auto-populated)</option>
-                    <option value="smart">Smart (ML-based)</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Default Environment</label>
-                  <select
-                    value={formData.default_environment_id || ''}
-                    onChange={e => setFormData({ ...formData, default_environment_id: e.target.value ? parseInt(e.target.value) : null })}
-                  >
-                    <option value="">None</option>
-                    {environments.map(env => (
-                      <option key={env.id} value={env.id}>{env.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              {renderSuiteTypeAndEnvironment({
+                static: 'Static (Manual selection)',
+                dynamic: 'Dynamic (Auto-populated)',
+                smart: 'Smart (ML-based)'
+              })}
 
               <div className="form-actions">
                 <button type="button" onClick={() => setShowCreateModal(false)} className="cancel-button">
@@ -490,8 +497,8 @@ const TestSuites = ({ projectId }) => {
 
       {/* Edit Modal */}
       {showEditModal && selectedSuite && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="ts-modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="ts-modal" onClick={e => e.stopPropagation()}>
             <h3>Edit Test Suite</h3>
             <form onSubmit={handleUpdateSuite}>
               <div className="form-group">
@@ -513,32 +520,7 @@ const TestSuites = ({ projectId }) => {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Suite Type *</label>
-                  <select
-                    value={formData.suite_type}
-                    onChange={e => setFormData({ ...formData, suite_type: e.target.value })}
-                  >
-                    <option value="static">Static</option>
-                    <option value="dynamic">Dynamic</option>
-                    <option value="smart">Smart</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Default Environment</label>
-                  <select
-                    value={formData.default_environment_id || ''}
-                    onChange={e => setFormData({ ...formData, default_environment_id: e.target.value ? parseInt(e.target.value) : null })}
-                  >
-                    <option value="">None</option>
-                    {environments.map(env => (
-                      <option key={env.id} value={env.id}>{env.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              {renderSuiteTypeAndEnvironment({ static: 'Static', dynamic: 'Dynamic', smart: 'Smart' })}
 
               <div className="form-actions">
                 <button type="button" onClick={() => setShowEditModal(false)} className="cancel-button">
@@ -555,40 +537,36 @@ const TestSuites = ({ projectId }) => {
 
       {/* Add Tests Modal */}
       {showAddTestsModal && selectedSuite && (
-        <div className="modal-overlay" onClick={() => setShowAddTestsModal(false)}>
-          <div className="modal-content modal-large" onClick={e => e.stopPropagation()}>
+        <div className="ts-modal-overlay" onClick={() => setShowAddTestsModal(false)}>
+          <div className="ts-modal ts-modal-large" onClick={e => e.stopPropagation()}>
             <h3>Add Tests to Suite: {selectedSuite.name}</h3>
-            
+
             {availableTests.length === 0 ? (
               <div className="empty-state">
                 <p>No test cases available in this project</p>
               </div>
             ) : (
-              <div className="tests-selection">
-                <div className="tests-list-modal">
-                  {availableTests.map(test => (
-                    <div key={test.id} className="test-checkbox-item">
-                      <input
-                        type="checkbox"
-                        id={`test-${test.id}`}
-                        checked={selectedTests.has(test.id)}
-                        onChange={(e) => {
-                          const newSelected = new Set(selectedTests);
-                          if (e.target.checked) {
-                            newSelected.add(test.id);
-                          } else {
-                            newSelected.delete(test.id);
-                          }
-                          setSelectedTests(newSelected);
-                        }}
-                      />
-                      <label htmlFor={`test-${test.id}`}>
-                        <span className="test-name">{test.test_name}</span>
-                        <span className="test-type">{test.test_type}</span>
-                      </label>
-                    </div>
-                  ))}
-                </div>
+              <div className="ts-pick-list">
+                {availableTests.map(test => (
+                  <label key={test.id} className="ts-pick-row" htmlFor={`test-${test.id}`}>
+                    <input
+                      type="checkbox"
+                      id={`test-${test.id}`}
+                      checked={selectedTests.has(test.id)}
+                      onChange={(e) => {
+                        const newSelected = new Set(selectedTests);
+                        if (e.target.checked) {
+                          newSelected.add(test.id);
+                        } else {
+                          newSelected.delete(test.id);
+                        }
+                        setSelectedTests(newSelected);
+                      }}
+                    />
+                    <span className="ts-test-name">{test.test_name}</span>
+                    <span className="ts-badge">{test.test_type}</span>
+                  </label>
+                ))}
               </div>
             )}
 
@@ -596,9 +574,9 @@ const TestSuites = ({ projectId }) => {
               <button type="button" onClick={() => setShowAddTestsModal(false)} className="cancel-button">
                 Cancel
               </button>
-              <button 
-                type="button" 
-                onClick={handleAddTestsToSuite} 
+              <button
+                type="button"
+                onClick={handleAddTestsToSuite}
                 className="submit-button"
                 disabled={selectedTests.size === 0}
               >

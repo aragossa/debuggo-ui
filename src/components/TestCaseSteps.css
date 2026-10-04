@@ -138,7 +138,8 @@
   font-size: 14px;
   margin: 12px 0 0 0;
   line-height: 1.5;
-  white-space: normal;
+  /* keep the line breaks of the description, as the edit form shows them */
+  white-space: pre-line;
   overflow: visible;
 }
 
@@ -673,6 +674,8 @@
 
 .test-results-table {
   width: 100%;
+  /* Fixed columns: a long step message wraps inside its cell instead of pushing Status off the screen */
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -752,7 +755,35 @@
 
 .step-execution-table {
   width: 100%;
+  table-layout: fixed;
   font-size: 13px;
+}
+
+/* The message of a step: an error, or the status and response of an API step */
+.step-result-message {
+  margin-top: 4px;
+  font-size: 12px;
+  font-family: monospace;
+  color: #6b7280;
+  /* Collapsed: one flowing text, so the three lines show the start of the response, not blank lines */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.step-result-message.failed {
+  color: #ef4444;
+}
+
+.step-result-message.expanded {
+  display: block;
+  white-space: pre-wrap;
+  max-height: 320px;
+  overflow: auto;
 }
 
 .step-execution-table th {
@@ -1004,4 +1035,124 @@
 .modal-button.create:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Why the last step generation stopped */
+.generation-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #991b1b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.generation-error-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #dc2626;
+}
+
+.generation-error-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-wrap: anywhere;
+}
+
+.generation-error-text strong {
+  font-weight: 600;
+}
+
+.generation-error-dismiss {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+}
+
+.generation-error-dismiss:hover {
+  background: #fee2e2;
+}
+
+/* What the generator changed to agree with the API: shown until a person confirms it */
+.step-review-note,
+.review-notes-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  color: #78350f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* The note goes on its own line under the step, aligned with the step text */
+.step-row:has(.step-review-note) {
+  flex-wrap: wrap;
+}
+
+.step-row:has(.step-review-note) .step-content {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.step-review-note {
+  order: 10;
+  flex: 0 0 calc(100% - 64px);
+  margin: 8px 0 0 64px;
+  box-sizing: border-box;
+}
+
+.review-notes-banner {
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.step-review-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #b45309;
+}
+
+.step-review-text {
+  flex: 1;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+.review-notes-banner .generation-error-text span {
+  white-space: pre-line;
+}
+
+.step-review-confirm {
+  flex-shrink: 0;
+  background: white;
+  border: 1px solid #d97706;
+  color: #92400e;
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.step-review-confirm:hover {
+  background: #fef3c7;
 }
