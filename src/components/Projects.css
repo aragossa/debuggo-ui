@@ -536,3 +536,106 @@
 }
 .projects-container button[type="submit"] { padding: 8px 14px; }
 .projects-container .submit-button { border: 1px solid #0A2540; }
+
+/* Delete dialog: the project alone, or the project with its tests */
+.project-delete-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.project-delete-dialog {
+  background: white;
+  border-radius: 8px;
+  padding: 22px 24px;
+  width: 520px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.project-delete-dialog h3 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+.project-delete-contents {
+  margin: 0 0 14px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.project-delete-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.project-delete-option.selected {
+  border-color: #6b7280;
+  background: #f9fafb;
+}
+
+.project-delete-option.danger.selected {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.project-delete-option input {
+  margin-top: 3px;
+}
+
+.project-delete-option > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.project-delete-option > span > span {
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.project-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.project-delete-cancel,
+.project-delete-confirm {
+  padding: 7px 14px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.project-delete-cancel {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.project-delete-confirm {
+  background: #dc2626;
+  border: 1px solid #dc2626;
+  color: white;
+}
+
+.project-delete-confirm:disabled,
+.project-delete-cancel:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
